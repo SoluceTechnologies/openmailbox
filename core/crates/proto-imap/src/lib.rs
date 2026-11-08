@@ -16,6 +16,8 @@ const NETWORK_TIMEOUT: Duration = Duration::from_secs(45);
 const SUMMARY_HEADER_FIELDS: &str = "DATE FROM TO CC REPLY-TO SUBJECT MESSAGE-ID IN-REPLY-TO REFERENCES \
      CONTENT-TYPE CONTENT-TRANSFER-ENCODING MIME-VERSION";
 const PREVIEW_BYTES: u32 = 2048;
+/// Without partial fetches, previews come from whole texts, so only small messages get one.
+const WHOLE_TEXT_PREVIEW_MAX_SIZE: u32 = 16 * 1024;
 
 type Session = async_imap::Session<TlsStream<TcpStream>>;
 
@@ -394,7 +396,7 @@ impl ImapConnection {
             }
             result => result?,
         };
-        Ok(fetches
+        let mut summaries: Vec<FetchedSummary> = fetches
             .iter()
             .filter_map(|fetch| {
                 Some(FetchedSummary {
@@ -406,7 +408,41 @@ impl ImapConnection {
                     text: fetch.text().unwrap_or_default().to_vec(),
                 })
             })
-            .collect())
+            .collect();
+        if !partial_fetch {
+            self.fetch_whole_texts(&mut summaries).await?;
+        }
+        Ok(summaries)
+    }
+
+    async fn fetch_whole_texts(&mut self, summaries: &mut [FetchedSummary]) -> Result<()> {
+        let small: Vec<u32> = summaries
+            .iter()
+            .filter(|summary| summary.size <= WHOLE_TEXT_PREVIEW_MAX_SIZE)
+            .map(|summary| summary.uid)
+            .collect();
+        if small.is_empty() {
+            return Ok(());
+        }
+        let set = uid_set(&small);
+        let fetches: Vec<Fetch> = timed(async {
+            self.session
+                .uid_fetch(&set, "(UID BODY.PEEK[TEXT])")
+                .await?
+                .try_collect()
+                .await
+        })
+        .await?;
+        let mut texts: std::collections::HashMap<u32, Vec<u8>> = fetches
+            .iter()
+            .filter_map(|fetch| Some((fetch.uid?, fetch.text()?.to_vec())))
+            .collect();
+        for summary in summaries {
+            if let Some(text) = texts.remove(&summary.uid) {
+                summary.text = text;
+            }
+        }
+        Ok(())
     }
 
     pub async fn fetch_flags(

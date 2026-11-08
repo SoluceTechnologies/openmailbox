@@ -123,6 +123,7 @@ async fn sends_syncs_reads_and_acts_on_a_real_server() {
         ))
         .unwrap();
     let thread = eventually(&engine, || thread_with(&engine, &token)).await;
+    assert_eq!(thread.latest.preview.as_deref(), Some("Premier message"));
     let first = engine
         .thread_emails(thread.thread_id, Some(thread.mailbox_id))
         .unwrap()
