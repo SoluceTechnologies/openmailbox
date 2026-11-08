@@ -140,7 +140,7 @@ export function SignInForm({ provider, onDone }: SignInFormProps) {
       </FormSection>
 
       {setup.error ? (
-        <View accessibilityRole="alert" style={[styles.error, { backgroundColor: `${colors.danger}14` }]}>
+        <View accessible accessibilityRole="alert" accessibilityLiveRegion="assertive" style={[styles.error, { backgroundColor: `${colors.danger}14` }]}>
           <CircleAlert size={18} color={colors.danger} />
           <Typography variant="caption" color={colors.text} style={styles.flex}>
             {setup.error}

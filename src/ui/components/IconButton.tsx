@@ -30,6 +30,7 @@ function IconButton({
 
   return (
     <AnimatedPressable
+      accessibilityRole="button"
       {...accessibility}
       onPress={onPress}
       disabled={disabled}
