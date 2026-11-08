@@ -105,8 +105,24 @@ Sync of a 10,000 message inbox from Dovecot over TLS on localhost:
 | Manual refresh without changes (CONDSTORE) | 61 ms |
 | Open a message whose body is not cached | 0.5 ms |
 
+The whole sync peaks at 15 MB of resident memory for the process.
+
 GreenMail is not used for these measurements: it resolves UIDs linearly and takes about one second
 per `UID FETCH` on a 10,000 message mailbox.
+
+The app itself, release build signed in to the same Dovecot inbox, on a Pixel 3a API 34 x86_64
+emulator (60 Hz, emulated GPU), measured with `tools/android-benchmark.sh`:
+
+| Measure | Result |
+| --- | --- |
+| Cold start to first frame, median of 10 | 694 ms |
+| Inbox scroll, 40 flings over about 200 threads | 398 frames, 0.5 % janky |
+| Frame time p50 / p90 / p99 while scrolling | 21 / 26 / 30 ms |
+| Memory after scrolling (total PSS) | 353 MB |
+| Memory with no account (total PSS) | 283 MB |
+
+Frame times include the emulator's software GPU; the jank ratio is the figure to compare between
+builds. Figures on a physical device are still to be measured.
 
 ## License
 
