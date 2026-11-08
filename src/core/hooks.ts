@@ -1,5 +1,5 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { ThreadScope, type Account, type Mailbox } from '@openmailbox/mail-core';
+import { useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-query';
+import { ThreadScope, type Account, type Mailbox, type ThreadPage } from '@openmailbox/mail-core';
 
 import { useSyncStore } from '@/stores/syncStore';
 
@@ -23,13 +23,15 @@ function threadScope(scope: string): ThreadScope {
   return scope === UNIFIED_SCOPE ? new ThreadScope.Unified() : new ThreadScope.Mailbox({ mailboxId: scope });
 }
 
+const flattenThreadPages = (data: InfiniteData<ThreadPage, string | undefined>) => data.pages.flatMap((page) => page.threads);
+
 export function useThreads(scope: string, unreadOnly: boolean) {
   return useInfiniteQuery({
     queryKey: queryKeys.threads(scope, unreadOnly),
     queryFn: ({ pageParam }) => mailCore().listThreads(threadScope(scope), unreadOnly, pageParam, THREAD_PAGE_SIZE),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (page) => page.nextCursor,
-    select: (data) => data.pages.flatMap((page) => page.threads),
+    select: flattenThreadPages,
   });
 }
 
