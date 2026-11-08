@@ -1,0 +1,21 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "types": [
+      "jest"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "core",
+    "modules/mail-core/android",
+    "modules/mail-core/ios"
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "name": "openmailbox",
+  "version": "0.1.0",
+  "main": "expo-router/entry",
+  "private": true,
+  "license": "MPL-2.0",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "core:android": "tools/build-core.sh android",
+    "core:ios": "tools/build-core.sh ios",
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~57.0.6",
+    "@openmailbox/mail-core": "link:./modules/mail-core",
+    "@shopify/flash-list": "2.3.3",
+    "@tanstack/react-query": "^5.107.1",
+    "@ubjs/core": "0.31.0-6",
+    "dayjs": "^1.11.20",
+    "expo": "^57.0.0",
+    "expo-constants": "~57.0.6",
+    "expo-dev-client": "~57.0.9",
+    "expo-file-system": "~57.0.0",
+    "expo-font": "~57.0.1",
+    "expo-glass-effect": "~57.0.0",
+    "expo-haptics": "~57.0.1",
+    "expo-linking": "~57.0.3",
+    "expo-localization": "~57.0.1",
+    "expo-network": "~57.0.1",
+    "expo-router": "~57.0.7",
+    "expo-secure-store": "~57.0.1",
+    "expo-sharing": "~57.0.0",
+    "expo-splash-screen": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.4",
+    "i18next": "^26.3.1",
+    "lucide-react-native": "^1.25.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-i18next": "^17.0.8",
+    "react-native": "0.86.0",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-mmkv": "^4.3.2",
+    "react-native-nitro-modules": "^0.36.1",
+    "react-native-reanimated": "4.5.0",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-svg": "15.15.4",
+    "react-native-webview": "15.0.0",
+    "react-native-worklets": "0.10.0",
+    "uniffi-bindgen-react-native": "0.31.0-6",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@react-native/jest-preset": "0.86.0",
+    "@types/jest": "^29.5.14",
+    "@types/react": "~19.2.10",
+    "jest": "^29.7.0",
+    "jest-expo": "~57.0.2",
+    "typescript": "~6.0.3"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/core/",
+      "<rootDir>/android/",
+      "<rootDir>/ios/"
+    ]
+  },
+  "packageManager": "yarn@4.5.3"
+}

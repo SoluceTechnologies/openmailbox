@@ -1,0 +1,144 @@
+{
+  "common": { "cancel": "Annuler", "close": "Fermer", "retry": "Réessayer" },
+  "offline": { "banner": "Vous êtes hors ligne. Vos modifications partiront au retour de la connexion." },
+  "dates": { "yesterday": "Hier" },
+  "units": { "bytes": "{{value}} o", "kilobytes": "{{value}} Ko", "megabytes": "{{value}} Mo" },
+  "onboarding": {
+    "title": "OpenMailbox",
+    "subtitle": "Ajoutez votre premier compte. OpenMailbox se connecte directement à votre fournisseur de messagerie."
+  },
+  "mailboxes": {
+    "title": "Boîtes aux lettres",
+    "allInboxes": "Toutes les boîtes",
+    "loadingFolders": "Chargement des dossiers…",
+    "roles": {
+      "inbox": "Boîte de réception",
+      "sent": "Envoyés",
+      "drafts": "Brouillons",
+      "trash": "Corbeille",
+      "junk": "Indésirables",
+      "archive": "Archives",
+      "all": "Tous les messages",
+      "flagged": "Suivis"
+    }
+  },
+  "threads": {
+    "unreadCount_one": "{{count}} non lu",
+    "unreadCount_other": "{{count}} non lus",
+    "filterAll": "Tous",
+    "filterUnread": "Non lus",
+    "empty": "Aucun message",
+    "emptyUnread": "Aucun message non lu",
+    "loadOlder": "Charger les messages plus anciens",
+    "markRead": "Lu",
+    "markUnread": "Non lu",
+    "archive": "Archiver",
+    "trash": "Supprimer",
+    "flag": "Suivre",
+    "unflag": "Ne plus suivre"
+  },
+  "reader": {
+    "to": "À :",
+    "noSubject": "(Sans objet)",
+    "threadGone": "Cette conversation n'est plus disponible.",
+    "loadFailed": "Le message n'a pas pu être téléchargé.",
+    "attachmentFailed": "La pièce jointe n'a pas pu être ouverte.",
+    "remoteContentBlocked": "Les images distantes sont bloquées pour protéger votre vie privée.",
+    "loadRemoteContent": "Charger",
+    "openLinkTitle": "Ouvrir ce lien ?",
+    "openLink": "Ouvrir"
+  },
+  "compose": {
+    "newMessage": "Nouveau message",
+    "reply": "Répondre",
+    "replyAll": "Répondre à tous",
+    "forward": "Transférer",
+    "send": "Envoyer",
+    "to": "À :",
+    "cc": "Cc :",
+    "bcc": "Cci :",
+    "from": "De :",
+    "subject": "Objet :",
+    "copiesAndFrom": "Cc/Cci, De : {{from}}",
+    "bodyPlaceholder": "Écrivez votre message",
+    "discardTitle": "Abandonner ce message ?",
+    "discard": "Abandonner",
+    "invalidAddresses": "Certaines adresses sont invalides",
+    "noRecipient": "Ajoutez au moins un destinataire.",
+    "sendFailed": "Le message n'a pas pu être mis en file d'envoi",
+    "wrote": "Le {{date}}, {{author}} a écrit :",
+    "forwardedHeader": "---------- Message transféré ----------",
+    "headerFrom": "De :",
+    "headerDate": "Date :",
+    "headerSubject": "Objet :",
+    "headerTo": "À :"
+  },
+  "search": {
+    "title": "Recherche",
+    "placeholder": "Rechercher",
+    "noResults": "Aucun résultat",
+    "localOnly": "La recherche porte sur les messages enregistrés sur cet appareil."
+  },
+  "sync": {
+    "syncing": "Relève en cours…",
+    "updatedJustNow": "Mis à jour à l'instant",
+    "updatedAt": "Mis à jour à {{time}}",
+    "offline": "Hors ligne",
+    "failed": "Connexion au serveur impossible",
+    "authFailed": "Mot de passe requis"
+  },
+  "accounts": {
+    "add": "Ajouter un compte",
+    "reconnectRequired": "Le serveur a refusé le mot de passe. Saisissez-le à nouveau pour reprendre la synchronisation.",
+    "servers": "Serveurs",
+    "password": "Mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "updatePassword": "Mettre à jour le mot de passe",
+    "passwordUpdated": "Mot de passe mis à jour.",
+    "syncNow": "Synchroniser maintenant",
+    "remove": "Supprimer le compte",
+    "removeTitle": "Supprimer ce compte ?",
+    "removeMessage": "Les messages de {{email}} enregistrés sur cet appareil seront effacés. Rien n'est supprimé sur le serveur.",
+    "setup": {
+      "email": "Adresse e-mail",
+      "password": "Mot de passe",
+      "displayName": "Nom affiché aux destinataires",
+      "appPasswordHint": "Ce fournisseur exige un mot de passe d'application, à créer dans les réglages de sécurité de votre compte.",
+      "connect": "Se connecter",
+      "connecting": "Connexion…",
+      "manual": "Configurer les serveurs manuellement",
+      "incoming": "Courrier entrant (IMAP)",
+      "outgoing": "Courrier sortant (SMTP)",
+      "host": "Serveur",
+      "port": "Port",
+      "security": "Sécurité",
+      "username": "Identifiant",
+      "privacy": "Votre mot de passe reste sur cet appareil et n'est envoyé qu'à vos serveurs de messagerie."
+    }
+  },
+  "settings": {
+    "title": "Réglages",
+    "accounts": "Comptes",
+    "general": "Général",
+    "appearance": "Apparence",
+    "theme": "Thème",
+    "themes": { "system": "Système", "light": "Clair", "dark": "Sombre" },
+    "language": "Langue",
+    "loadRemoteImages": "Charger les images distantes",
+    "loadRemoteImagesHint": "Les images distantes peuvent indiquer à l'expéditeur que vous avez lu le message.",
+    "about": "À propos"
+  },
+  "about": {
+    "version": "Version",
+    "license": "Licence",
+    "description": "OpenMailbox est un client de messagerie open source. Il n'a pas de serveur : vos messages et mots de passe ne circulent qu'entre cet appareil et vos fournisseurs de messagerie."
+  },
+  "errors": {
+    "auth": "Le serveur a refusé ces identifiants.",
+    "network": "Le serveur est injoignable ({{message}}).",
+    "server": "Le serveur a renvoyé une erreur : {{message}}",
+    "invalidInput": "Valeur invalide : {{message}}",
+    "generic": "Une erreur est survenue.",
+    "operationFailed": "Une action n'a pas pu être appliquée sur le serveur"
+  }
+}

@@ -66,3 +66,10 @@ tools/.test-certificates/
 
 # Rust
 core/target/
+
+# Native builds of the Rust core
+modules/mail-core/android/src/main/jniLibs/
+modules/mail-core/android/build/
+modules/mail-core/android/.cxx/
+modules/mail-core/build/
+modules/mail-core/*.xcframework
