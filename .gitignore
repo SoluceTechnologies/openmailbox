@@ -61,3 +61,8 @@ android/*
 
 .idea
 .env
+# Local test mail server
+tools/.test-certificates/
+
+# Rust
+core/target/
