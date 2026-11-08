@@ -261,26 +261,30 @@ impl Worker {
             return;
         }
         self.set_status(SyncStatus::Syncing);
-        let result = async {
-            self.drain_operations().await?;
-            let stale_list = self
-                .mailbox_list_refreshed_at
-                .is_none_or(|at| at.elapsed() > MAILBOX_LIST_MAX_AGE);
-            if force || stale_list {
-                self.refresh_mailbox_list().await?;
-            }
-            for mailbox in self.targets(mailbox_ids)? {
-                self.sync_mailbox(&mailbox, force).await?;
-            }
-            Ok::<_, Error>(())
+        let mut result = self.sync_once(mailbox_ids.clone(), force).await;
+        if matches!(result, Err(Error::Network(_))) {
+            result = self.sync_once(mailbox_ids, force).await;
         }
-        .await;
         match result {
             Ok(()) => self.set_status(SyncStatus::Idle {
                 last_synced_at: Some(now_millis()),
             }),
             Err(error) => self.report(error),
         }
+    }
+
+    async fn sync_once(&mut self, mailbox_ids: Option<Vec<i64>>, force: bool) -> Result<()> {
+        self.drain_operations().await?;
+        let stale_list = self
+            .mailbox_list_refreshed_at
+            .is_none_or(|at| at.elapsed() > MAILBOX_LIST_MAX_AGE);
+        if force || stale_list {
+            self.refresh_mailbox_list().await?;
+        }
+        for mailbox in self.targets(mailbox_ids)? {
+            self.sync_mailbox(&mailbox, force).await?;
+        }
+        Ok(())
     }
 
     async fn refresh_mailbox_list(&mut self) -> Result<()> {
@@ -368,6 +372,7 @@ impl Worker {
             }
         };
         let unchanged = state.synced_at.is_some()
+            && status.uid_next.is_some()
             && state.uidvalidity == status.uid_validity
             && state.uidnext == status.uid_next
             && flags_unchanged;
