@@ -448,8 +448,9 @@ impl Worker {
             .iter()
             .map(|update| (update.uid, update.flags))
             .collect();
-        self.store.update_flags(mailbox.id, &updates)?;
-        if !self.store.has_pending_operations(&self.account.id)? {
+        let local_changes_pending = self.store.has_pending_operations(&self.account.id)?;
+        if !local_changes_pending {
+            self.store.update_flags(mailbox.id, &updates)?;
             self.store.clear_unconfirmed_links(mailbox.id)?;
         }
         self.store.save_mailbox_sync_state(
@@ -457,9 +458,13 @@ impl Worker {
             &MailboxSyncState {
                 uidvalidity: selected.uid_validity,
                 uidnext: status.uid_next.max(selected.uid_next),
-                highest_modseq: selected.highest_modseq.or(status.highest_modseq),
+                highest_modseq: if local_changes_pending {
+                    state.highest_modseq.filter(|_| same_validity)
+                } else {
+                    selected.highest_modseq.or(status.highest_modseq)
+                },
                 sync_since: Some(window_start),
-                synced_at: Some(now_millis()),
+                synced_at: (!local_changes_pending).then(now_millis),
             },
         )?;
         self.events.mailboxes_changed([mailbox.id]);

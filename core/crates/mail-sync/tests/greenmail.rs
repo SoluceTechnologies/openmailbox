@@ -139,12 +139,21 @@ async fn sends_syncs_reads_and_acts_on_a_real_server() {
         ))
         .unwrap();
     let thread = eventually(&engine, || {
-        thread_with(&engine, &token).filter(|thread| thread.message_count == 2)
+        thread_with(&engine, &token)
+            .filter(|thread| thread.message_count == 2 && thread.unread_count == 0)
     })
     .await;
+
+    engine
+        .set_thread_keywords(thread.mailbox_id, thread.thread_id, &[], &[Keyword::Seen])
+        .unwrap();
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    engine.sync_now(None);
+    tokio::time::sleep(Duration::from_secs(2)).await;
     assert_eq!(
-        thread.unread_count, 1,
-        "the reply is also in Sent, where it is read"
+        thread_with(&engine, &token).unwrap().unread_count,
+        2,
+        "the read copy in Sent was marked unread too"
     );
 
     engine
