@@ -22,25 +22,31 @@ function MessageCardImpl({ email, expanded, onToggle }: MessageCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const sender = email.from[0];
-  const senderName = displayName(sender) || '—';
-  const recipients = [...email.to, ...email.cc];
+  const senderName = displayName(sender) || t('threads.unknownSender');
+  const recipients = formatAddressList([...email.to, ...email.cc]);
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded }} onPress={() => onToggle(email.id)} style={styles.header}>
-        <Avatar name={senderName} size={40} color={avatarColor(sender?.email ?? senderName)} />
+    <View style={styles.message}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityHint={expanded ? t('reader.collapseHint') : t('reader.expandHint')}
+        onPress={() => onToggle(email.id)}
+        style={styles.header}
+      >
+        <Avatar name={senderName} size={38} color={avatarColor(sender?.email ?? senderName)} />
         <View style={styles.headerText}>
           <View style={styles.line}>
-            <Typography variant="body2" weight={email.isSeen ? '600' : '700'} numberOfLines={1} style={styles.flex}>
+            <Typography numberOfLines={1} style={[styles.sender, { color: colors.text, fontWeight: email.isSeen ? '600' : '700' }]}>
               {senderName}
             </Typography>
-            {email.isFlagged ? <Flag size={14} color={colors.warning} fill={colors.warning} /> : null}
-            <Typography variant="caption" color="secondary">
+            {email.isFlagged ? <Flag size={13} color={colors.warning} fill={colors.warning} /> : null}
+            <Typography style={[styles.date, { color: colors.textSecondary }]}>
               {expanded ? formatFullDate(email.receivedAt) : formatListDate(email.receivedAt)}
             </Typography>
           </View>
-          <Typography variant="caption" color="secondary" numberOfLines={expanded ? 3 : 1}>
-            {expanded ? `${t('reader.to')} ${formatAddressList(recipients)}` : (email.preview ?? '')}
+          <Typography numberOfLines={expanded ? 3 : 1} style={[styles.secondary, { color: colors.textSecondary }]}>
+            {expanded ? t('reader.toRecipients', { recipients }) : (email.preview ?? '')}
           </Typography>
         </View>
       </Pressable>
@@ -52,9 +58,11 @@ function MessageCardImpl({ email, expanded, onToggle }: MessageCardProps) {
 export const MessageCard = memo(MessageCardImpl);
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 12, gap: 12 },
-  header: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  message: { paddingVertical: 14, gap: 14 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   headerText: { flex: 1, gap: 2 },
   line: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  flex: { flex: 1 },
+  sender: { flex: 1, fontSize: 16, lineHeight: 21 },
+  date: { fontSize: 13, fontWeight: '400' },
+  secondary: { fontSize: 13, lineHeight: 18, fontWeight: '400' },
 });

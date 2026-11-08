@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
@@ -12,7 +12,7 @@ import { mailCore } from '@/core/mailCore';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { MessageCard } from '@/features/reader/components/MessageCard';
 import type { ComposeMode } from '@/features/composer/prefill';
-import { EmptyState, IconButton, ScreenHeader, Typography, ViewContainer } from '@/ui/components';
+import { ActionList, EmptyState, IconButton, ScreenHeader, Sheet, Typography, ViewContainer } from '@/ui/components';
 
 export default function ThreadScreen() {
   const { threadId, mailboxId } = useLocalSearchParams<{ threadId: string; mailboxId?: string }>();
@@ -24,6 +24,7 @@ export default function ThreadScreen() {
   const emailsQuery = useThreadEmails(threadId, mailboxId);
   const emails = useMemo(() => emailsQuery.data ?? [], [emailsQuery.data]);
   const [expanded, setExpanded] = useState<Set<string> | null>(null);
+  const [replyMenuVisible, setReplyMenuVisible] = useState(false);
 
   const mailbox = mailboxes.find((candidate) => candidate.id === mailboxId);
   const reference: ThreadReference | null = mailboxId ? { mailboxId, threadId } : null;
@@ -54,6 +55,7 @@ export default function ThreadScreen() {
   }, []);
 
   const compose = (mode: ComposeMode) => {
+    setReplyMenuVisible(false);
     if (!latest) return;
     router.push({ pathname: '/compose', params: { mode, emailId: latest.id, threadId, mailboxId: mailboxId ?? '' } });
   };
@@ -84,17 +86,20 @@ export default function ThreadScreen() {
           <EmptyState title={t('reader.threadGone')} />
         ) : (
           <ScrollView contentContainerStyle={styles.content}>
-            <Typography variant="h3">{latest?.subject || t('reader.noSubject')}</Typography>
-            {mailbox ? (
-              <Typography variant="caption" color="secondary">
-                {mailboxName(mailbox, t)}
-              </Typography>
-            ) : null}
-            <View style={styles.messages}>
-              {emails.map((email) => (
-                <MessageCard key={email.id} email={email} expanded={expanded?.has(email.id) ?? false} onToggle={toggle} />
-              ))}
+            <View style={styles.titleBlock}>
+              <Typography variant="h3">{latest?.subject || t('reader.noSubject')}</Typography>
+              {mailbox ? (
+                <Typography variant="caption" color={colors.textSecondary} style={styles.mailbox}>
+                  {mailboxName(mailbox, t)}
+                </Typography>
+              ) : null}
             </View>
+            {emails.map((email) => (
+              <Fragment key={email.id}>
+                <View style={[styles.separator, { backgroundColor: colors.border }]} />
+                <MessageCard email={email} expanded={expanded?.has(email.id) ?? false} onToggle={toggle} />
+              </Fragment>
+            ))}
           </ScrollView>
         )}
       </SafeAreaView>
@@ -108,17 +113,26 @@ export default function ThreadScreen() {
           !reference,
         )}
         {toolbarIcon(t('threads.markUnread'), <Mail size={22} color={colors.primary} />, () => reference && leaveAfter(() => setThreadRead(reference, false)), !reference)}
-        {toolbarIcon(t('compose.reply'), <Reply size={22} color={colors.primary} />, () => compose('reply'))}
-        {toolbarIcon(t('compose.replyAll'), <ReplyAll size={22} color={colors.primary} />, () => compose('replyAll'))}
-        {toolbarIcon(t('compose.forward'), <Forward size={22} color={colors.primary} />, () => compose('forward'))}
+        {toolbarIcon(t('compose.reply'), <Reply size={22} color={colors.primary} />, () => setReplyMenuVisible(true), !latest)}
       </View>
+      <Sheet visible={replyMenuVisible} onClose={() => setReplyMenuVisible(false)} title={t('compose.reply')}>
+        <ActionList
+          actions={[
+            { key: 'reply', title: t('compose.reply'), icon: <Reply />, onPress: () => compose('reply') },
+            { key: 'replyAll', title: t('compose.replyAll'), icon: <ReplyAll />, onPress: () => compose('replyAll') },
+            { key: 'forward', title: t('compose.forward'), icon: <Forward />, onPress: () => compose('forward') },
+          ]}
+        />
+      </Sheet>
     </ViewContainer>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingBottom: 32, gap: 4 },
-  messages: { marginTop: 16, gap: 12 },
-  toolbar: { flexDirection: 'row', justifyContent: 'space-around', paddingTop: 6, borderTopWidth: StyleSheet.hairlineWidth },
+  content: { paddingBottom: 40 },
+  titleBlock: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 14 },
+  mailbox: { marginTop: 4, fontSize: 13 },
+  separator: { height: StyleSheet.hairlineWidth, marginLeft: 16 },
+  toolbar: { flexDirection: 'row', justifyContent: 'space-around', paddingTop: 4, borderTopWidth: StyleSheet.hairlineWidth },
 });

@@ -119,10 +119,10 @@ export const MessageBody = memo(MessageBodyImpl);
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  body: { gap: 10 },
+  body: { gap: 12, paddingHorizontal: 16 },
   loading: { marginVertical: 24 },
-  error: { alignItems: 'center', paddingVertical: 16, gap: 4 },
-  text: { lineHeight: 22 },
+  error: { alignItems: 'center', paddingVertical: 16, paddingHorizontal: 16, gap: 4 },
+  text: { fontSize: 16, lineHeight: 23 },
   remoteBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 10 },
   attachments: { gap: 8 },
   attachment: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth },

@@ -34,7 +34,7 @@ function documentFor(html: string, allowRemoteContent: boolean): string {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src ${images}; font-src data:; media-src 'none'; frame-src 'none'; form-action 'none';">
 <style>
 html, body { margin: 0; padding: 0; background: #ffffff; color: #1a1a1a; }
-body { padding: 12px 14px; font: 15px/1.45 -apple-system, Roboto, 'Helvetica Neue', sans-serif; overflow-wrap: break-word; }
+body { padding: 4px 2px; font: 15px/1.45 -apple-system, Roboto, 'Helvetica Neue', sans-serif; overflow-wrap: break-word; }
 img { max-width: 100%; height: auto; }
 pre { white-space: pre-wrap; }
 blockquote { margin: 0 0 0 8px; padding-left: 10px; border-left: 3px solid #d0d0d0; color: #555555; }
@@ -103,6 +103,6 @@ function HtmlBodyImpl({ html, allowRemoteContent }: HtmlBodyProps) {
 export const HtmlBody = memo(HtmlBodyImpl);
 
 const styles = StyleSheet.create({
-  container: { width: '100%', borderRadius: 12, overflow: 'hidden', backgroundColor: '#ffffff' },
+  container: { width: '100%', borderRadius: 10, overflow: 'hidden', backgroundColor: '#ffffff' },
   webView: { flex: 1, backgroundColor: '#ffffff' },
 });

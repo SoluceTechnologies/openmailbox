@@ -15,7 +15,7 @@ import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { useIsSyncing, useSyncLabel } from '@/features/sync/useSyncLabel';
 import { SwipeableThreadRow } from '@/features/threads/components/SwipeableThreadRow';
 import { accountColor } from '@/theme';
-import { Button, Chip, EmptyState, ScreenHeader, Spinner, Typography, ViewContainer } from '@/ui/components';
+import { Button, EmptyState, ScreenHeader, SegmentedControl, Spinner, Typography, ViewContainer } from '@/ui/components';
 
 const MINIMUM_REFRESH_MS = 700;
 
@@ -135,17 +135,20 @@ export default function MailboxScreen() {
                 {title}
               </Typography>
               {subtitle ? (
-                <Typography color="secondary" numberOfLines={1}>
+                <Typography variant="caption" color={colors.textSecondary} numberOfLines={1} style={styles.subtitle}>
                   {subtitle}
                 </Typography>
               ) : null}
               <View style={styles.filters}>
-                <Chip small active={!unreadOnly} onPress={() => setUnreadOnly(false)}>
-                  {t('threads.filterAll')}
-                </Chip>
-                <Chip small active={unreadOnly} onPress={() => setUnreadOnly(true)}>
-                  {t('threads.filterUnread')}
-                </Chip>
+                <SegmentedControl
+                  accessibilityLabel={t('threads.filter')}
+                  value={unreadOnly ? 'unread' : 'all'}
+                  onChange={(filter) => setUnreadOnly(filter === 'unread')}
+                  options={[
+                    { value: 'all', label: t('threads.filterAll') },
+                    { value: 'unread', label: t('threads.filterUnread') },
+                  ]}
+                />
               </View>
             </View>
           }
@@ -153,7 +156,11 @@ export default function MailboxScreen() {
             threads.isLoading ? (
               <EmptyState loading title="" />
             ) : (
-              <EmptyState icon={<Inbox />} title={unreadOnly ? t('threads.emptyUnread') : t('threads.empty')} />
+              <EmptyState
+                icon={<Inbox />}
+                title={unreadOnly ? t('threads.emptyUnread') : t('threads.empty')}
+                description={unreadOnly ? undefined : t('threads.emptyHint')}
+              />
             )
           }
           ListFooterComponent={
@@ -172,8 +179,9 @@ export default function MailboxScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingBottom: 8, gap: 2 },
-  filters: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  header: { paddingHorizontal: 20, paddingBottom: 12 },
+  subtitle: { marginTop: 2, fontSize: 13 },
+  filters: { marginTop: 14, width: 240 },
   listContent: { paddingBottom: 120 },
   footer: { marginVertical: 20, alignSelf: 'center' },
 });

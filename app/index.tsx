@@ -13,39 +13,25 @@ import { mailboxBadge, mailboxIcon, mailboxName } from '@/features/mailboxes/mai
 import { useSyncLabel } from '@/features/sync/useSyncLabel';
 import { useSyncStore } from '@/stores/syncStore';
 import { accountColor } from '@/theme';
-import { IconButton, Item, List, Typography, ViewContainer } from '@/ui/components';
+import { FormSection, IconButton, ListRow, Typography, ViewContainer } from '@/ui/components';
 
 let unifiedInboxOpened = false;
-
-function CountAndChevron({ count }: { count: number }) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.trailing}>
-      {count > 0 ? <Typography color="secondary">{count}</Typography> : null}
-      <ChevronRight size={18} color={colors.textTertiary} />
-    </View>
-  );
-}
 
 function MailboxRow({ mailbox, title, accent }: { mailbox: Mailbox; title: string; accent?: string }) {
   const router = useRouter();
   const { colors } = useTheme();
   const Icon = mailboxIcon(mailbox);
   return (
-    <Item
+    <ListRow
+      title={title}
       disabled={!mailbox.selectable}
+      detail={mailbox.selectable ? mailboxBadge(mailbox) : undefined}
       onPress={mailbox.selectable ? () => router.push(`/mailbox/${mailbox.id}`) : undefined}
       leading={
-        <View style={[styles.leading, { paddingLeft: Math.min(mailbox.depth, 4) * 16 }]}>
+        <View style={{ paddingLeft: Math.min(mailbox.depth, 3) * 18 }}>
           <Icon size={22} color={mailbox.selectable ? (accent ?? colors.primary) : colors.textTertiary} />
         </View>
       }
-      title={
-        <Typography numberOfLines={1} color={mailbox.selectable ? 'text' : 'secondary'}>
-          {title}
-        </Typography>
-      }
-      trailing={mailbox.selectable ? <CountAndChevron count={mailboxBadge(mailbox)} /> : undefined}
     />
   );
 }
@@ -56,6 +42,7 @@ function AccountSection({ account, mailboxes }: { account: Account; mailboxes: M
   const { colors } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const authRequired = useSyncStore((state) => state.authRequired[account.id] === true);
+  const Chevron = collapsed ? ChevronRight : ChevronDown;
 
   return (
     <View style={styles.section}>
@@ -69,26 +56,30 @@ function AccountSection({ account, mailboxes }: { account: Account; mailboxes: M
         <Typography variant="h4" numberOfLines={1} style={styles.flex}>
           {account.displayName}
         </Typography>
-        {collapsed ? <ChevronRight size={20} color={colors.textSecondary} /> : <ChevronDown size={20} color={colors.textSecondary} />}
+        <Chevron size={20} color={colors.textSecondary} />
       </Pressable>
       {authRequired ? (
-        <Pressable onPress={() => router.push(`/settings/account/${account.id}`)} style={[styles.warning, { backgroundColor: colors.surface }]}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push(`/settings/account/${account.id}`)}
+          style={[styles.warning, { backgroundColor: `${colors.warning}1f` }]}
+        >
           <TriangleAlert size={18} color={colors.warning} />
-          <Typography variant="caption" style={styles.flex}>
+          <Typography variant="caption" color={colors.text} style={styles.flex}>
             {t('accounts.reconnectRequired')}
           </Typography>
         </Pressable>
       ) : null}
       {collapsed ? null : mailboxes.length === 0 ? (
-        <Typography variant="caption" color="secondary" style={styles.loadingFolders}>
+        <Typography variant="caption" color={colors.textSecondary} style={styles.loadingFolders}>
           {t('mailboxes.loadingFolders')}
         </Typography>
       ) : (
-        <List>
+        <FormSection>
           {mailboxes.map((mailbox) => (
             <MailboxRow key={mailbox.id} mailbox={mailbox} title={mailboxName(mailbox, t)} />
           ))}
-        </List>
+        </FormSection>
       )}
     </View>
   );
@@ -120,7 +111,7 @@ export default function MailboxesScreen() {
   if (accounts.length === 0) return <Redirect href="/onboarding" />;
 
   return (
-    <ViewContainer>
+    <ViewContainer grouped>
       <SafeAreaView edges={['top']} style={styles.flex}>
         <View style={styles.toolbar}>
           <IconButton round glass size={40} accessibilityLabel={t('settings.title')} onPress={() => router.push('/settings')}>
@@ -128,18 +119,20 @@ export default function MailboxesScreen() {
           </IconButton>
         </View>
         <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
-          <Typography variant="h1">{t('mailboxes.title')}</Typography>
-          {syncLabel ? (
-            <Typography color="secondary" style={styles.subtitle}>
-              {syncLabel}
-            </Typography>
-          ) : null}
-          <List style={styles.inboxes}>
-            <Item
-              onPress={() => router.push(`/mailbox/${UNIFIED_SCOPE}`)}
-              leading={<Inbox size={22} color={colors.primary} />}
+          <View style={styles.header}>
+            <Typography variant="h1">{t('mailboxes.title')}</Typography>
+            {syncLabel ? (
+              <Typography variant="caption" color={colors.textSecondary} style={styles.subtitle}>
+                {syncLabel}
+              </Typography>
+            ) : null}
+          </View>
+          <FormSection>
+            <ListRow
               title={t('mailboxes.allInboxes')}
-              trailing={<CountAndChevron count={unifiedUnread} />}
+              detail={unifiedUnread}
+              leading={<Inbox size={22} color={colors.primary} />}
+              onPress={() => router.push(`/mailbox/${UNIFIED_SCOPE}`)}
             />
             {accounts.map((account) => {
               const inbox = inboxes.find((mailbox) => mailbox.accountId === account.id);
@@ -147,7 +140,7 @@ export default function MailboxesScreen() {
                 <MailboxRow key={inbox.id} mailbox={inbox} title={account.displayName} accent={accountColor(account.color)} />
               ) : null;
             })}
-          </List>
+          </FormSection>
           {accounts.map((account) => (
             <AccountSection key={account.id} account={account} mailboxes={mailboxesByAccount.get(account.id) ?? []} />
           ))}
@@ -160,15 +153,13 @@ export default function MailboxesScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  toolbar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 16, paddingTop: 4 },
+  toolbar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 16, minHeight: 52, alignItems: 'center' },
   content: { paddingHorizontal: 16, paddingBottom: 120, width: '100%', maxWidth: 700, alignSelf: 'center' },
-  subtitle: { marginBottom: 12 },
-  inboxes: { marginTop: 4 },
-  section: { marginTop: 28, gap: 10 },
+  header: { marginLeft: 4, marginBottom: 16 },
+  subtitle: { marginTop: 2, fontSize: 13 },
+  section: { marginTop: 32, gap: 10 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 },
-  accountDot: { width: 10, height: 10, borderRadius: 5 },
-  leading: { minWidth: 26, alignItems: 'flex-start', justifyContent: 'center' },
-  trailing: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  accountDot: { width: 8, height: 8, borderRadius: 4 },
   warning: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12 },
   loadingFolders: { paddingHorizontal: 4 },
 });

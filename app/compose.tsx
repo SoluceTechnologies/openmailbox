@@ -159,7 +159,7 @@ export default function ComposeScreen() {
             </IconButton>
           </View>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-            <Typography variant="h2" style={styles.title}>
+            <Typography variant="h3" style={styles.title}>
               {title}
             </Typography>
             <FieldRow label={t('compose.to')}>
