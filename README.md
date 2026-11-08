@@ -41,6 +41,10 @@ yarn test
 yarn typecheck
 ```
 
+App tests live in `__tests__/`, grouped like the sources, and use Jest with React Native Testing Library.
+They load the generated bindings for their types but replace the core itself with the fake in
+`jest.setup.js`, so they run without a native build.
+
 ## Local mail server
 
 `compose.yaml` runs GreenMail with a certificate signed by a local CA. `yarn mail:start` creates the

@@ -1,6 +1,6 @@
 import type { EmailSummary } from '@openmailbox/mail-core';
 
-import { prefill } from './prefill';
+import { prefill } from '@/features/composer/prefill';
 
 const labels = {
   wrote: (date: string, author: string) => `On ${date}, ${author} wrote:`,
