@@ -2,7 +2,8 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use mail_model::{
-    AccountConfig, Address, Draft, Keyword, Security, ServerEndpoint, ThreadScope, ThreadSummary,
+    AccountConfig, Address, Draft, Keyword, MailboxRole, Security, ServerEndpoint, ThreadScope,
+    ThreadSummary,
 };
 use mail_sync::{Destination, Engine};
 
@@ -14,10 +15,10 @@ fn endpoint(port: u16) -> ServerEndpoint {
     }
 }
 
-fn alice() -> Address {
+fn bob() -> Address {
     Address {
-        name: Some("Alice".into()),
-        email: "alice@example.com".into(),
+        name: Some("Bob".into()),
+        email: "bob@example.com".into(),
     }
 }
 
@@ -29,7 +30,7 @@ fn draft(
 ) -> Draft {
     Draft {
         account_id: account_id.into(),
-        to: vec![alice()],
+        to: vec![bob()],
         cc: vec![],
         bcc: vec![],
         subject,
@@ -39,7 +40,7 @@ fn draft(
 }
 
 async fn server_subjects() -> Vec<String> {
-    let mut connection = proto_imap::connect(&endpoint(3993), "alice@example.com", "secret")
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
         .await
         .unwrap();
     connection.select("INBOX").await.unwrap();
@@ -55,6 +56,19 @@ async fn server_subjects() -> Vec<String> {
         .filter(|summary| !summary.flags.deleted)
         .filter_map(|summary| mail_mime::parse_summary(&summary.header, &summary.text).subject)
         .collect()
+}
+
+async fn ensure_sent_mailbox() {
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
+        .await
+        .unwrap();
+    let mailboxes = connection.list_mailboxes().await.unwrap();
+    if !mailboxes
+        .iter()
+        .any(|mailbox| mailbox.role == Some(MailboxRole::Sent))
+    {
+        connection.create_mailbox("Sent").await.unwrap();
+    }
 }
 
 async fn eventually<T>(engine: &Engine, mut probe: impl FnMut() -> Option<T>) -> T {
@@ -94,6 +108,7 @@ fn thread_with(engine: &Engine, token: &str) -> Option<ThreadSummary> {
 #[tokio::test(flavor = "multi_thread")]
 #[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
 async fn sends_syncs_reads_and_acts_on_a_real_server() {
+    ensure_sent_mailbox().await;
     let directory =
         std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
     let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
@@ -102,9 +117,9 @@ async fn sends_syncs_reads_and_acts_on_a_real_server() {
     let account = engine
         .add_account(
             AccountConfig {
-                email: "alice@example.com".into(),
-                display_name: "Alice".into(),
-                username: "alice@example.com".into(),
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },
@@ -198,9 +213,9 @@ async fn deleting_an_unopened_thread_removes_it_from_the_server() {
     let account = engine
         .add_account(
             AccountConfig {
-                email: "alice@example.com".into(),
-                display_name: "Alice".into(),
-                username: "alice@example.com".into(),
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },

@@ -53,11 +53,11 @@ yarn core:android:dev
 yarn android
 ```
 
-Sign in with `alice@example.com` / `secret`, servers `10.0.2.2:3993` (IMAP) and `10.0.2.2:3465` (SMTP)
-from the Android emulator, or `localhost` from the iOS simulator. Builds made with `core:*:dev` trust
-the test CA: never ship them.
+Development builds list a GreenMail entry on the sign-in screen, filled in with `alice@example.com` /
+`secret` and servers `10.0.2.2:3993` (IMAP) and `10.0.2.2:3465` (SMTP) on the Android emulator, or
+`localhost` on the iOS simulator. Builds made with `core:*:dev` trust the test CA: never ship them.
 
-The integration tests use the same server:
+The integration tests use the same server with `bob@example.com`, so Alice's seeded mailbox stays as it is:
 
 ```bash
 yarn mail:start

@@ -533,6 +533,10 @@ impl ImapConnection {
         Ok(())
     }
 
+    pub async fn create_mailbox(&mut self, remote_name: &str) -> Result<()> {
+        timed(self.session.create(remote_name)).await
+    }
+
     pub async fn append(&mut self, remote_name: &str, raw: &[u8]) -> Result<()> {
         timed(
             self.session
