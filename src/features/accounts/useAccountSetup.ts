@@ -70,7 +70,10 @@ export function useAccountSetup(provider: MailProvider, onDone: (account: Accoun
       onDone(account);
     } catch (failure) {
       setError(describeCoreError(failure, t));
-      if (!CoreError.Auth.instanceOf(failure)) setManual(true);
+      if (!CoreError.Auth.instanceOf(failure)) {
+        setServers((current) => current ?? emptyServers(email));
+        setManual(true);
+      }
     } finally {
       setPhase('idle');
     }
