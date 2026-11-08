@@ -54,14 +54,11 @@ impl Store {
         self.write(|transaction| {
             let mut touched_threads = HashSet::new();
             for message in messages {
-                let (email_id, thread_id) =
-                    match find_by_message_id(transaction, account_id, message)? {
-                        Some((email_id, thread_id)) => {
-                            write_flags(transaction, email_id, message.flags)?;
-                            (email_id, thread_id)
-                        }
-                        None => insert_email(transaction, account_id, mailbox_id, message)?,
-                    };
+                let existing = find_by_message_id(transaction, account_id, message)?;
+                let (email_id, thread_id) = match existing {
+                    Some(found) => found,
+                    None => insert_email(transaction, account_id, mailbox_id, message)?,
+                };
                 transaction
                     .prepare_cached(
                         "INSERT INTO email_mailbox (mailbox_id, email_id, uid) VALUES (?1, ?2, ?3)
@@ -70,6 +67,9 @@ impl Store {
                     .storage()?
                     .execute(params![mailbox_id, email_id, message.uid])
                     .storage()?;
+                if existing.is_some() {
+                    apply_flags(transaction, email_id, message.flags)?;
+                }
                 touched_threads.insert(thread_id);
             }
             refresh_threads(transaction, &touched_threads)
@@ -79,23 +79,19 @@ impl Store {
     pub fn update_flags(&self, mailbox_id: i64, updates: &[(u32, Flags)]) -> Result<bool> {
         self.write(|transaction| {
             let mut touched_threads = HashSet::new();
-            let mut statement = transaction
+            let mut find = transaction
                 .prepare_cached(
-                    "UPDATE email SET is_seen = ?2, is_flagged = ?3, is_answered = ?4, is_draft = ?5
-                     WHERE id = (SELECT email_id FROM email_mailbox WHERE mailbox_id = ?1 AND uid = ?6)
-                       AND (is_seen != ?2 OR is_flagged != ?3 OR is_answered != ?4 OR is_draft != ?5)
-                     RETURNING thread_id",
+                    "SELECT email_id FROM email_mailbox WHERE mailbox_id = ?1 AND uid = ?2",
                 )
                 .storage()?;
             for (uid, flags) in updates {
-                let thread_id: Option<i64> = statement
-                    .query_row(
-                        params![mailbox_id, flags.seen, flags.flagged, flags.answered, flags.draft, uid],
-                        |row| row.get(0),
-                    )
+                let email_id: Option<i64> = find
+                    .query_row(params![mailbox_id, uid], |row| row.get(0))
                     .optional()
                     .storage()?;
-                touched_threads.extend(thread_id);
+                if let Some(email_id) = email_id {
+                    touched_threads.extend(apply_flags(transaction, email_id, *flags)?);
+                }
             }
             refresh_threads(transaction, &touched_threads)?;
             Ok(!touched_threads.is_empty())
@@ -409,13 +405,53 @@ fn find_by_message_id(
         .storage()
 }
 
-fn write_flags(transaction: &Transaction, email_id: i64, flags: Flags) -> Result<()> {
-    transaction
-        .prepare_cached("UPDATE email SET is_seen = ?2, is_flagged = ?3, is_answered = ?4, is_draft = ?5 WHERE id = ?1")
+/// IMAP keeps flags per copy while the store keeps one email per Message-ID. When an email has
+/// several copies (the inbox and the Sent copy of a message sent to oneself), a flag set on any
+/// copy wins, otherwise every sync of each folder would flip the flags of the other.
+fn apply_flags(transaction: &Transaction, email_id: i64, incoming: Flags) -> Result<Option<i64>> {
+    let (thread_id, current, copies): (i64, Flags, i64) = transaction
+        .prepare_cached(
+            "SELECT thread_id, is_seen, is_flagged, is_answered, is_draft,
+               (SELECT COUNT(*) FROM email_mailbox WHERE email_id = ?1)
+             FROM email WHERE id = ?1",
+        )
         .storage()?
-        .execute(params![email_id, flags.seen, flags.flagged, flags.answered, flags.draft])
+        .query_row([email_id], |row| {
+            let current = Flags {
+                seen: row.get(1)?,
+                flagged: row.get(2)?,
+                answered: row.get(3)?,
+                draft: row.get(4)?,
+                deleted: false,
+            };
+            Ok((row.get(0)?, current, row.get(5)?))
+        })
         .storage()?;
-    Ok(())
+    let merged = if copies > 1 {
+        Flags {
+            seen: current.seen || incoming.seen,
+            flagged: current.flagged || incoming.flagged,
+            answered: current.answered || incoming.answered,
+            draft: current.draft || incoming.draft,
+            deleted: false,
+        }
+    } else {
+        Flags {
+            deleted: false,
+            ..incoming
+        }
+    };
+    if merged == current {
+        return Ok(None);
+    }
+    transaction
+        .prepare_cached(
+            "UPDATE email SET is_seen = ?2, is_flagged = ?3, is_answered = ?4, is_draft = ?5 WHERE id = ?1",
+        )
+        .storage()?
+        .execute(params![email_id, merged.seen, merged.flagged, merged.answered, merged.draft])
+        .storage()?;
+    Ok(Some(thread_id))
 }
 
 fn insert_email(

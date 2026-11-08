@@ -328,6 +328,30 @@ mod tests {
     }
 
     #[test]
+    fn a_flag_set_on_any_copy_of_a_message_is_kept() {
+        let (store, _directory, inbox, trash) = setup();
+        store
+            .insert_messages("alice", inbox, &[message(1, "self@x", &[], 1_000, false)])
+            .unwrap();
+        store
+            .insert_messages("alice", trash, &[message(9, "self@x", &[], 1_000, true)])
+            .unwrap();
+        store.update_flags(inbox, &[(1, Flags::default())]).unwrap();
+        let unread = |store: &Store| {
+            store
+                .list_threads(ThreadScope::Mailbox(inbox), false, None, 1)
+                .unwrap()
+                .threads[0]
+                .unread_count
+        };
+        assert_eq!(unread(&store), 0);
+
+        store.remove_uids(trash, &[9]).unwrap();
+        store.update_flags(inbox, &[(1, Flags::default())]).unwrap();
+        assert_eq!(unread(&store), 1);
+    }
+
+    #[test]
     fn removed_uids_delete_orphan_emails_and_search_finds_the_rest() {
         let (store, _directory, inbox, _) = setup();
         store

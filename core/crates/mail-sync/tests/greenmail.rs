@@ -142,7 +142,10 @@ async fn sends_syncs_reads_and_acts_on_a_real_server() {
         thread_with(&engine, &token).filter(|thread| thread.message_count == 2)
     })
     .await;
-    assert_eq!(thread.unread_count, 2);
+    assert_eq!(
+        thread.unread_count, 1,
+        "the reply is also in Sent, where it is read"
+    );
 
     engine
         .set_thread_keywords(thread.mailbox_id, thread.thread_id, &[Keyword::Seen], &[])
