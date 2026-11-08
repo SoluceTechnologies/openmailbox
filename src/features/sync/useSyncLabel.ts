@@ -18,7 +18,12 @@ function useNow(intervalMs: number): number {
 }
 
 export function useIsSyncing(accountIds: string[]): boolean {
-  return useSyncStore((state) => accountIds.some((accountId) => SyncStatus.Syncing.instanceOf(state.statuses[accountId])));
+  return useSyncStore((state) =>
+    accountIds.some((accountId) => {
+      const status = state.statuses[accountId];
+      return status !== undefined && SyncStatus.Syncing.instanceOf(status);
+    }),
+  );
 }
 
 export function useSyncLabel(accountIds: string[]): string | null {
