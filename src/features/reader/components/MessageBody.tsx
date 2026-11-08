@@ -7,6 +7,7 @@ import { ImageOff, Paperclip } from 'lucide-react-native';
 import type { Attachment } from '@openmailbox/mail-core';
 
 import { useBody } from '@/core/hooks';
+import { describeCoreError } from '@/features/accounts/coreErrors';
 import { attachmentsDirectory, mailCore } from '@/core/mailCore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { Button, Spinner, Typography } from '@/ui/components';
@@ -72,6 +73,11 @@ function MessageBodyImpl({ emailId }: { emailId: string }) {
     return (
       <View style={styles.error}>
         <Typography color="secondary">{t('reader.loadFailed')}</Typography>
+        {body.error ? (
+          <Typography variant="caption" color="secondary" align="center">
+            {describeCoreError(body.error, t)}
+          </Typography>
+        ) : null}
         <Button variant="link" title={t('common.retry')} onPress={() => body.refetch()} />
       </View>
     );

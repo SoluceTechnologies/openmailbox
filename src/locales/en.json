@@ -1,8 +1,20 @@
 {
-  "common": { "cancel": "Cancel", "close": "Close", "retry": "Retry" },
-  "offline": { "banner": "You are offline. Changes will be sent when the connection is back." },
-  "dates": { "yesterday": "Yesterday" },
-  "units": { "bytes": "{{value}} B", "kilobytes": "{{value}} KB", "megabytes": "{{value}} MB" },
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "retry": "Retry"
+  },
+  "offline": {
+    "banner": "You are offline. Changes will be sent when the connection is back."
+  },
+  "dates": {
+    "yesterday": "Yesterday"
+  },
+  "units": {
+    "bytes": "{{value}} B",
+    "kilobytes": "{{value}} KB",
+    "megabytes": "{{value}} MB"
+  },
   "onboarding": {
     "title": "OpenMailbox",
     "subtitle": "Add your first mail account. OpenMailbox talks directly to your mail provider."
@@ -114,7 +126,8 @@
       "security": "Security",
       "username": "Username",
       "privacy": "Your password stays on this device and is only sent to your mail servers."
-    }
+    },
+    "usernameValue": "Username: {{username}}"
   },
   "settings": {
     "title": "Settings",
@@ -122,7 +135,11 @@
     "general": "General",
     "appearance": "Appearance",
     "theme": "Theme",
-    "themes": { "system": "System", "light": "Light", "dark": "Dark" },
+    "themes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
     "language": "Language",
     "loadRemoteImages": "Load remote images",
     "loadRemoteImagesHint": "Remote images can tell senders when you read a message.",

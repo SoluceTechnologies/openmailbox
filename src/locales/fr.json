@@ -1,8 +1,20 @@
 {
-  "common": { "cancel": "Annuler", "close": "Fermer", "retry": "Réessayer" },
-  "offline": { "banner": "Vous êtes hors ligne. Vos modifications partiront au retour de la connexion." },
-  "dates": { "yesterday": "Hier" },
-  "units": { "bytes": "{{value}} o", "kilobytes": "{{value}} Ko", "megabytes": "{{value}} Mo" },
+  "common": {
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "retry": "Réessayer"
+  },
+  "offline": {
+    "banner": "Vous êtes hors ligne. Vos modifications partiront au retour de la connexion."
+  },
+  "dates": {
+    "yesterday": "Hier"
+  },
+  "units": {
+    "bytes": "{{value}} o",
+    "kilobytes": "{{value}} Ko",
+    "megabytes": "{{value}} Mo"
+  },
   "onboarding": {
     "title": "OpenMailbox",
     "subtitle": "Ajoutez votre premier compte. OpenMailbox se connecte directement à votre fournisseur de messagerie."
@@ -114,7 +126,8 @@
       "security": "Sécurité",
       "username": "Identifiant",
       "privacy": "Votre mot de passe reste sur cet appareil et n'est envoyé qu'à vos serveurs de messagerie."
-    }
+    },
+    "usernameValue": "Identifiant : {{username}}"
   },
   "settings": {
     "title": "Réglages",
@@ -122,7 +135,11 @@
     "general": "Général",
     "appearance": "Apparence",
     "theme": "Thème",
-    "themes": { "system": "Système", "light": "Clair", "dark": "Sombre" },
+    "themes": {
+      "system": "Système",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
     "language": "Langue",
     "loadRemoteImages": "Charger les images distantes",
     "loadRemoteImagesHint": "Les images distantes peuvent indiquer à l'expéditeur que vous avez lu le message.",

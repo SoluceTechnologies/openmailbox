@@ -40,3 +40,10 @@ export function useSyncLabel(accountIds: string[]): string | null {
   if (!lastSyncedAt) return null;
   return now - lastSyncedAt < JUST_NOW_MS ? t('sync.updatedJustNow') : t('sync.updatedAt', { time: formatTime(lastSyncedAt) });
 }
+
+export function useSyncFailureMessage(accountId: string): string | null {
+  return useSyncStore((state) => {
+    const status = state.statuses[accountId];
+    return status && SyncStatus.Failed.instanceOf(status) ? status.inner.message : null;
+  });
+}

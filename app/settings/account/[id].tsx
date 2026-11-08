@@ -10,7 +10,7 @@ import { queryClient, queryKeys } from '@/core/queryClient';
 import { deleteSecret, saveSecret } from '@/core/secrets';
 import { describeCoreError } from '@/features/accounts/coreErrors';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
-import { useSyncLabel } from '@/features/sync/useSyncLabel';
+import { useSyncFailureMessage, useSyncLabel } from '@/features/sync/useSyncLabel';
 import { useSyncStore } from '@/stores/syncStore';
 import { Button, Item, List, SectionHeader, TextField, Typography } from '@/ui/components';
 
@@ -21,6 +21,7 @@ export default function AccountSettingsScreen() {
   const account = useAccounts().find((candidate) => candidate.id === id);
   const authRequired = useSyncStore((state) => state.authRequired[id] === true);
   const syncLabel = useSyncLabel([id]);
+  const syncFailure = useSyncFailureMessage(id);
   const [displayName, setDisplayName] = useState(account?.displayName ?? '');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -72,7 +73,7 @@ export default function AccountSettingsScreen() {
         <TextField label={t('accounts.setup.displayName')} value={displayName} onChangeText={setDisplayName} onBlur={saveName} returnKeyType="done" onSubmitEditing={saveName} />
         {syncLabel ? (
           <Typography variant="caption" color="secondary">
-            {syncLabel}
+            {syncFailure ? `${syncLabel} · ${syncFailure}` : syncLabel}
           </Typography>
         ) : null}
         <Button variant="secondary" title={t('accounts.syncNow')} onPress={() => mailCore().syncNow(account.id)} />
@@ -81,7 +82,7 @@ export default function AccountSettingsScreen() {
       <View style={styles.section}>
         <SectionHeader title={t('accounts.servers')} />
         <List>
-          <Item title={account.email} description={t('accounts.setup.username') + ' : ' + account.username} />
+          <Item title={account.email} description={t('accounts.usernameValue', { username: account.username })} />
           <Item title={t('accounts.setup.incoming')} description={`${account.imap.host}:${account.imap.port} · ${security(account.imap.security)}`} />
           <Item title={t('accounts.setup.outgoing')} description={`${account.smtp.host}:${account.smtp.port} · ${security(account.smtp.security)}`} />
         </List>
