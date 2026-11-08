@@ -70,7 +70,7 @@ pub fn parse_summary(header: &[u8], partial_text: &[u8]) -> ParsedHeaders {
         cc: addresses(message.cc()),
         reply_to: addresses(message.reply_to()),
         date: message.date().map(|date| date.to_timestamp() * 1000),
-        has_attachment: is_mixed || message.has_attachments(),
+        has_attachment: is_mixed || (!partial_text.is_empty() && message.has_attachments()),
         preview: message
             .body_preview(PREVIEW_LENGTH * 2)
             .map(|preview| normalize_whitespace(&preview, PREVIEW_LENGTH)),
