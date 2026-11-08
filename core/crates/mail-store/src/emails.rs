@@ -133,8 +133,9 @@ impl Store {
         let connection = self.read();
         let mut statement = connection
             .prepare_cached(
-                "SELECT e.id FROM email e JOIN email_mailbox em ON em.email_id = e.id
-                 WHERE em.mailbox_id = ?1 AND e.thread_id = ?2",
+                "SELECT e.id FROM email e
+                 WHERE e.thread_id = ?2
+                   AND EXISTS (SELECT 1 FROM email_mailbox em WHERE em.mailbox_id = ?1 AND em.email_id = e.id)",
             )
             .storage()?;
         statement
@@ -350,11 +351,16 @@ impl Store {
                 .storage()?;
             transaction.execute("UPDATE email SET body_state = 2 WHERE id = ?1", [email_id]).storage()?;
             let indexed_body: String = body.text.chars().take(INDEXED_BODY_LIMIT).collect();
-            transaction.execute("DELETE FROM email_fts WHERE rowid = ?1", [email_id]).storage()?;
+            transaction
+                .execute(
+                    "DELETE FROM email_fts WHERE rowid = (SELECT search_key FROM email WHERE id = ?1)",
+                    [email_id],
+                )
+                .storage()?;
             transaction
                 .execute(
                     "INSERT INTO email_fts (rowid, subject, participants, body)
-                     SELECT id, subject, ?2, ?3 FROM email WHERE id = ?1",
+                     SELECT search_key, subject, ?2, ?3 FROM email WHERE id = ?1",
                     params![email_id, participants_of_email(transaction, email_id)?, indexed_body],
                 )
                 .storage()?;
@@ -371,8 +377,9 @@ impl Store {
         let mut statement = connection
             .prepare_cached(&format!(
                 "SELECT {EMAIL_COLUMNS} FROM email e
-                 WHERE e.id IN (SELECT rowid FROM email_fts WHERE email_fts MATCH ?1)
-                 ORDER BY e.received_at DESC LIMIT ?2"
+                 WHERE e.search_key IN (
+                   SELECT rowid FROM email_fts WHERE email_fts MATCH ?1 ORDER BY rowid DESC LIMIT ?2)
+                 ORDER BY e.search_key DESC"
             ))
             .storage()?;
         statement
@@ -509,6 +516,12 @@ fn insert_email(
             |row| row.get(0),
         )
         .storage()?;
+    let search_key = (received_at << 20) | (email_id & 0xF_FFFF);
+    transaction
+        .prepare_cached("UPDATE email SET search_key = ?2 WHERE id = ?1")
+        .storage()?
+        .execute([email_id, search_key])
+        .storage()?;
     let participants = headers
         .from
         .iter()
@@ -524,7 +537,7 @@ fn insert_email(
         )
         .storage()?
         .execute(params![
-            email_id,
+            search_key,
             headers.subject,
             participants,
             headers.preview
