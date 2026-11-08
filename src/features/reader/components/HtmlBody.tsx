@@ -1,18 +1,18 @@
 import { memo, useMemo, useState } from 'react';
-import { Alert, Linking, StyleSheet, View } from 'react-native';
+import { Alert, Linking, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
 import { useTranslation } from 'react-i18next';
 
 const INITIAL_HEIGHT = 120;
 
-const FIT_AND_MEASURE = `
+const fitAndMeasure = (availableWidth: number) => `
 (function () {
   function fit() {
     var body = document.body;
     if (!body) return;
     body.style.zoom = '1';
-    var overflow = body.scrollWidth / window.innerWidth;
+    var overflow = body.scrollWidth / ${availableWidth};
     if (overflow > 1.02) body.style.zoom = String(1 / overflow);
   }
   function report() {
@@ -49,6 +49,7 @@ interface HtmlBodyProps {
 function HtmlBodyImpl({ html, allowRemoteContent }: HtmlBodyProps) {
   const { t } = useTranslation();
   const [height, setHeight] = useState(INITIAL_HEIGHT);
+  const [width, setWidth] = useState(0);
   const source = useMemo(() => ({ html: documentFor(html, allowRemoteContent) }), [html, allowRemoteContent]);
 
   const onMessage = (event: WebViewMessageEvent) => {
@@ -70,24 +71,31 @@ function HtmlBodyImpl({ html, allowRemoteContent }: HtmlBodyProps) {
     return false;
   };
 
+  const onLayout = (event: LayoutChangeEvent) => setWidth(Math.round(event.nativeEvent.layout.width));
+
   return (
-    <View style={[styles.container, { height }]}>
-      <WebView
-        source={source}
-        originWhitelist={['*']}
-        injectedJavaScript={FIT_AND_MEASURE}
-        onMessage={onMessage}
-        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
-        scrollEnabled={false}
-        nestedScrollEnabled={false}
-        allowFileAccess={false}
-        allowsLinkPreview={false}
-        javaScriptCanOpenWindowsAutomatically={false}
-        setSupportMultipleWindows={false}
-        cacheEnabled={false}
-        incognito
-        style={styles.webView}
-      />
+    <View style={[styles.container, { height }]} onLayout={onLayout}>
+      {width > 0 ? (
+        <WebView
+          key={width}
+          source={source}
+          originWhitelist={['*']}
+          injectedJavaScript={fitAndMeasure(width)}
+          onMessage={onMessage}
+          onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+          scrollEnabled={false}
+          nestedScrollEnabled={false}
+          allowFileAccess={false}
+          allowsLinkPreview={false}
+          javaScriptCanOpenWindowsAutomatically={false}
+          setSupportMultipleWindows={false}
+          cacheEnabled={false}
+          incognito
+          scalesPageToFit={false}
+          setBuiltInZoomControls={false}
+          style={styles.webView}
+        />
+      ) : null}
     </View>
   );
 }
