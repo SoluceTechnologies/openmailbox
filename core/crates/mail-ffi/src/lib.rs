@@ -1,5 +1,6 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock, Mutex};
 
 use mail_sync::Engine;
 
@@ -466,6 +467,11 @@ fn keywords(values: Vec<Keyword>) -> Vec<mail_model::Keyword> {
     values.into_iter().map(Into::into).collect()
 }
 
+/// A JavaScript reload creates a new `MailCore` while the previous one is still alive in the
+/// process: reusing it keeps a single sync engine per database.
+static OPEN_CORES: LazyLock<Mutex<HashMap<String, Arc<MailCore>>>> =
+    LazyLock::new(Default::default);
+
 #[derive(uniffi::Object)]
 pub struct MailCore {
     engine: Arc<Engine>,
@@ -508,6 +514,12 @@ impl MailCore {
 impl MailCore {
     #[uniffi::constructor]
     pub fn open(data_directory: String) -> CoreResult<Arc<MailCore>> {
+        let mut open_cores = OPEN_CORES
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        if let Some(core) = open_cores.get(&data_directory) {
+            return Ok(core.clone());
+        }
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(2)
             .thread_name("mail-core")
@@ -516,8 +528,10 @@ impl MailCore {
             .map_err(|error| CoreError::Storage {
                 message: error.to_string(),
             })?;
-        let engine = Engine::open(&PathBuf::from(data_directory), runtime.handle().clone())?;
-        Ok(Arc::new(MailCore { engine, runtime }))
+        let engine = Engine::open(&PathBuf::from(&data_directory), runtime.handle().clone())?;
+        let core = Arc::new(MailCore { engine, runtime });
+        open_cores.insert(data_directory, core.clone());
+        Ok(core)
     }
 
     pub fn subscribe(&self, listener: Arc<dyn EventListener>) {
