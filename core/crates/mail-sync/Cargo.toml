@@ -20,5 +20,7 @@ tokio.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
+mail-mime = { workspace = true }
+proto-imap = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }

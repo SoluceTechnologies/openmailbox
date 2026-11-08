@@ -10,10 +10,11 @@ container=openmailbox-greenmail
 if [[ ! -f $certificates/server.p12 ]]; then
   mkdir -p "$certificates"
   openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -subj "/CN=OpenMailbox Test CA" \
+    -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign" \
     -keyout "$certificates/ca.key" -out "$certificates/ca.pem" 2>/dev/null
   openssl req -newkey rsa:2048 -nodes -subj "/CN=localhost" \
     -keyout "$certificates/server.key" -out "$certificates/server.csr" 2>/dev/null
-  printf 'subjectAltName=DNS:localhost,IP:127.0.0.1,IP:10.0.2.2\nextendedKeyUsage=serverAuth\n' > "$certificates/server.ext"
+  printf 'subjectAltName=DNS:localhost,IP:127.0.0.1,IP:10.0.2.2\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\n' > "$certificates/server.ext"
   openssl x509 -req -in "$certificates/server.csr" -CA "$certificates/ca.pem" -CAkey "$certificates/ca.key" \
     -CAcreateserial -days 3650 -extfile "$certificates/server.ext" -out "$certificates/server.pem" 2>/dev/null
   openssl pkcs12 -export -inkey "$certificates/server.key" -in "$certificates/server.pem" -certfile "$certificates/ca.pem" \
