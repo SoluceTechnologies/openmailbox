@@ -1,0 +1,186 @@
+{
+  "about": {
+    "description": "OpenMailbox is een opensource-mailclient zonder eigen server: berichten en wachtwoorden gaan alleen tussen dit apparaat en je e-mailproviders.",
+    "license": "Licentie",
+    "version": "Versie"
+  },
+  "accounts": {
+    "add": "Voeg account toe",
+    "newPassword": "Wachtwoord",
+    "password": "Wachtwoord",
+    "passwordHint": "Gebruik het wachtwoord, of het app-wachtwoord, van deze e-mailaccount.",
+    "passwordUpdated": "Wachtwoord bijgewerkt.",
+    "reconnectRequired": "De server heeft het wachtwoord geweigerd. Voer het opnieuw in om de synchronisatie te hervatten.",
+    "remove": "Verwijder account",
+    "removeMessage": "De berichten van {{email}} worden van dit apparaat verwijderd. Er wordt niets verwijderd op de server.",
+    "removeTitle": "Deze account verwijderen?",
+    "servers": "Servers",
+    "setup": {
+      "appPasswordHint": "{{provider}} accepteert in e-mailapps alleen app-wachtwoorden.",
+      "appPasswordLink": "Een app-wachtwoord aanmaken",
+      "appPasswordPlaceholder": "App-wachtwoord",
+      "authentication": "Authenticatie",
+      "chooseProvider": "Voeg account toe",
+      "connectingTo": "Verbinden met {{host}}…",
+      "development": "Ontwikkeling",
+      "discovering": "Serverinstellingen opzoeken…",
+      "email": "E-mail",
+      "emailPlaceholder": "naam@voorbeeld.nl",
+      "emailPlaceholderUser": "naam",
+      "hidePassword": "Verberg wachtwoord",
+      "host": "Server",
+      "incoming": "Inkomende e-mail (IMAP)",
+      "localServerHint": "Lokale GreenMail-testserver",
+      "manual": "Configureer servers handmatig",
+      "name": "Naam",
+      "namePlaceholder": "Zichtbaar voor ontvangers",
+      "otherAccountTitle": "E-mailaccount",
+      "otherProvider": "Andere",
+      "otherProviderHint": "IMAP en SMTP",
+      "outgoing": "Uitgaande e-mail (SMTP)",
+      "password": "Wachtwoord",
+      "port": "Poort",
+      "privacy": "Je wachtwoord blijft op dit apparaat en wordt alleen naar je mailservers verstuurd.",
+      "providerAccountTitle": "{{provider}}-account",
+      "providerFooter": "Elke IMAP- en SMTP-account kan worden toegevoegd via Andere.",
+      "required": "Vereist",
+      "security": "Beveiliging",
+      "showPassword": "Toon wachtwoord",
+      "signIn": "Log in",
+      "username": "Gebruikersnaam",
+      "welcome": "Welkom bij OpenMailbox",
+      "welcomeHint": "Voeg een e-mailaccount toe om te beginnen. Je berichten worden alleen op dit apparaat bewaard."
+    },
+    "syncNow": "Haal nieuwe e-mail op",
+    "updatePassword": "Werk wachtwoord bij"
+  },
+  "common": {
+    "back": "Terug",
+    "cancel": "Annuleer",
+    "close": "Sluit",
+    "retry": "Probeer opnieuw"
+  },
+  "compose": {
+    "bcc": "Bcc:",
+    "bodyPlaceholder": "Bericht",
+    "cc": "Cc:",
+    "copiesAndFrom": "Cc/Bcc, Van: {{from}}",
+    "discard": "Gooi weg",
+    "discardTitle": "Dit concept weggooien?",
+    "forward": "Stuur door",
+    "forwardedHeader": "---------- Doorgestuurd bericht ----------",
+    "from": "Van:",
+    "headerDate": "Datum:",
+    "headerFrom": "Van:",
+    "headerSubject": "Onderwerp:",
+    "headerTo": "Aan:",
+    "invalidAddresses": "Ongeldige adressen",
+    "newMessage": "Nieuw bericht",
+    "noRecipient": "Voeg minstens één ontvanger toe.",
+    "reply": "Beantwoord",
+    "replyAll": "Beantwoord allen",
+    "send": "Verstuur",
+    "sendFailed": "Het bericht kon niet worden verstuurd",
+    "subject": "Onderwerp:",
+    "to": "Aan:",
+    "wrote": "Op {{date}} schreef {{author}}:"
+  },
+  "dates": {
+    "yesterday": "Gisteren"
+  },
+  "errors": {
+    "auth": "De server heeft het adres of het wachtwoord geweigerd.",
+    "generic": "Er ging iets mis. Probeer het opnieuw.",
+    "invalidInput": "Ongeldige waarde: {{message}}",
+    "network": "De server is niet bereikbaar ({{message}}).",
+    "operationFailed": "Een wijziging kon niet op de server worden toegepast",
+    "server": "De server gaf een fout terug: {{message}}"
+  },
+  "mailboxes": {
+    "allInboxes": "Alle inkomende",
+    "loadingFolders": "Mappen laden…",
+    "roles": {
+      "all": "Alle berichten",
+      "archive": "Archief",
+      "drafts": "Concepten",
+      "flagged": "Gemarkeerd",
+      "inbox": "Inkomend",
+      "junk": "Ongewenst",
+      "sent": "Verstuurd",
+      "trash": "Prullenmand"
+    },
+    "title": "Postvakken"
+  },
+  "offline": {
+    "banner": "Je bent offline. Wijzigingen worden verstuurd zodra er weer verbinding is."
+  },
+  "reader": {
+    "attachmentFailed": "De bijlage kon niet worden geopend.",
+    "collapseHint": "Klapt het bericht in",
+    "expandHint": "Toont het volledige bericht",
+    "loadFailed": "Het bericht kon niet worden gedownload.",
+    "loadRemoteContent": "Laad afbeeldingen",
+    "noSubject": "Geen onderwerp",
+    "openLink": "Open",
+    "openLinkTitle": "Deze link openen?",
+    "remoteContentBlocked": "Externe afbeeldingen zijn geblokkeerd.",
+    "threadGone": "Dit gesprek is niet meer beschikbaar.",
+    "toRecipients": "Aan: {{recipients}}"
+  },
+  "search": {
+    "localOnly": "De zoekopdracht omvat de berichten die op dit apparaat zijn gedownload.",
+    "noResults": "Geen resultaten",
+    "placeholder": "Zoek",
+    "title": "Zoek"
+  },
+  "settings": {
+    "about": "Over",
+    "accounts": "Accounts",
+    "appearance": "Weergave en taal",
+    "general": "Algemeen",
+    "language": "Taal",
+    "languageHint": "Datums en teksten volgen deze taal.",
+    "loadRemoteImages": "Laad externe afbeeldingen",
+    "loadRemoteImagesHint": "Externe afbeeldingen kunnen afzenders laten weten wanneer je hun berichten opent.",
+    "reading": "Lezen",
+    "theme": "Thema",
+    "themes": {
+      "dark": "Donker",
+      "light": "Licht",
+      "system": "Automatisch"
+    },
+    "title": "Instellingen"
+  },
+  "sync": {
+    "authFailed": "Wachtwoord vereist",
+    "failed": "Kan geen verbinding maken met de server",
+    "offline": "Offline",
+    "syncing": "Nieuwe e-mail ophalen…",
+    "updatedAt": "Bijgewerkt om {{time}}",
+    "updatedJustNow": "Zojuist bijgewerkt"
+  },
+  "threads": {
+    "archive": "Archiveer",
+    "empty": "Geen e-mail",
+    "emptyHint": "Nieuwe berichten verschijnen hier.",
+    "emptyUnread": "Geen ongelezen e-mail",
+    "filter": "Filter",
+    "filterAll": "Alle",
+    "filterUnread": "Ongelezen",
+    "flag": "Markeer",
+    "loadOlder": "Oudere berichten laden",
+    "markRead": "Gelezen",
+    "markUnread": "Ongelezen",
+    "trash": "Prullenmand",
+    "unflag": "Verwijder markering",
+    "unknownSender": "Onbekende afzender",
+    "unread": "Ongelezen",
+    "unreadCount_one": "{{count}} ongelezen",
+    "unreadCount_other": "{{count}} ongelezen"
+  },
+  "units": {
+    "bytes": "{{value}} B",
+    "kilobytes": "{{value}} KB",
+    "megabytes": "{{value}} MB"
+  }
+}

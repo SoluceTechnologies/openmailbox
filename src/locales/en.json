@@ -1,161 +1,186 @@
 {
+  "about": {
+    "description": "OpenMailbox is an open source mail client without a server of its own: messages and passwords only travel between this device and your mail providers.",
+    "license": "License",
+    "version": "Version"
+  },
+  "accounts": {
+    "add": "Add Account",
+    "newPassword": "Password",
+    "password": "Password",
+    "passwordHint": "Use the password, or the app password, of this mail account.",
+    "passwordUpdated": "Password updated.",
+    "reconnectRequired": "The server rejected the password. Enter it again to resume syncing.",
+    "remove": "Remove Account",
+    "removeMessage": "Messages from {{email}} will be removed from this device. Nothing is deleted on the server.",
+    "removeTitle": "Remove this account?",
+    "servers": "Servers",
+    "setup": {
+      "appPasswordHint": "{{provider}} only accepts app passwords from mail apps.",
+      "appPasswordLink": "How to create an app password",
+      "appPasswordPlaceholder": "App password",
+      "authentication": "Authentication",
+      "chooseProvider": "Add Account",
+      "connectingTo": "Connecting to {{host}}…",
+      "development": "Development",
+      "discovering": "Looking up server settings…",
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "emailPlaceholderUser": "name",
+      "hidePassword": "Hide password",
+      "host": "Server",
+      "incoming": "Incoming Mail (IMAP)",
+      "localServerHint": "Local GreenMail test server",
+      "manual": "Configure Servers Manually",
+      "name": "Name",
+      "namePlaceholder": "Shown to recipients",
+      "otherAccountTitle": "Mail Account",
+      "otherProvider": "Other",
+      "otherProviderHint": "IMAP and SMTP",
+      "outgoing": "Outgoing Mail (SMTP)",
+      "password": "Password",
+      "port": "Port",
+      "privacy": "Your password stays on this device and is only sent to your mail servers.",
+      "providerAccountTitle": "{{provider}} Account",
+      "providerFooter": "Any IMAP and SMTP mail account can be added with Other.",
+      "required": "Required",
+      "security": "Security",
+      "showPassword": "Show password",
+      "signIn": "Sign In",
+      "username": "Username",
+      "welcome": "Welcome to OpenMailbox",
+      "welcomeHint": "Add a mail account to get started. Your messages are stored on this device only."
+    },
+    "syncNow": "Check for New Mail",
+    "updatePassword": "Update Password"
+  },
   "common": {
+    "back": "Back",
     "cancel": "Cancel",
     "close": "Close",
-    "retry": "Retry"
+    "retry": "Try Again"
   },
-  "offline": {
-    "banner": "You are offline. Changes will be sent when the connection is back."
+  "compose": {
+    "bcc": "Bcc:",
+    "bodyPlaceholder": "Message",
+    "cc": "Cc:",
+    "copiesAndFrom": "Cc/Bcc, From: {{from}}",
+    "discard": "Discard",
+    "discardTitle": "Discard this draft?",
+    "forward": "Forward",
+    "forwardedHeader": "---------- Forwarded message ----------",
+    "from": "From:",
+    "headerDate": "Date:",
+    "headerFrom": "From:",
+    "headerSubject": "Subject:",
+    "headerTo": "To:",
+    "invalidAddresses": "Invalid addresses",
+    "newMessage": "New Message",
+    "noRecipient": "Add at least one recipient.",
+    "reply": "Reply",
+    "replyAll": "Reply All",
+    "send": "Send",
+    "sendFailed": "The message couldn't be sent",
+    "subject": "Subject:",
+    "to": "To:",
+    "wrote": "On {{date}}, {{author}} wrote:"
   },
   "dates": {
     "yesterday": "Yesterday"
+  },
+  "errors": {
+    "auth": "The server rejected the email address or password.",
+    "generic": "Something went wrong. Try again.",
+    "invalidInput": "Invalid value: {{message}}",
+    "network": "The server can't be reached ({{message}}).",
+    "operationFailed": "A change couldn't be applied on the server",
+    "server": "The server returned an error: {{message}}"
+  },
+  "mailboxes": {
+    "allInboxes": "All Inboxes",
+    "loadingFolders": "Loading folders…",
+    "roles": {
+      "all": "All Mail",
+      "archive": "Archive",
+      "drafts": "Drafts",
+      "flagged": "Flagged",
+      "inbox": "Inbox",
+      "junk": "Junk",
+      "sent": "Sent",
+      "trash": "Trash"
+    },
+    "title": "Mailboxes"
+  },
+  "offline": {
+    "banner": "You're offline. Changes will be sent when the connection is back."
+  },
+  "reader": {
+    "attachmentFailed": "The attachment couldn't be opened.",
+    "collapseHint": "Collapses the message",
+    "expandHint": "Shows the full message",
+    "loadFailed": "The message couldn't be downloaded.",
+    "loadRemoteContent": "Load Images",
+    "noSubject": "No Subject",
+    "openLink": "Open",
+    "openLinkTitle": "Open this link?",
+    "remoteContentBlocked": "Remote images are blocked.",
+    "threadGone": "This conversation is no longer available.",
+    "toRecipients": "To: {{recipients}}"
+  },
+  "search": {
+    "localOnly": "Search covers the messages downloaded to this device.",
+    "noResults": "No Results",
+    "placeholder": "Search",
+    "title": "Search"
+  },
+  "settings": {
+    "about": "About",
+    "accounts": "Accounts",
+    "appearance": "Appearance and Language",
+    "general": "General",
+    "language": "Language",
+    "languageHint": "Dates and texts follow this language.",
+    "loadRemoteImages": "Load Remote Images",
+    "loadRemoteImagesHint": "Remote images can tell senders when you open their messages.",
+    "reading": "Reading",
+    "theme": "Theme",
+    "themes": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "Automatic"
+    },
+    "title": "Settings"
+  },
+  "sync": {
+    "authFailed": "Password required",
+    "failed": "Couldn't connect to the server",
+    "offline": "Offline",
+    "syncing": "Checking for mail…",
+    "updatedAt": "Updated at {{time}}",
+    "updatedJustNow": "Updated just now"
+  },
+  "threads": {
+    "archive": "Archive",
+    "empty": "No Mail",
+    "emptyHint": "New messages will appear here.",
+    "emptyUnread": "No Unread Mail",
+    "filter": "Filter",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "flag": "Flag",
+    "loadOlder": "Load Older Messages",
+    "markRead": "Read",
+    "markUnread": "Unread",
+    "trash": "Trash",
+    "unflag": "Unflag",
+    "unknownSender": "Unknown sender",
+    "unread": "Unread",
+    "unreadCount_one": "{{count}} unread",
+    "unreadCount_other": "{{count}} unread"
   },
   "units": {
     "bytes": "{{value}} B",
     "kilobytes": "{{value}} KB",
     "megabytes": "{{value}} MB"
-  },
-  "onboarding": {
-    "title": "OpenMailbox",
-    "subtitle": "Add your first mail account. OpenMailbox talks directly to your mail provider."
-  },
-  "mailboxes": {
-    "title": "Mailboxes",
-    "allInboxes": "All Inboxes",
-    "loadingFolders": "Loading folders…",
-    "roles": {
-      "inbox": "Inbox",
-      "sent": "Sent",
-      "drafts": "Drafts",
-      "trash": "Trash",
-      "junk": "Junk",
-      "archive": "Archive",
-      "all": "All Mail",
-      "flagged": "Flagged"
-    }
-  },
-  "threads": {
-    "unreadCount_one": "{{count}} unread",
-    "unreadCount_other": "{{count}} unread",
-    "filterAll": "All",
-    "filterUnread": "Unread",
-    "empty": "No messages",
-    "emptyUnread": "No unread messages",
-    "loadOlder": "Load older messages",
-    "markRead": "Read",
-    "markUnread": "Unread",
-    "archive": "Archive",
-    "trash": "Trash",
-    "flag": "Flag",
-    "unflag": "Unflag"
-  },
-  "reader": {
-    "to": "To:",
-    "noSubject": "(No subject)",
-    "threadGone": "This conversation is no longer available.",
-    "loadFailed": "The message could not be downloaded.",
-    "attachmentFailed": "The attachment could not be opened.",
-    "remoteContentBlocked": "Remote images are blocked to protect your privacy.",
-    "loadRemoteContent": "Load",
-    "openLinkTitle": "Open this link?",
-    "openLink": "Open"
-  },
-  "compose": {
-    "newMessage": "New Message",
-    "reply": "Reply",
-    "replyAll": "Reply All",
-    "forward": "Forward",
-    "send": "Send",
-    "to": "To:",
-    "cc": "Cc:",
-    "bcc": "Bcc:",
-    "from": "From:",
-    "subject": "Subject:",
-    "copiesAndFrom": "Cc/Bcc, From: {{from}}",
-    "bodyPlaceholder": "Write your message",
-    "discardTitle": "Discard this message?",
-    "discard": "Discard",
-    "invalidAddresses": "Some addresses are invalid",
-    "noRecipient": "Add at least one recipient.",
-    "sendFailed": "The message could not be queued",
-    "wrote": "On {{date}}, {{author}} wrote:",
-    "forwardedHeader": "---------- Forwarded message ----------",
-    "headerFrom": "From:",
-    "headerDate": "Date:",
-    "headerSubject": "Subject:",
-    "headerTo": "To:"
-  },
-  "search": {
-    "title": "Search",
-    "placeholder": "Search",
-    "noResults": "No results",
-    "localOnly": "Search covers the messages stored on this device."
-  },
-  "sync": {
-    "syncing": "Checking for mail…",
-    "updatedJustNow": "Updated just now",
-    "updatedAt": "Updated at {{time}}",
-    "offline": "Offline",
-    "failed": "Could not connect to the server",
-    "authFailed": "Password required"
-  },
-  "accounts": {
-    "add": "Add Account",
-    "reconnectRequired": "The server rejected the password. Enter it again to resume syncing.",
-    "servers": "Servers",
-    "password": "Password",
-    "newPassword": "New password",
-    "updatePassword": "Update password",
-    "passwordUpdated": "Password updated.",
-    "syncNow": "Sync now",
-    "remove": "Remove account",
-    "removeTitle": "Remove this account?",
-    "removeMessage": "Messages of {{email}} stored on this device will be deleted. Nothing is deleted on the server.",
-    "setup": {
-      "email": "Email address",
-      "password": "Password",
-      "displayName": "Name shown to recipients",
-      "appPasswordHint": "This provider requires an app password, created in your account security settings.",
-      "connect": "Sign in",
-      "connecting": "Connecting…",
-      "manual": "Configure servers manually",
-      "incoming": "Incoming mail (IMAP)",
-      "outgoing": "Outgoing mail (SMTP)",
-      "host": "Server",
-      "port": "Port",
-      "security": "Security",
-      "username": "Username",
-      "privacy": "Your password stays on this device and is only sent to your mail servers."
-    },
-    "usernameValue": "Username: {{username}}"
-  },
-  "settings": {
-    "title": "Settings",
-    "accounts": "Accounts",
-    "general": "General",
-    "appearance": "Appearance",
-    "theme": "Theme",
-    "themes": {
-      "system": "System",
-      "light": "Light",
-      "dark": "Dark"
-    },
-    "language": "Language",
-    "loadRemoteImages": "Load remote images",
-    "loadRemoteImagesHint": "Remote images can tell senders when you read a message.",
-    "about": "About"
-  },
-  "about": {
-    "version": "Version",
-    "license": "License",
-    "description": "OpenMailbox is an open source mail client. It has no server of its own: your messages and passwords only travel between this device and your mail providers."
-  },
-  "errors": {
-    "auth": "The server rejected these credentials.",
-    "network": "The server could not be reached ({{message}}).",
-    "server": "The server returned an error: {{message}}",
-    "invalidInput": "Invalid value: {{message}}",
-    "generic": "Something went wrong.",
-    "operationFailed": "An action could not be applied on the server"
   }
 }

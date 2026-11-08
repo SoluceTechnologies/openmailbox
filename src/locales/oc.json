@@ -1,0 +1,186 @@
+{
+  "about": {
+    "description": "OpenMailbox es un client de messatjariá liure sens servidor pròpri : los messatges e los senhals circulan pas qu'entre aqueste aparelh e vòstres provesidors de messatjariá.",
+    "license": "Licéncia",
+    "version": "Version"
+  },
+  "accounts": {
+    "add": "Apondre un compte",
+    "newPassword": "Senhal",
+    "password": "Senhal",
+    "passwordHint": "Utilizatz lo senhal, o lo senhal d'aplicacion, d'aqueste compte.",
+    "passwordUpdated": "Senhal mes a jorn.",
+    "reconnectRequired": "Lo servidor a refusat lo senhal. Picatz-lo tornamai per reprendre la sincronizacion.",
+    "remove": "Suprimir lo compte",
+    "removeMessage": "Los messatges de {{email}} seràn suprimits d'aqueste aparelh. Res es pas suprimit sul servidor.",
+    "removeTitle": "Suprimir aqueste compte ?",
+    "servers": "Servidors",
+    "setup": {
+      "appPasswordHint": "{{provider}} accèpta pas que los senhals d'aplicacion dins las aplicacions de messatjariá.",
+      "appPasswordLink": "Crear un senhal d'aplicacion",
+      "appPasswordPlaceholder": "Senhal d'aplicacion",
+      "authentication": "Autentificacion",
+      "chooseProvider": "Apondre un compte",
+      "connectingTo": "Connexion a {{host}}…",
+      "development": "Desvolopament",
+      "discovering": "Recèrca dels paramètres del servidor…",
+      "email": "Corrièl",
+      "emailPlaceholder": "nom@exemple.org",
+      "emailPlaceholderUser": "nom",
+      "hidePassword": "Amagar lo senhal",
+      "host": "Servidor",
+      "incoming": "Corrièr dintrant (IMAP)",
+      "localServerHint": "Servidor de tèst GreenMail local",
+      "manual": "Configurar los servidors manualament",
+      "name": "Nom",
+      "namePlaceholder": "Afichat als destinataris",
+      "otherAccountTitle": "Compte de messatjariá",
+      "otherProvider": "Autre",
+      "otherProviderHint": "IMAP e SMTP",
+      "outgoing": "Corrièr sortent (SMTP)",
+      "password": "Senhal",
+      "port": "Pòrt",
+      "privacy": "Vòstre senhal demòra sus aqueste aparelh e es pas mandat qu'a vòstres servidors de messatjariá.",
+      "providerAccountTitle": "Compte {{provider}}",
+      "providerFooter": "Tot compte IMAP e SMTP pòt èsser apondut amb Autre.",
+      "required": "Obligatòri",
+      "security": "Seguretat",
+      "showPassword": "Afichar lo senhal",
+      "signIn": "Se connectar",
+      "username": "Identificant",
+      "welcome": "Benvenguda dins OpenMailbox",
+      "welcomeHint": "Apondètz un compte de messatjariá per començar. Vòstres messatges son gardats sonque sus aqueste aparelh."
+    },
+    "syncNow": "Relevar los messatges",
+    "updatePassword": "Metre a jorn lo senhal"
+  },
+  "common": {
+    "back": "Tornar",
+    "cancel": "Anullar",
+    "close": "Tampar",
+    "retry": "Tornar ensajar"
+  },
+  "compose": {
+    "bcc": "Cci :",
+    "bodyPlaceholder": "Messatge",
+    "cc": "Cc :",
+    "copiesAndFrom": "Cc/Cci, De : {{from}}",
+    "discard": "Suprimir",
+    "discardTitle": "Suprimir aqueste borrolhon ?",
+    "forward": "Transferir",
+    "forwardedHeader": "---------- Messatge transferit ----------",
+    "from": "De :",
+    "headerDate": "Data :",
+    "headerFrom": "De :",
+    "headerSubject": "Objècte :",
+    "headerTo": "A :",
+    "invalidAddresses": "Adreças invalidas",
+    "newMessage": "Messatge novèl",
+    "noRecipient": "Apondètz almens un destinatari.",
+    "reply": "Respondre",
+    "replyAll": "Respondre a totes",
+    "send": "Mandar",
+    "sendFailed": "Lo messatge a pas pogut èsser mandat",
+    "subject": "Objècte :",
+    "to": "A :",
+    "wrote": "Lo {{date}}, {{author}} a escrich :"
+  },
+  "dates": {
+    "yesterday": "Ièr"
+  },
+  "errors": {
+    "auth": "Lo servidor a refusat l'adreça o lo senhal.",
+    "generic": "Una error s'es producha. Tornatz ensajar.",
+    "invalidInput": "Valor invalida : {{message}}",
+    "network": "Lo servidor es injonhable ({{message}}).",
+    "operationFailed": "Una modificacion a pas pogut èsser aplicada sul servidor",
+    "server": "Lo servidor a mandat una error : {{message}}"
+  },
+  "mailboxes": {
+    "allInboxes": "Totas las bóstias",
+    "loadingFolders": "Cargament dels dossièrs…",
+    "roles": {
+      "all": "Totes los messatges",
+      "archive": "Archius",
+      "drafts": "Borrolhons",
+      "flagged": "Seguits",
+      "inbox": "Bóstia de recepcion",
+      "junk": "Indesirables",
+      "sent": "Mandats",
+      "trash": "Escobilhièr"
+    },
+    "title": "Bóstias de letras"
+  },
+  "offline": {
+    "banner": "Sètz fòra linha. Las modificacions seràn mandadas quand la connexion tornarà."
+  },
+  "reader": {
+    "attachmentFailed": "La pèça junta a pas pogut èsser dobèrta.",
+    "collapseHint": "Plega lo messatge",
+    "expandHint": "Aficha lo messatge complet",
+    "loadFailed": "Lo messatge a pas pogut èsser telecargat.",
+    "loadRemoteContent": "Cargar los imatges",
+    "noSubject": "Sens objècte",
+    "openLink": "Dobrir",
+    "openLinkTitle": "Dobrir aqueste ligam ?",
+    "remoteContentBlocked": "Los imatges distants son blocats.",
+    "threadGone": "Aquesta conversacion es pas mai disponibla.",
+    "toRecipients": "A : {{recipients}}"
+  },
+  "search": {
+    "localOnly": "La recèrca pòrta sus los messatges telecargats sus aqueste aparelh.",
+    "noResults": "Cap de resultat",
+    "placeholder": "Recercar",
+    "title": "Recèrca"
+  },
+  "settings": {
+    "about": "A prepaus",
+    "accounts": "Comptes",
+    "appearance": "Aparéncia e lenga",
+    "general": "General",
+    "language": "Lenga",
+    "languageHint": "Las datas e los tèxtes seguisson aquesta lenga.",
+    "loadRemoteImages": "Cargar los imatges distants",
+    "loadRemoteImagesHint": "Los imatges distants pòdon indicar als expeditors que avètz dobèrt lor messatge.",
+    "reading": "Lectura",
+    "theme": "Tèma",
+    "themes": {
+      "dark": "Escur",
+      "light": "Clar",
+      "system": "Automatic"
+    },
+    "title": "Paramètres"
+  },
+  "sync": {
+    "authFailed": "Senhal requerit",
+    "failed": "Connexion al servidor impossibla",
+    "offline": "Fòra linha",
+    "syncing": "Relèva en cors…",
+    "updatedAt": "Mes a jorn a {{time}}",
+    "updatedJustNow": "Mes a jorn ara meteis"
+  },
+  "threads": {
+    "archive": "Archivar",
+    "empty": "Cap de messatge",
+    "emptyHint": "Los messatges novèls apareisseràn aquí.",
+    "emptyUnread": "Cap de messatge pas legit",
+    "filter": "Filtre",
+    "filterAll": "Totes",
+    "filterUnread": "Pas legits",
+    "flag": "Seguir",
+    "loadOlder": "Cargar los messatges mai ancians",
+    "markRead": "Legit",
+    "markUnread": "Pas legit",
+    "trash": "Escobilhièr",
+    "unflag": "Seguir pas mai",
+    "unknownSender": "Expeditor desconegut",
+    "unread": "Pas legit",
+    "unreadCount_one": "{{count}} pas legit",
+    "unreadCount_other": "{{count}} pas legits"
+  },
+  "units": {
+    "bytes": "{{value}} o",
+    "kilobytes": "{{value}} Ko",
+    "megabytes": "{{value}} Mo"
+  }
+}

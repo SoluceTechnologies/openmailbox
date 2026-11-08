@@ -1,0 +1,186 @@
+{
+  "about": {
+    "description": "OpenMailbox è un client di posta open source senza server proprio: messaggi e password viaggiano solo tra questo dispositivo e i tuoi provider di posta.",
+    "license": "Licenza",
+    "version": "Versione"
+  },
+  "accounts": {
+    "add": "Aggiungi account",
+    "newPassword": "Password",
+    "password": "Password",
+    "passwordHint": "Usa la password, o la password per le app, di questo account di posta.",
+    "passwordUpdated": "Password aggiornata.",
+    "reconnectRequired": "Il server ha rifiutato la password. Inseriscila di nuovo per riprendere la sincronizzazione.",
+    "remove": "Rimuovi account",
+    "removeMessage": "I messaggi di {{email}} verranno rimossi da questo dispositivo. Nulla viene eliminato sul server.",
+    "removeTitle": "Rimuovere questo account?",
+    "servers": "Server",
+    "setup": {
+      "appPasswordHint": "{{provider}} accetta solo password per le app nei client di posta.",
+      "appPasswordLink": "Creare una password per le app",
+      "appPasswordPlaceholder": "Password per le app",
+      "authentication": "Autenticazione",
+      "chooseProvider": "Aggiungi account",
+      "connectingTo": "Connessione a {{host}}…",
+      "development": "Sviluppo",
+      "discovering": "Ricerca delle impostazioni del server…",
+      "email": "Email",
+      "emailPlaceholder": "nome@esempio.it",
+      "emailPlaceholderUser": "nome",
+      "hidePassword": "Nascondi password",
+      "host": "Server",
+      "incoming": "Posta in arrivo (IMAP)",
+      "localServerHint": "Server di test GreenMail locale",
+      "manual": "Configura i server manualmente",
+      "name": "Nome",
+      "namePlaceholder": "Visibile ai destinatari",
+      "otherAccountTitle": "Account di posta",
+      "otherProvider": "Altro",
+      "otherProviderHint": "IMAP e SMTP",
+      "outgoing": "Posta in uscita (SMTP)",
+      "password": "Password",
+      "port": "Porta",
+      "privacy": "La password resta su questo dispositivo e viene inviata solo ai tuoi server di posta.",
+      "providerAccountTitle": "Account {{provider}}",
+      "providerFooter": "Qualsiasi account IMAP e SMTP può essere aggiunto con Altro.",
+      "required": "Obbligatoria",
+      "security": "Sicurezza",
+      "showPassword": "Mostra password",
+      "signIn": "Accedi",
+      "username": "Nome utente",
+      "welcome": "Benvenuto in OpenMailbox",
+      "welcomeHint": "Aggiungi un account di posta per iniziare. I tuoi messaggi sono salvati solo su questo dispositivo."
+    },
+    "syncNow": "Controlla nuova posta",
+    "updatePassword": "Aggiorna password"
+  },
+  "common": {
+    "back": "Indietro",
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "retry": "Riprova"
+  },
+  "compose": {
+    "bcc": "Ccn:",
+    "bodyPlaceholder": "Messaggio",
+    "cc": "Cc:",
+    "copiesAndFrom": "Cc/Ccn, Da: {{from}}",
+    "discard": "Elimina",
+    "discardTitle": "Eliminare questa bozza?",
+    "forward": "Inoltra",
+    "forwardedHeader": "---------- Messaggio inoltrato ----------",
+    "from": "Da:",
+    "headerDate": "Data:",
+    "headerFrom": "Da:",
+    "headerSubject": "Oggetto:",
+    "headerTo": "A:",
+    "invalidAddresses": "Indirizzi non validi",
+    "newMessage": "Nuovo messaggio",
+    "noRecipient": "Aggiungi almeno un destinatario.",
+    "reply": "Rispondi",
+    "replyAll": "Rispondi a tutti",
+    "send": "Invia",
+    "sendFailed": "Impossibile inviare il messaggio",
+    "subject": "Oggetto:",
+    "to": "A:",
+    "wrote": "Il {{date}}, {{author}} ha scritto:"
+  },
+  "dates": {
+    "yesterday": "Ieri"
+  },
+  "errors": {
+    "auth": "Il server ha rifiutato l'indirizzo o la password.",
+    "generic": "Si è verificato un errore. Riprova.",
+    "invalidInput": "Valore non valido: {{message}}",
+    "network": "Il server non è raggiungibile ({{message}}).",
+    "operationFailed": "Impossibile applicare una modifica sul server",
+    "server": "Il server ha restituito un errore: {{message}}"
+  },
+  "mailboxes": {
+    "allInboxes": "Tutte le caselle",
+    "loadingFolders": "Caricamento delle cartelle…",
+    "roles": {
+      "all": "Tutti i messaggi",
+      "archive": "Archivio",
+      "drafts": "Bozze",
+      "flagged": "Contrassegnati",
+      "inbox": "Posta in arrivo",
+      "junk": "Indesiderata",
+      "sent": "Inviata",
+      "trash": "Cestino"
+    },
+    "title": "Caselle"
+  },
+  "offline": {
+    "banner": "Sei offline. Le modifiche verranno inviate al ritorno della connessione."
+  },
+  "reader": {
+    "attachmentFailed": "Impossibile aprire l'allegato.",
+    "collapseHint": "Comprime il messaggio",
+    "expandHint": "Mostra il messaggio completo",
+    "loadFailed": "Impossibile scaricare il messaggio.",
+    "loadRemoteContent": "Carica immagini",
+    "noSubject": "Nessun oggetto",
+    "openLink": "Apri",
+    "openLinkTitle": "Aprire questo link?",
+    "remoteContentBlocked": "Le immagini remote sono bloccate.",
+    "threadGone": "Questa conversazione non è più disponibile.",
+    "toRecipients": "A: {{recipients}}"
+  },
+  "search": {
+    "localOnly": "La ricerca riguarda i messaggi scaricati su questo dispositivo.",
+    "noResults": "Nessun risultato",
+    "placeholder": "Cerca",
+    "title": "Cerca"
+  },
+  "settings": {
+    "about": "Informazioni",
+    "accounts": "Account",
+    "appearance": "Aspetto e lingua",
+    "general": "Generali",
+    "language": "Lingua",
+    "languageHint": "Date e testi seguono questa lingua.",
+    "loadRemoteImages": "Carica immagini remote",
+    "loadRemoteImagesHint": "Le immagini remote possono indicare ai mittenti quando apri i loro messaggi.",
+    "reading": "Lettura",
+    "theme": "Tema",
+    "themes": {
+      "dark": "Scuro",
+      "light": "Chiaro",
+      "system": "Automatico"
+    },
+    "title": "Impostazioni"
+  },
+  "sync": {
+    "authFailed": "Password richiesta",
+    "failed": "Impossibile connettersi al server",
+    "offline": "Offline",
+    "syncing": "Controllo nuova posta…",
+    "updatedAt": "Aggiornato alle {{time}}",
+    "updatedJustNow": "Aggiornato ora"
+  },
+  "threads": {
+    "archive": "Archivia",
+    "empty": "Nessun messaggio",
+    "emptyHint": "I nuovi messaggi appariranno qui.",
+    "emptyUnread": "Nessun messaggio da leggere",
+    "filter": "Filtro",
+    "filterAll": "Tutti",
+    "filterUnread": "Da leggere",
+    "flag": "Contrassegna",
+    "loadOlder": "Carica messaggi meno recenti",
+    "markRead": "Letto",
+    "markUnread": "Da leggere",
+    "trash": "Cestino",
+    "unflag": "Rimuovi contrassegno",
+    "unknownSender": "Mittente sconosciuto",
+    "unread": "Da leggere",
+    "unreadCount_one": "{{count}} da leggere",
+    "unreadCount_other": "{{count}} da leggere"
+  },
+  "units": {
+    "bytes": "{{value}} B",
+    "kilobytes": "{{value}} KB",
+    "megabytes": "{{value}} MB"
+  }
+}

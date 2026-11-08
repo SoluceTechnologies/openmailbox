@@ -1,0 +1,186 @@
+{
+  "about": {
+    "description": "OpenMailbox es un cliente de correo de código abierto sin servidor propio: los mensajes y las contraseñas solo viajan entre este dispositivo y tus proveedores de correo.",
+    "license": "Licencia",
+    "version": "Versión"
+  },
+  "accounts": {
+    "add": "Añadir cuenta",
+    "newPassword": "Contraseña",
+    "password": "Contraseña",
+    "passwordHint": "Usa la contraseña, o la contraseña de aplicación, de esta cuenta de correo.",
+    "passwordUpdated": "Contraseña actualizada.",
+    "reconnectRequired": "El servidor ha rechazado la contraseña. Vuelve a introducirla para reanudar la sincronización.",
+    "remove": "Eliminar cuenta",
+    "removeMessage": "Los mensajes de {{email}} se eliminarán de este dispositivo. No se borra nada en el servidor.",
+    "removeTitle": "¿Eliminar esta cuenta?",
+    "servers": "Servidores",
+    "setup": {
+      "appPasswordHint": "{{provider}} solo acepta contraseñas de aplicación en las apps de correo.",
+      "appPasswordLink": "Crear una contraseña de aplicación",
+      "appPasswordPlaceholder": "Contraseña de aplicación",
+      "authentication": "Autenticación",
+      "chooseProvider": "Añadir cuenta",
+      "connectingTo": "Conectando con {{host}}…",
+      "development": "Desarrollo",
+      "discovering": "Buscando la configuración del servidor…",
+      "email": "Correo",
+      "emailPlaceholder": "nombre@ejemplo.es",
+      "emailPlaceholderUser": "nombre",
+      "hidePassword": "Ocultar contraseña",
+      "host": "Servidor",
+      "incoming": "Correo entrante (IMAP)",
+      "localServerHint": "Servidor de pruebas GreenMail local",
+      "manual": "Configurar los servidores manualmente",
+      "name": "Nombre",
+      "namePlaceholder": "Visible para los destinatarios",
+      "otherAccountTitle": "Cuenta de correo",
+      "otherProvider": "Otra",
+      "otherProviderHint": "IMAP y SMTP",
+      "outgoing": "Correo saliente (SMTP)",
+      "password": "Contraseña",
+      "port": "Puerto",
+      "privacy": "Tu contraseña se queda en este dispositivo y solo se envía a tus servidores de correo.",
+      "providerAccountTitle": "Cuenta de {{provider}}",
+      "providerFooter": "Cualquier cuenta IMAP y SMTP se puede añadir con Otra.",
+      "required": "Obligatoria",
+      "security": "Seguridad",
+      "showPassword": "Mostrar contraseña",
+      "signIn": "Iniciar sesión",
+      "username": "Usuario",
+      "welcome": "Te damos la bienvenida a OpenMailbox",
+      "welcomeHint": "Añade una cuenta de correo para empezar. Tus mensajes se guardan solo en este dispositivo."
+    },
+    "syncNow": "Buscar correo nuevo",
+    "updatePassword": "Actualizar contraseña"
+  },
+  "common": {
+    "back": "Atrás",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "retry": "Reintentar"
+  },
+  "compose": {
+    "bcc": "Cco:",
+    "bodyPlaceholder": "Mensaje",
+    "cc": "Cc:",
+    "copiesAndFrom": "Cc/Cco, De: {{from}}",
+    "discard": "Descartar",
+    "discardTitle": "¿Descartar este borrador?",
+    "forward": "Reenviar",
+    "forwardedHeader": "---------- Mensaje reenviado ----------",
+    "from": "De:",
+    "headerDate": "Fecha:",
+    "headerFrom": "De:",
+    "headerSubject": "Asunto:",
+    "headerTo": "Para:",
+    "invalidAddresses": "Direcciones no válidas",
+    "newMessage": "Nuevo mensaje",
+    "noRecipient": "Añade al menos un destinatario.",
+    "reply": "Responder",
+    "replyAll": "Responder a todos",
+    "send": "Enviar",
+    "sendFailed": "No se ha podido enviar el mensaje",
+    "subject": "Asunto:",
+    "to": "Para:",
+    "wrote": "El {{date}}, {{author}} escribió:"
+  },
+  "dates": {
+    "yesterday": "Ayer"
+  },
+  "errors": {
+    "auth": "El servidor ha rechazado la dirección o la contraseña.",
+    "generic": "Se ha producido un error. Inténtalo de nuevo.",
+    "invalidInput": "Valor no válido: {{message}}",
+    "network": "No se puede acceder al servidor ({{message}}).",
+    "operationFailed": "No se ha podido aplicar un cambio en el servidor",
+    "server": "El servidor ha devuelto un error: {{message}}"
+  },
+  "mailboxes": {
+    "allInboxes": "Todas las bandejas",
+    "loadingFolders": "Cargando carpetas…",
+    "roles": {
+      "all": "Todos los mensajes",
+      "archive": "Archivo",
+      "drafts": "Borradores",
+      "flagged": "Marcados",
+      "inbox": "Bandeja de entrada",
+      "junk": "Correo no deseado",
+      "sent": "Enviados",
+      "trash": "Papelera"
+    },
+    "title": "Buzones"
+  },
+  "offline": {
+    "banner": "Estás sin conexión. Los cambios se enviarán cuando vuelva la conexión."
+  },
+  "reader": {
+    "attachmentFailed": "No se ha podido abrir el archivo adjunto.",
+    "collapseHint": "Contrae el mensaje",
+    "expandHint": "Muestra el mensaje completo",
+    "loadFailed": "No se ha podido descargar el mensaje.",
+    "loadRemoteContent": "Cargar imágenes",
+    "noSubject": "Sin asunto",
+    "openLink": "Abrir",
+    "openLinkTitle": "¿Abrir este enlace?",
+    "remoteContentBlocked": "Las imágenes remotas están bloqueadas.",
+    "threadGone": "Esta conversación ya no está disponible.",
+    "toRecipients": "Para: {{recipients}}"
+  },
+  "search": {
+    "localOnly": "La búsqueda abarca los mensajes descargados en este dispositivo.",
+    "noResults": "Sin resultados",
+    "placeholder": "Buscar",
+    "title": "Buscar"
+  },
+  "settings": {
+    "about": "Acerca de",
+    "accounts": "Cuentas",
+    "appearance": "Apariencia e idioma",
+    "general": "General",
+    "language": "Idioma",
+    "languageHint": "Las fechas y los textos siguen este idioma.",
+    "loadRemoteImages": "Cargar imágenes remotas",
+    "loadRemoteImagesHint": "Las imágenes remotas pueden indicar a los remitentes cuándo abres sus mensajes.",
+    "reading": "Lectura",
+    "theme": "Tema",
+    "themes": {
+      "dark": "Oscuro",
+      "light": "Claro",
+      "system": "Automático"
+    },
+    "title": "Ajustes"
+  },
+  "sync": {
+    "authFailed": "Se necesita la contraseña",
+    "failed": "No se puede conectar con el servidor",
+    "offline": "Sin conexión",
+    "syncing": "Buscando correo…",
+    "updatedAt": "Actualizado a las {{time}}",
+    "updatedJustNow": "Actualizado ahora mismo"
+  },
+  "threads": {
+    "archive": "Archivar",
+    "empty": "No hay correo",
+    "emptyHint": "Los mensajes nuevos aparecerán aquí.",
+    "emptyUnread": "No hay correo sin leer",
+    "filter": "Filtro",
+    "filterAll": "Todos",
+    "filterUnread": "Sin leer",
+    "flag": "Marcar",
+    "loadOlder": "Cargar mensajes anteriores",
+    "markRead": "Leído",
+    "markUnread": "No leído",
+    "trash": "Papelera",
+    "unflag": "Desmarcar",
+    "unknownSender": "Remitente desconocido",
+    "unread": "No leído",
+    "unreadCount_one": "{{count}} sin leer",
+    "unreadCount_other": "{{count}} sin leer"
+  },
+  "units": {
+    "bytes": "{{value}} B",
+    "kilobytes": "{{value}} KB",
+    "megabytes": "{{value}} MB"
+  }
+}
