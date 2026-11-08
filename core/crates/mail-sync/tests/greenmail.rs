@@ -92,7 +92,7 @@ fn thread_with(engine: &Engine, token: &str) -> Option<ThreadSummary> {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[ignore = "requires tools/test-mail-server.sh and the test-ca feature"]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
 async fn sends_syncs_reads_and_acts_on_a_real_server() {
     let directory =
         std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
@@ -175,7 +175,7 @@ async fn sends_syncs_reads_and_acts_on_a_real_server() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[ignore = "requires tools/test-mail-server.sh and the test-ca feature"]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
 async fn deleting_an_unopened_thread_removes_it_from_the_server() {
     let directory =
         std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));

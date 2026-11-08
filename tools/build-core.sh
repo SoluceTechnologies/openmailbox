@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the Rust core for one platform and regenerates the React Native bindings.
 # Usage: tools/build-core.sh android|ios [--release]
-# Set OPENMAILBOX_TEST_CA (see tools/test-mail-server.sh) and pass --test-ca to trust the local test server.
+# --test-ca trusts the CA of the local mail server (tools/mail-server/mail-server.sh). Never ship such a build.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,7 +15,13 @@ config=ubrn.config.yaml
 arguments=()
 for argument in "$@"; do
   case "$argument" in
-    --test-ca) config=ubrn.test.config.yaml ;;
+    --test-ca)
+      config=ubrn.test.config.yaml
+      if [[ -z ${OPENMAILBOX_TEST_CA:-} ]]; then
+        OPENMAILBOX_TEST_CA="$(cat "$root/tools/mail-server/.certificates/ca.pem")"
+        export OPENMAILBOX_TEST_CA
+      fi
+      ;;
     *) arguments+=("$argument") ;;
   esac
 done

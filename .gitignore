@@ -62,7 +62,7 @@ android/*
 .idea
 .env
 # Local test mail server
-tools/.test-certificates/
+tools/mail-server/.certificates/
 
 # Rust
 core/target/

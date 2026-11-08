@@ -41,17 +41,29 @@ yarn test
 yarn typecheck
 ```
 
-The integration test runs against a local GreenMail server whose certificate is signed by a test CA:
+## Local mail server
+
+`compose.yaml` runs GreenMail with a certificate signed by a local CA. `yarn mail:start` creates the
+certificate, starts the server and seeds realistic mailboxes (threads, attachments, HTML newsletters,
+Sent, Drafts, Archive, Trash, Junk and nested folders). `yarn mail:start --messages 10000` seeds a large inbox.
 
 ```bash
-tools/test-mail-server.sh
-export OPENMAILBOX_TEST_CA="$(cat tools/.test-certificates/ca.pem)"
-cd core && cargo test -p mail-sync --features test-ca --test greenmail -- --ignored
+yarn mail:start
+yarn core:android:dev
+yarn android
 ```
 
-To try the app against the same server, build the core with `tools/build-core.sh android --test-ca`
-and add the account `alice@example.com` / `secret` with the servers `10.0.2.2:3993` (IMAP) and
-`10.0.2.2:3465` (SMTP) from the Android emulator. Never ship a build made with `--test-ca`.
+Sign in with `alice@example.com` / `secret`, servers `10.0.2.2:3993` (IMAP) and `10.0.2.2:3465` (SMTP)
+from the Android emulator, or `localhost` from the iOS simulator. Builds made with `core:*:dev` trust
+the test CA: never ship them.
+
+The integration tests use the same server:
+
+```bash
+yarn mail:start
+export OPENMAILBOX_TEST_CA="$(cat tools/mail-server/.certificates/ca.pem)"
+cd core && cargo test -p mail-sync --features test-ca --test greenmail -- --ignored
+```
 
 ## License
 

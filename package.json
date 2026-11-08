@@ -11,7 +11,12 @@
     "core:android": "tools/build-core.sh android",
     "core:ios": "tools/build-core.sh ios",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "core:android:dev": "tools/build-core.sh android --test-ca",
+    "core:ios:dev": "tools/build-core.sh ios --test-ca",
+    "mail:start": "tools/mail-server/mail-server.sh start",
+    "mail:seed": "tools/mail-server/mail-server.sh seed",
+    "mail:stop": "tools/mail-server/mail-server.sh stop"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.6",
