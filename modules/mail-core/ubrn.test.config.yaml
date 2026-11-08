@@ -1,0 +1,13 @@
+rust:
+  directory: ../../core
+  manifestPath: crates/mail-ffi/Cargo.toml
+android:
+  cargoExtras: ["--features", "test-ca"]
+  targets:
+    - arm64-v8a
+    - x86_64
+  apiLevel: 24
+ios:
+  targets:
+    - aarch64-apple-ios
+    - aarch64-apple-ios-sim
