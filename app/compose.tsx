@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
@@ -12,6 +12,8 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { IconButton, Select, Typography, ViewContainer } from '@/ui/components';
 import { formatAddressList, parseAddressList, type MailAddress } from '@/utils/addresses';
 import { formatFullDate } from '@/utils/dates';
+
+const snapshot = (...fields: string[]) => fields.map((field) => field.trim()).join('\u0000');
 
 type ComposeParams = { mode?: ComposeMode; emailId?: string; threadId?: string; mailboxId?: string; accountId?: string };
 
@@ -50,6 +52,8 @@ export default function ComposeScreen() {
   const [showCopies, setShowCopies] = useState(false);
   const [prefilled, setPrefilled] = useState(mode === 'new');
   const [sending, setSending] = useState(false);
+  const bodyInput = useRef<TextInput>(null);
+  const [initialContent, setInitialContent] = useState(() => snapshot('', '', '', '', ''));
 
   useEffect(() => {
     if (prefilled || !original || originalBody.isLoading) return;
@@ -68,18 +72,28 @@ export default function ComposeScreen() {
     setShowCopies(content.cc.length > 0);
     setSubject(content.subject);
     setBody(content.body);
+    setInitialContent(snapshot(formatAddressList(content.to), formatAddressList(content.cc), '', content.subject, content.body));
     setPrefilled(true);
   }, [prefilled, original, originalBody.isLoading, originalBody.data, accounts, mode, t]);
+
+  useEffect(() => {
+    if (!prefilled || (mode !== 'reply' && mode !== 'replyAll')) return;
+    const timer = setTimeout(() => {
+      bodyInput.current?.focus();
+      bodyInput.current?.setSelection(0, 0);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [prefilled, mode]);
 
   const accountOptions = useMemo(
     () => accounts.map((account) => ({ value: account.id, label: account.email, description: account.displayName })),
     [accounts],
   );
   const sender = accounts.find((account) => account.id === accountId);
-  const dirty = (to + cc + bcc + subject + body).trim().length > 0;
+  const dirty = prefilled && snapshot(to, cc, bcc, subject, body) !== initialContent;
 
   const close = () => {
-    if (!dirty || mode !== 'new') {
+    if (!dirty) {
       router.back();
       return;
     }
@@ -185,7 +199,7 @@ export default function ComposeScreen() {
               value={body}
               onChangeText={setBody}
               multiline
-              autoFocus={mode === 'reply' || mode === 'replyAll'}
+              ref={bodyInput}
               textAlignVertical="top"
               placeholder={t('compose.bodyPlaceholder')}
               placeholderTextColor={colors.textTertiary}
