@@ -17,6 +17,7 @@ export interface ThemeFonts {
 
 export interface ThemeColors {
   background: string;
+  groupedBackground: string;
   surface: string;
   surfaceRaised: string;
   text: string;
@@ -92,6 +93,7 @@ const fonts: ThemeFonts = DefaultTheme.fonts;
 
 const lightColors: ThemeColors = {
   background: '#ffffff',
+  groupedBackground: '#f2f2f7',
   surface: '#f5f5f5',
   surfaceRaised: '#ffffff',
   text: '#1a1a1a',
@@ -111,11 +113,12 @@ const lightColors: ThemeColors = {
   chipActive: '#007aff',
   card: '#ffffff',
   notification: '#d32f2f',
-  item: '#f7f7f7',
+  item: '#ffffff',
 };
 
 const darkColors: ThemeColors = {
-  background: '#121212',
+  background: '#000000',
+  groupedBackground: '#000000',
   surface: '#1e1e1e',
   surfaceRaised: '#2a2a2a',
   text: '#f1f1f1',
@@ -135,7 +138,7 @@ const darkColors: ThemeColors = {
   chipActive: '#0a84ff',
   card: '#1c1c1e',
   notification: '#ef5350',
-  item: '#1e1e1e',
+  item: '#1c1c1e',
 };
 
 export const ACCOUNT_COLORS = ['#007aff', '#34c759', '#ff9500', '#af52de', '#ff2d55', '#5ac8fa', '#ffcc00', '#8e8e93'];

@@ -83,7 +83,7 @@ function Button({
           alignSelf: inline ? 'flex-start' : 'stretch',
           backgroundColor,
           borderColor,
-          borderWidth: variant === 'link' ? 0 : 1.5,
+          borderWidth: variant === 'link' || variant === 'primary' ? 0 : 1.5,
           borderStyle: dashed ? 'dashed' : 'solid',
           opacity: disabled ? 0.5 : 1,
         },

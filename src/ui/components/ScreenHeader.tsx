@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   container: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 },
   actions: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
   spacer: { flex: 1 },
-  title: { marginTop: 8 },
+  title: { marginTop: 8, marginLeft: 4 },
 });
 
 export default React.memo(ScreenHeader);

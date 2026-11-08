@@ -6,12 +6,13 @@ const MAX_CONTENT_WIDTH = 700;
 
 interface Props extends ViewProps {
   centered?: boolean;
+  grouped?: boolean;
 }
 
-function ViewContainer({ children, style, centered, ...rest }: Props) {
+function ViewContainer({ children, style, centered, grouped, ...rest }: Props) {
   const { colors } = useTheme();
   return (
-    <View {...rest} style={[styles.root, { backgroundColor: colors.background }, style]}>
+    <View {...rest} style={[styles.root, { backgroundColor: grouped ? colors.groupedBackground : colors.background }, style]}>
       {centered ? <View style={styles.centered}>{children}</View> : children}
     </View>
   );
