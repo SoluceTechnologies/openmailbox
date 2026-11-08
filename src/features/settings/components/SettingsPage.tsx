@@ -16,7 +16,7 @@ export function SettingsPage({ title, children }: Props) {
   const router = useRouter();
 
   return (
-    <ViewContainer>
+    <ViewContainer grouped>
       <SafeAreaView edges={['top']} style={styles.flex}>
         <View style={styles.column}>
           <ScreenHeader title={title} onBack={() => router.back()} />
@@ -27,7 +27,7 @@ export function SettingsPage({ title, children }: Props) {
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
         >
-          <View style={styles.column}>{children}</View>
+          <View style={[styles.column, styles.sections]}>{children}</View>
         </ScrollView>
       </SafeAreaView>
     </ViewContainer>
@@ -36,6 +36,7 @@ export function SettingsPage({ title, children }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  scroll: { paddingTop: 8, paddingBottom: 24 },
+  scroll: { paddingTop: 8, paddingBottom: 40, paddingHorizontal: 16, gap: 28 },
   column: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
+  sections: { gap: 28 },
 });

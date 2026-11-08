@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Security } from '@openmailbox/mail-core';
+import { RefreshCw } from 'lucide-react-native';
+import { Security, type ServerEndpoint } from '@openmailbox/mail-core';
 
 import { useAccounts } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
@@ -12,24 +13,27 @@ import { describeCoreError } from '@/features/accounts/coreErrors';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { useSyncFailureMessage, useSyncLabel } from '@/features/sync/useSyncLabel';
 import { useSyncStore } from '@/stores/syncStore';
-import { Button, Item, List, SectionHeader, TextField, Typography } from '@/ui/components';
+import { Button, FormField, FormSection, ListRow, Typography } from '@/ui/components';
+
+function describeEndpoint(endpoint: ServerEndpoint): string {
+  return `${endpoint.host}:${endpoint.port} · ${endpoint.security === Security.Tls ? 'SSL/TLS' : 'STARTTLS'}`;
+}
 
 export default function AccountSettingsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const router = useRouter();
+  const { colors } = useTheme();
   const account = useAccounts().find((candidate) => candidate.id === id);
   const authRequired = useSyncStore((state) => state.authRequired[id] === true);
   const syncLabel = useSyncLabel([id]);
   const syncFailure = useSyncFailureMessage(id);
   const [displayName, setDisplayName] = useState(account?.displayName ?? '');
   const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{ text: string; failed: boolean } | null>(null);
 
   if (!account) return <SettingsPage title="">{null}</SettingsPage>;
-
-  const security = (value: Security) => (value === Security.Tls ? 'SSL/TLS' : 'STARTTLS');
 
   const saveName = () => {
     const trimmed = displayName.trim();
@@ -37,18 +41,18 @@ export default function AccountSettingsScreen() {
   };
 
   const updatePassword = async () => {
-    setBusy(true);
+    setUpdating(true);
     setPasswordMessage(null);
     try {
       await mailCore().updatePassword(account.id, password);
       await saveSecret(account.id, password);
       useSyncStore.getState().setAuthRequired(account.id, false);
       setPassword('');
-      setPasswordMessage(t('accounts.passwordUpdated'));
+      setPasswordMessage({ text: t('accounts.passwordUpdated'), failed: false });
     } catch (error) {
-      setPasswordMessage(describeCoreError(error, t));
+      setPasswordMessage({ text: describeCoreError(error, t), failed: true });
     } finally {
-      setBusy(false);
+      setUpdating(false);
     }
   };
 
@@ -69,44 +73,66 @@ export default function AccountSettingsScreen() {
 
   return (
     <SettingsPage title={account.displayName}>
-      <View style={styles.section}>
-        <TextField label={t('accounts.setup.displayName')} value={displayName} onChangeText={setDisplayName} onBlur={saveName} returnKeyType="done" onSubmitEditing={saveName} />
-        {syncLabel ? (
-          <Typography variant="caption" color="secondary">
-            {syncFailure ? `${syncLabel} · ${syncFailure}` : syncLabel}
+      <FormSection footer={syncFailure ? `${syncLabel} · ${syncFailure}` : (syncLabel ?? undefined)}>
+        <FormField
+          label={t('accounts.setup.name')}
+          value={displayName}
+          onChangeText={setDisplayName}
+          onBlur={saveName}
+          onSubmitEditing={saveName}
+          returnKeyType="done"
+        />
+        <FormField
+          label={t('accounts.setup.email')}
+          value={account.email}
+          editable={false}
+          style={{ color: colors.textSecondary }}
+        />
+        <ListRow
+          title={t('accounts.syncNow')}
+          leading={<RefreshCw size={20} color={colors.primary} />}
+          chevron={false}
+          onPress={() => mailCore().syncNow(account.id)}
+        />
+      </FormSection>
+
+      <FormSection title={t('accounts.servers')}>
+        <ListRow title={t('accounts.setup.incoming')} subtitle={describeEndpoint(account.imap)} />
+        <ListRow title={t('accounts.setup.outgoing')} subtitle={describeEndpoint(account.smtp)} />
+        <ListRow title={t('accounts.setup.username')} subtitle={account.username} />
+      </FormSection>
+
+      <View style={styles.group}>
+        <FormSection
+          title={t('accounts.password')}
+          footer={authRequired ? t('accounts.reconnectRequired') : t('accounts.passwordHint')}
+        >
+          <FormField
+            label={t('accounts.newPassword')}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="password"
+          />
+        </FormSection>
+        {passwordMessage ? (
+          <Typography variant="caption" color={passwordMessage.failed ? colors.danger : colors.textSecondary} style={styles.message}>
+            {passwordMessage.text}
           </Typography>
         ) : null}
-        <Button variant="secondary" title={t('accounts.syncNow')} onPress={() => mailCore().syncNow(account.id)} />
+        <Button title={t('accounts.updatePassword')} loading={updating} disabled={!password || updating} onPress={updatePassword} />
       </View>
 
-      <View style={styles.section}>
-        <SectionHeader title={t('accounts.servers')} />
-        <List>
-          <Item title={account.email} description={t('accounts.usernameValue', { username: account.username })} />
-          <Item title={t('accounts.setup.incoming')} description={`${account.imap.host}:${account.imap.port} · ${security(account.imap.security)}`} />
-          <Item title={t('accounts.setup.outgoing')} description={`${account.smtp.host}:${account.smtp.port} · ${security(account.smtp.security)}`} />
-        </List>
-      </View>
-
-      <View style={styles.section}>
-        <SectionHeader title={t('accounts.password')} />
-        {authRequired ? (
-          <Typography variant="caption" color="danger">
-            {t('accounts.reconnectRequired')}
-          </Typography>
-        ) : null}
-        <TextField label={t('accounts.newPassword')} value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" />
-        {passwordMessage ? <Typography variant="caption">{passwordMessage}</Typography> : null}
-        <Button title={t('accounts.updatePassword')} loading={busy} disabled={!password || busy} onPress={updatePassword} />
-      </View>
-
-      <View style={styles.section}>
-        <Button variant="secondary" color="danger" title={t('accounts.remove')} onPress={remove} />
-      </View>
+      <FormSection>
+        <ListRow title={t('accounts.remove')} destructive chevron={false} onPress={remove} />
+      </FormSection>
     </SettingsPage>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { marginHorizontal: 16, marginBottom: 24, gap: 10 },
+  group: { gap: 12 },
+  message: { marginHorizontal: 16 },
 });
