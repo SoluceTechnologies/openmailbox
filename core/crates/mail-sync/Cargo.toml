@@ -24,3 +24,7 @@ mail-mime = { workspace = true }
 proto-imap = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
+
+[[example]]
+name = "sync_benchmark"
+required-features = ["test-ca"]

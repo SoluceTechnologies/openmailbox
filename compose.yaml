@@ -19,3 +19,18 @@ services:
         -Dgreenmail.users=alice:secret@example.com,bob:secret@example.com
         -Dgreenmail.users.login=email
       JAVA_OPTS: -Djava.net.preferIPv4Stack=true -Xmx1g
+
+  # Production-grade IMAP server for performance measurements (GreenMail resolves UIDs linearly).
+  # Started by `tools/mail-server/mail-server.sh performance`.
+  performance-imap:
+    image: dovecot/dovecot:2.4.2
+    container_name: openmailbox-performance-imap
+    profiles: ["performance"]
+    ports:
+      - "3994:31993"
+    volumes:
+      - ./tools/mail-server/.certificates/server.pem:/etc/dovecot/ssl/tls.crt:ro
+      - ./tools/mail-server/.certificates/server.key:/etc/dovecot/ssl/tls.key:ro
+      - ./tools/mail-server/dovecot-performance.conf:/etc/dovecot/conf.d/zz-performance.conf:ro
+    environment:
+      USER_PASSWORD: secret

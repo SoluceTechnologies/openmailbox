@@ -16,7 +16,10 @@
     "core:ios:dev": "tools/build-core.sh ios --test-ca",
     "mail:start": "tools/mail-server/mail-server.sh start",
     "mail:seed": "tools/mail-server/mail-server.sh seed",
-    "mail:stop": "tools/mail-server/mail-server.sh stop"
+    "mail:stop": "tools/mail-server/mail-server.sh stop",
+    "mail:performance": "tools/mail-server/mail-server.sh performance",
+    "benchmark:store": "cd core && cargo run --release -p mail-store --example benchmark --",
+    "benchmark:sync": "cd core && OPENMAILBOX_TEST_CA=\"$(cat ../tools/mail-server/.certificates/ca.pem)\" cargo run --release -p mail-sync --features test-ca --example sync_benchmark --"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.6",

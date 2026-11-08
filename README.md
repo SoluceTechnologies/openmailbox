@@ -65,6 +65,45 @@ export OPENMAILBOX_TEST_CA="$(cat tools/mail-server/.certificates/ca.pem)"
 cd core && cargo test -p mail-sync --features test-ca --test greenmail -- --ignored
 ```
 
+## Performance
+
+Two benchmarks cover large mailboxes. Figures below were measured on a Ryzen 7 7840HS, release build.
+
+```bash
+yarn benchmark:store 100000        # local database only
+yarn mail:start                    # SMTP, used to validate the account
+yarn mail:performance              # Dovecot with a 10,000 message inbox on port 3994
+yarn benchmark:sync                # sync against that Dovecot
+```
+
+Database, 100,000 messages over two accounts:
+
+| Operation | p50 | p95 |
+| --- | --- | --- |
+| Unified inbox, first page of 50 threads | 0.10 ms | 0.11 ms |
+| Unified inbox, page 21 | 0.10 ms | 0.11 ms |
+| Unified inbox, unread only | 0.11 ms | 0.12 ms |
+| Open a thread | 0.02 ms | 0.03 ms |
+| Search, frequent word | 3.8 ms | 4.2 ms |
+| Mark a thread as read | 0.03 ms | 0.12 ms |
+| Move a thread to the trash | 0.14 ms | 0.17 ms |
+| Store a batch of 50 synced messages | 1.8 ms | 3.1 ms |
+
+List and thread queries do not depend on the mailbox size: they are index range scans with a cursor.
+
+Sync of a 10,000 message inbox from Dovecot over TLS on localhost:
+
+| Step | Duration |
+| --- | --- |
+| Add the account (IMAP and SMTP sign-in) | 100 ms |
+| First page of threads available | 162 ms |
+| Initial sync complete | 1.2 s |
+| Manual refresh without changes (CONDSTORE) | 61 ms |
+| Open a message whose body is not cached | 0.5 ms |
+
+GreenMail is not used for these measurements: it resolves UIDs linearly and takes about one second
+per `UID FETCH` on a 10,000 message mailbox.
+
 ## License
 
 MPL-2.0

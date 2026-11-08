@@ -3,7 +3,10 @@
 #
 #   mail-server.sh start [--messages N]   start the server and seed the mailboxes
 #   mail-server.sh seed [--messages N]    replace the seeded content of a running server
-#   mail-server.sh stop                   stop and remove the container
+#   mail-server.sh performance [--messages N]
+#                                         start a Dovecot IMAP server on port 3994, seeded with
+#                                         a large inbox, for performance measurements
+#   mail-server.sh stop                   stop and remove the containers
 #   mail-server.sh status                 show whether the server is running
 #
 # The certificate is signed by a local CA kept in tools/mail-server/.certificates.
@@ -29,17 +32,18 @@ create_certificates() {
     -CAcreateserial -days 3650 -extfile "$certificates/server.ext" -out "$certificates/server.pem" 2>/dev/null
   openssl pkcs12 -export -inkey "$certificates/server.key" -in "$certificates/server.pem" \
     -certfile "$certificates/ca.pem" -name greenmail -passout pass:changeit -out "$certificates/server.p12"
-  chmod 644 "$certificates/server.p12"
+  chmod 644 "$certificates/server.p12" "$certificates/server.key"
 }
 
 wait_until_ready() {
+  local container="$1" marker="$2"
   for _ in $(seq 1 60); do
-    if docker logs openmailbox-mail 2>&1 | grep -q "Starting GreenMail API"; then
+    if docker logs "$container" 2>&1 | grep -q "$marker"; then
       return
     fi
     sleep 1
   done
-  echo "The mail server did not start, see: docker logs openmailbox-mail" >&2
+  echo "The mail server did not start, see: docker logs $container" >&2
   exit 1
 }
 
@@ -54,7 +58,7 @@ case "$command" in
   start)
     create_certificates
     docker compose -f "$root/compose.yaml" up -d --force-recreate mail >/dev/null
-    wait_until_ready
+    wait_until_ready openmailbox-mail "Starting GreenMail API"
     seed "$@"
     echo "Mail server ready: IMAPS localhost:3993, SMTPS localhost:3465 (alice@example.com / secret)"
     echo "From the Android emulator, use the host 10.0.2.2."
@@ -62,11 +66,18 @@ case "$command" in
   seed)
     seed --reset "$@"
     ;;
+  performance)
+    create_certificates
+    docker compose -f "$root/compose.yaml" --profile performance up -d --force-recreate performance-imap >/dev/null
+    wait_until_ready openmailbox-performance-imap "starting up for imap"
+    seed --port 3994 --reset --messages 10000 "$@"
+    echo "Dovecot ready on IMAPS localhost:3994 (alice@example.com / secret)"
+    ;;
   stop)
-    docker compose -f "$root/compose.yaml" down >/dev/null
+    docker compose -f "$root/compose.yaml" --profile performance down >/dev/null
     ;;
   status)
-    docker ps --filter name=openmailbox-mail --format '{{.Names}}: {{.Status}}'
+    docker ps --filter name=openmailbox- --format '{{.Names}}: {{.Status}}'
     ;;
   *)
     echo "Unknown command: $command (start, seed, stop, status)" >&2
