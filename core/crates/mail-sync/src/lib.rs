@@ -388,6 +388,12 @@ impl Engine {
     }
 
     pub fn send(&self, draft: Draft) -> Result<()> {
+        self.queue_send(draft, true)
+    }
+
+    /// Queues the message; `remember_recipients` ranks them in suggestions, which list addresses
+    /// written to only to unsubscribe must not be.
+    fn queue_send(&self, draft: Draft, remember_recipients: bool) -> Result<()> {
         if draft.to.is_empty() && draft.cc.is_empty() && draft.bcc.is_empty() {
             return Err(Error::InvalidInput("no recipient".into()));
         }
@@ -451,7 +457,9 @@ impl Engine {
             .chain(&draft.bcc)
             .cloned()
             .collect();
-        self.store.record_sent(&recipients, now_millis())?;
+        if remember_recipients {
+            self.store.record_sent(&recipients, now_millis())?;
+        }
         self.dispatch(&account.id, Command::DrainOperations);
         Ok(())
     }
@@ -465,15 +473,13 @@ impl Engine {
             .body(email_id)?
             .and_then(|body| body.unsubscribe)
             .ok_or_else(not_a_list)?;
-        if let (true, Some(url)) = (unsubscribe.one_click, unsubscribe.https_url.as_deref()) {
-            match post_one_click(url) {
-                Ok(()) => return Ok(UnsubscribeOutcome::Done),
-                Err(error) if unsubscribe.mailto.is_none() => return Err(error),
-                Err(_) => {}
-            }
+        if let (true, Some(url)) = (unsubscribe.one_click, unsubscribe.https_url.as_deref())
+            && post_one_click(url).is_ok()
+        {
+            return Ok(UnsubscribeOutcome::Done);
         }
         if let Some(mailto) = unsubscribe.mailto.as_deref() {
-            self.send(self.unsubscribe_draft(email_id, mailto)?)?;
+            self.queue_send(self.unsubscribe_draft(email_id, mailto)?, false)?;
             return Ok(UnsubscribeOutcome::Done);
         }
         unsubscribe
@@ -1210,6 +1216,33 @@ mod tests {
         };
         assert_eq!(recipients, vec!["leave@x.example"]);
         assert!(raw.contains("Subject: stop now"));
+        assert!(
+            fixture
+                .engine
+                .suggest_addresses("leave", 5)
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn a_one_click_unsubscribe_that_fails_opens_the_list_page() {
+        let fixture = Fixture::new(STANDARD);
+        let email_id = newsletter(
+            &fixture,
+            Unsubscribe {
+                https_url: Some("http://127.0.0.1:9/unsubscribe".into()),
+                mailto: None,
+                one_click: true,
+            },
+        );
+
+        assert_eq!(
+            fixture.engine.unsubscribe(email_id).unwrap(),
+            UnsubscribeOutcome::OpenInBrowser {
+                url: "http://127.0.0.1:9/unsubscribe".into()
+            }
+        );
     }
 
     #[test]
