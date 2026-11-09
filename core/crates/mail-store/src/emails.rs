@@ -5,6 +5,7 @@ use mail_model::{
 };
 use rusqlite::{OptionalExtension, Transaction, params, params_from_iter};
 
+use crate::correspondents::record_received;
 use crate::threads::refresh_threads;
 use crate::{
     EMAIL_COLUMNS, StorageResult, Store, addresses_from_json, addresses_to_json, email_from_row,
@@ -53,11 +54,27 @@ impl Store {
     ) -> Result<()> {
         self.write(|transaction| {
             let mut touched_threads = HashSet::new();
+            let account_email: String = transaction
+                .query_row(
+                    "SELECT email FROM account WHERE id = ?1",
+                    [account_id],
+                    |row| row.get(0),
+                )
+                .storage()?;
             for message in messages {
                 let existing = find_by_message_id(transaction, account_id, message)?;
                 let (email_id, thread_id) = match existing {
                     Some(found) => found,
-                    None => insert_email(transaction, account_id, mailbox_id, message)?,
+                    None => {
+                        let inserted = insert_email(transaction, account_id, mailbox_id, message)?;
+                        record_received(
+                            transaction,
+                            &account_email,
+                            &message.headers.from,
+                            message.internal_date.unwrap_or_default(),
+                        )?;
+                        inserted
+                    }
                 };
                 transaction
                     .prepare_cached(

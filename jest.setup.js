@@ -24,6 +24,7 @@ jest.mock('@/core/mailCore', () => {
     renameAccount: jest.fn(async () => undefined),
     saveAttachment: jest.fn(),
     search: jest.fn(async () => []),
+    suggestAddresses: jest.fn(async () => []),
     send: jest.fn(async () => undefined),
     setKeywords: jest.fn(async () => undefined),
     setThreadKeywords: jest.fn(async () => undefined),

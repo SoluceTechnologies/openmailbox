@@ -2496,6 +2496,7 @@ export interface MailCoreLike {
     setKeywords(emailIds: Array<string>, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     setThreadKeywords(mailboxId: string, threadId: string, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     subscribe(listener: EventListener): void;
+    suggestAddresses(query: string, limit: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<Address>>;
     syncNow(accountId: string | undefined): void;
     threadEmails(threadId: string, contextMailboxId: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<EmailSummary>>;
     unlockAccount(accountId: string, secret: string): void;
@@ -3162,6 +3163,47 @@ private constructor(pointer: UniffiHandle) {
     );
     }
     
+    async suggestAddresses(query: string, limit: number, asyncOpts_?: { signal: AbortSignal }): Promise<Array<Address>> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_suggest_addresses(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(query, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(limit, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterSequenceTypeAddress.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
     syncNow(accountId: string | undefined): void {uniffiCaller.rustCall(
             /*caller:*/ (callStatus) => { nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_sync_now(
                 uniffiTypeMailCoreObjectFactory.clonePointer(this),
@@ -3485,6 +3527,9 @@ function uniffiEnsureInitialized() {
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_subscribe() !== 63803) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_subscribe");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_suggest_addresses() !== 13097) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_suggest_addresses");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_sync_now() !== 1581) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_sync_now");

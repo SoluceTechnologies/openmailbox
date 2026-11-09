@@ -280,6 +280,10 @@ fn main() {
         measure(SAMPLES, |_| store.search("recru lanc", 100).unwrap()),
     );
     report(
+        "Address suggestions",
+        measure(SAMPLES, |_| store.suggest_addresses("ma", 8).unwrap()),
+    );
+    report(
         "Search, no match",
         measure(SAMPLES, |_| store.search("introuvable", 100).unwrap()),
     );

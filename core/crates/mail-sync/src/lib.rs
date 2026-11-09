@@ -245,6 +245,10 @@ impl Engine {
         self.store.thread_emails(thread_id, context_mailbox_id)
     }
 
+    pub fn suggest_addresses(&self, query: &str, limit: u32) -> Result<Vec<Address>> {
+        self.store.suggest_addresses(query, limit)
+    }
+
     pub fn search(&self, query: &str, limit: u32) -> Result<Vec<EmailSummary>> {
         self.store.search(query, limit)
     }
@@ -439,6 +443,14 @@ impl Engine {
         if let Some(email_id) = draft.in_reply_to_email_id {
             self.set_keywords(&[email_id], &[Keyword::Answered], &[])?;
         }
+        let recipients: Vec<Address> = draft
+            .to
+            .iter()
+            .chain(&draft.cc)
+            .chain(&draft.bcc)
+            .cloned()
+            .collect();
+        self.store.record_sent(&recipients, now_millis())?;
         self.dispatch(&account.id, Command::DrainOperations);
         Ok(())
     }
@@ -1140,6 +1152,16 @@ mod tests {
             UnsubscribeOutcome::OpenInBrowser {
                 url: "https://x.example/u".into()
             }
+        );
+    }
+
+    #[test]
+    fn sending_makes_recipients_suggestions() {
+        let fixture = Fixture::new(STANDARD);
+        fixture.engine.send(draft_with(vec![])).unwrap();
+        assert_eq!(
+            fixture.engine.suggest_addresses("bob", 8).unwrap()[0].email,
+            "bob@example.org"
         );
     }
 }

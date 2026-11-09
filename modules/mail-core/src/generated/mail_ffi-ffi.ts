@@ -94,6 +94,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_fn_method_mailcore_set_keywords(uniffiSelf: bigint, emailIds: Uint8Array, add: Uint8Array, remove: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_set_thread_keywords(uniffiSelf: bigint, mailboxId: Uint8Array, threadId: Uint8Array, add: Uint8Array, remove: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_subscribe(uniffiSelf: bigint, listener: bigint, uniffi_out_err: UniffiRustCallStatus): void;
+    ubrn_uniffi_mail_ffi_fn_method_mailcore_suggest_addresses(uniffiSelf: bigint, query: Uint8Array, limit: number): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_sync_now(uniffiSelf: bigint, accountId: Uint8Array, uniffi_out_err: UniffiRustCallStatus): void;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_thread_emails(uniffiSelf: bigint, threadId: Uint8Array, contextMailboxId: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_unlock_account(uniffiSelf: bigint, accountId: Uint8Array, secret: Uint8Array, uniffi_out_err: UniffiRustCallStatus): void;
@@ -122,6 +123,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_keywords(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_thread_keywords(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_subscribe(): number;
+    ubrn_uniffi_mail_ffi_checksum_method_mailcore_suggest_addresses(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_sync_now(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_thread_emails(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_unlock_account(): number;

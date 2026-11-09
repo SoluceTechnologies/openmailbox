@@ -729,6 +729,11 @@ impl MailCore {
         .await
     }
 
+    pub async fn suggest_addresses(&self, query: String, limit: u32) -> CoreResult<Vec<Address>> {
+        self.blocking(move |engine| engine.suggest_addresses(&query, limit).map(convert_all))
+            .await
+    }
+
     pub async fn search(&self, query: String, limit: u32) -> CoreResult<Vec<EmailSummary>> {
         Ok(convert_all(
             self.blocking(move |engine| engine.search(&query, limit))
