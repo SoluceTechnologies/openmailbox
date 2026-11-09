@@ -28,12 +28,15 @@ fn account_from_row(row: &Row) -> rusqlite::Result<Account> {
 }
 
 impl Store {
-    pub fn notified_until(&self, account_id: &str) -> Result<i64> {
+    /// The notification watermark: messages received at or after this time, and stored after this
+    /// email id, have not been notified. Dates from servers often have one-second precision, so the
+    /// time alone cannot tell apart two messages received in the same second.
+    pub fn notified_until(&self, account_id: &str) -> Result<(i64, i64)> {
         self.read()
             .query_row(
-                "SELECT notified_until FROM account WHERE id = ?1",
+                "SELECT notified_until, notified_email_id FROM account WHERE id = ?1",
                 [account_id],
-                |row| row.get(0),
+                |row| Ok((row.get(0)?, row.get(1)?)),
             )
             .optional()
             .storage()?
@@ -44,7 +47,9 @@ impl Store {
         self.write(|transaction| {
             transaction
                 .execute(
-                    "UPDATE account SET notified_until = max(notified_until, ?2) WHERE id = ?1",
+                    "UPDATE account SET notified_until = max(notified_until, ?2),
+                       notified_email_id = max(notified_email_id, coalesce((SELECT max(id) FROM email WHERE account_id = ?1), 0))
+                     WHERE id = ?1",
                     params![account_id, at],
                 )
                 .storage()?;
@@ -57,11 +62,17 @@ impl Store {
         self.write(|transaction| {
             transaction
                 .execute(
-                    "UPDATE account SET notified_until = max(notified_until, coalesce((
-                       SELECT max(e.received_at) FROM email e
-                       JOIN email_mailbox em ON em.email_id = e.id
-                       JOIN mailbox m ON m.id = em.mailbox_id
-                       WHERE m.account_id = ?1 AND m.role = 'inbox'), 0))
+                    "UPDATE account SET
+                       notified_until = max(notified_until, coalesce((
+                         SELECT max(e.received_at) FROM email e
+                         JOIN email_mailbox em ON em.email_id = e.id
+                         JOIN mailbox m ON m.id = em.mailbox_id
+                         WHERE m.account_id = ?1 AND m.role = 'inbox'), 0)),
+                       notified_email_id = max(notified_email_id, coalesce((
+                         SELECT max(e.id) FROM email e
+                         JOIN email_mailbox em ON em.email_id = e.id
+                         JOIN mailbox m ON m.id = em.mailbox_id
+                         WHERE m.account_id = ?1 AND m.role = 'inbox'), 0))
                      WHERE id = ?1",
                     [account_id],
                 )

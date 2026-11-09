@@ -310,7 +310,7 @@ impl Store {
     pub fn unread_inbox_emails_after(
         &self,
         account_id: &str,
-        after: i64,
+        (received_since, after_email_id): (i64, i64),
     ) -> Result<Vec<NewMessage>> {
         let connection = self.read();
         let mut statement = connection
@@ -318,12 +318,13 @@ impl Store {
                 "SELECT {EMAIL_COLUMNS}, m.id FROM email e
                  JOIN email_mailbox em ON em.email_id = e.id
                  JOIN mailbox m ON m.id = em.mailbox_id
-                 WHERE m.account_id = ?1 AND m.role = 'inbox' AND e.is_seen = 0 AND e.received_at > ?2
-                 ORDER BY e.received_at"
+                 WHERE m.account_id = ?1 AND m.role = 'inbox' AND e.is_seen = 0
+                   AND e.received_at >= ?2 AND e.id > ?3
+                 ORDER BY e.received_at, e.id"
             ))
             .storage()?;
         statement
-            .query_map(params![account_id, after], |row| {
+            .query_map(params![account_id, received_since, after_email_id], |row| {
                 Ok(NewMessage {
                     email: email_from_row(row, 0)?,
                     mailbox_id: row.get(13)?,

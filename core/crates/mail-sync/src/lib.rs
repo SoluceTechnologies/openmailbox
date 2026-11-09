@@ -1264,6 +1264,26 @@ mod tests {
     }
 
     #[test]
+    fn notifies_mail_received_in_the_same_second_as_the_last_check() {
+        let fixture = Fixture::new(STANDARD);
+        fixture.deliver_at(1, 100_000, false);
+        assert_eq!(subjects(&fixture.check()), vec!["Message 1"]);
+
+        fixture.deliver_at(2, 100_000, false);
+        assert_eq!(subjects(&fixture.check()), vec!["Message 2"]);
+        assert!(fixture.check().is_empty());
+    }
+
+    #[test]
+    fn older_mail_synced_late_is_not_notified() {
+        let fixture = Fixture::new(STANDARD);
+        fixture.deliver_at(1, 100_000, false);
+        fixture.check();
+        fixture.deliver_at(2, 50_000, false);
+        assert!(fixture.check().is_empty());
+    }
+
+    #[test]
     fn going_to_background_skips_mail_already_in_the_app() {
         let fixture = Fixture::new(STANDARD);
         fixture.deliver_at(1, 100, false);
