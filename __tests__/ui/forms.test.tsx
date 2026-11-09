@@ -1,7 +1,7 @@
 import { Text } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { Button, FormField, FormSection, ListRow, SegmentedControl } from '@/ui/components';
+import { Button, FormField, FormSection, ListRow, ScreenHeader, SegmentedControl } from '@/ui/components';
 
 import { renderWithProviders } from '../helpers/render';
 
@@ -75,5 +75,12 @@ describe('form components', () => {
   it('presents buttons as buttons to screen readers, with their state', () => {
     renderWithProviders(<Button title="Sign In" disabled onPress={jest.fn()} />);
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeDisabled();
+  });
+
+  it('names the back button for screen readers', () => {
+    const onBack = jest.fn();
+    renderWithProviders(<ScreenHeader title="Settings" onBack={onBack} />);
+    fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(onBack).toHaveBeenCalled();
   });
 });

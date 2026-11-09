@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react-native';
 import Typography from './Typography';
 import IconButton from './IconButton';
@@ -15,9 +16,10 @@ interface ScreenHeaderProps {
 
 function ScreenHeader({ title, onBack, left, right }: ScreenHeaderProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const leftSlot = onBack ? (
-    <IconButton variant="ghost" glass round size={40} onPress={onBack} accessibilityRole="button">
+    <IconButton variant="ghost" glass round size={40} onPress={onBack} accessibilityRole="button" accessibilityLabel={t('common.back')}>
       <ChevronLeft size={22} color={colors.text} />
     </IconButton>
   ) : (
