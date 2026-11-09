@@ -35,9 +35,10 @@ interface SwipeableThreadRowProps {
   accountAccent?: string;
   canArchive: boolean;
   onOpen: (thread: ThreadSummary) => void;
+  onLongPress?: (thread: ThreadSummary) => void;
 }
 
-function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen }: SwipeableThreadRowProps) {
+function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onLongPress }: SwipeableThreadRowProps) {
   const { t } = useTranslation();
   const swipeable = useRef<SwipeableMethods>(null);
   const unread = thread.unreadCount > 0;
@@ -73,7 +74,7 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen }: S
         </View>
       )}
     >
-      <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} />
+      <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} onLongPress={onLongPress} />
     </ReanimatedSwipeable>
   );
 }

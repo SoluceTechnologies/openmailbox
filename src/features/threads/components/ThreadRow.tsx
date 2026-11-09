@@ -9,14 +9,16 @@ import { avatarColor } from '@/theme';
 import { Avatar, Typography } from '@/ui/components';
 import { displayName } from '@/utils/addresses';
 import { formatListDate } from '@/utils/dates';
+import { haptic, ImpactFeedbackStyle } from '@/utils/haptics';
 
 interface ThreadRowProps {
   thread: ThreadSummary;
   accountAccent?: string;
   onOpen: (thread: ThreadSummary) => void;
+  onLongPress?: (thread: ThreadSummary) => void;
 }
 
-function ThreadRowImpl({ thread, accountAccent, onOpen }: ThreadRowProps) {
+function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress }: ThreadRowProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const sender = thread.latest.from[0];
@@ -28,6 +30,15 @@ function ThreadRowImpl({ thread, accountAccent, onOpen }: ThreadRowProps) {
       accessibilityRole="button"
       accessibilityLabel={[unread ? t('threads.unread') : null, senderName, thread.latest.subject, formatListDate(thread.lastReceivedAt)].filter(Boolean).join(', ')}
       onPress={() => onOpen(thread)}
+      onLongPress={
+        onLongPress
+          ? () => {
+              haptic(ImpactFeedbackStyle.Medium);
+              onLongPress(thread);
+            }
+          : undefined
+      }
+      delayLongPress={350}
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.surface : colors.background }]}
     >
       <View style={styles.indicator}>

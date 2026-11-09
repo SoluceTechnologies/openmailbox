@@ -14,6 +14,9 @@ import { UNIFIED_SCOPE } from '@/core/queryClient';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { useIsSyncing, useSyncLabel } from '@/features/sync/useSyncLabel';
 import { SwipeableThreadRow } from '@/features/threads/components/SwipeableThreadRow';
+import { ThreadActionSheet } from '@/features/threads/components/ThreadActionSheet';
+import { ThreadPreview } from '@/features/threads/components/ThreadPreview';
+import { useThreadActions } from '@/features/threads/useThreadActions';
 import { accountColor } from '@/theme';
 import { Button, EmptyState, ScreenHeader, SegmentedControl, Spinner, Typography, ViewContainer } from '@/ui/components';
 
@@ -88,6 +91,10 @@ export default function MailboxScreen() {
     if (!unified) mailCore().openMailbox(scope).catch(() => undefined);
   }, [scope, unified]);
 
+  const [previewed, setPreviewed] = useState<ThreadSummary | null>(null);
+  const [sheetThread, setSheetThread] = useState<ThreadSummary | null>(null);
+  const threadActions = useThreadActions();
+
   const openThread = useCallback(
     (thread: ThreadSummary) =>
       router.push({ pathname: '/thread/[threadId]', params: { threadId: thread.threadId, mailboxId: thread.mailboxId } }),
@@ -101,6 +108,7 @@ export default function MailboxScreen() {
         accountAccent={showAccountAccent ? accentByAccount.get(item.accountId) : undefined}
         canArchive={archiveAvailable(item.accountId) && mailbox?.role !== MailboxRole.Archive}
         onOpen={openThread}
+        onLongPress={setPreviewed}
       />
     ),
     [showAccountAccent, accentByAccount, archiveAvailable, mailbox?.role, openThread],
@@ -173,6 +181,19 @@ export default function MailboxScreen() {
         />
       </SafeAreaView>
       <BottomBar composeAccountId={account?.id} />
+      <ThreadPreview
+        thread={previewed}
+        actions={previewed ? threadActions.actionsFor(previewed) : []}
+        onAction={threadActions.run}
+        onOpen={openThread}
+        onClose={() => setPreviewed(null)}
+      />
+      <ThreadActionSheet
+        thread={sheetThread}
+        actions={sheetThread ? threadActions.actionsFor(sheetThread) : []}
+        onAction={threadActions.run}
+        onClose={() => setSheetThread(null)}
+      />
     </ViewContainer>
   );
 }
