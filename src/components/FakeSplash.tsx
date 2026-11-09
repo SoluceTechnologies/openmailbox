@@ -9,6 +9,6 @@ export default function FakeSplash() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#007aff', alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#0082c9', alignItems: 'center', justifyContent: 'center' },
   logo: { width: 200, height: 200 },
 });

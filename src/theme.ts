@@ -101,7 +101,7 @@ const lightColors: ThemeColors = {
   textTertiary: '#888888',
   border: '#eeeeee',
   borderSubtle: '#f5f5f5',
-  primary: '#007aff',
+  primary: '#109be6',
   primaryText: '#ffffff',
   danger: '#d32f2f',
   warning: '#f57c00',
@@ -110,7 +110,7 @@ const lightColors: ThemeColors = {
   tabBarInactive: '#8e8e93',
   headerBackground: '#ffffff',
   chip: '#f0f0f0',
-  chipActive: '#007aff',
+  chipActive: '#109be6',
   card: '#ffffff',
   notification: '#d32f2f',
   item: '#ffffff',
@@ -126,7 +126,7 @@ const darkColors: ThemeColors = {
   textTertiary: '#666666',
   border: '#333333',
   borderSubtle: '#242424',
-  primary: '#0a84ff',
+  primary: '#29aef7',
   primaryText: '#ffffff',
   danger: '#ef5350',
   warning: '#ffa726',
@@ -135,13 +135,13 @@ const darkColors: ThemeColors = {
   tabBarInactive: '#636366',
   headerBackground: '#1c1c1e',
   chip: '#2c2c2e',
-  chipActive: '#0a84ff',
+  chipActive: '#29aef7',
   card: '#1c1c1e',
   notification: '#ef5350',
   item: '#1c1c1e',
 };
 
-export const ACCOUNT_COLORS = ['#007aff', '#34c759', '#ff9500', '#af52de', '#ff2d55', '#5ac8fa', '#ffcc00', '#8e8e93'];
+export const ACCOUNT_COLORS = ['#109be6', '#34c759', '#ff9500', '#af52de', '#ff2d55', '#5ac8fa', '#ffcc00', '#8e8e93'];
 
 export function accountColor(index: number): string {
   return ACCOUNT_COLORS[index % ACCOUNT_COLORS.length];

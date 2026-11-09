@@ -75,7 +75,7 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onL
         <SwipeAction
           label={unread ? t('threads.markRead') : t('threads.markUnread')}
           Icon={unread ? MailOpen : Mail}
-          color="#007aff"
+          color="#109be6"
           onPress={act(unread ? 'markRead' : 'markUnread')}
         />
       )}

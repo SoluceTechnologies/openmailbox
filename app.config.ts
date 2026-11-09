@@ -19,6 +19,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.soluce.openmailbox',
+    icon: './assets/icon-ios.icon',
     infoPlist: {
       CFBundleDisplayName: 'OpenMailbox',
       ITSAppUsesNonExemptEncryption: false,
@@ -30,10 +31,12 @@ const config: ExpoConfig = {
     versionCode,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#007aff',
+      monochromeImage: './assets/adaptive-icon.png',
+      backgroundColor: '#109be6',
     },
     softwareKeyboardLayoutMode: 'resize',
     allowBackup: false,
+    blockedPermissions: ['android.permission.WRITE_CONTACTS'],
   },
 
   plugins: [
@@ -42,7 +45,7 @@ const config: ExpoConfig = {
     'expo-localization',
     'expo-font',
     'expo-background-task',
-    ['expo-notifications', { color: '#007aff' }],
+    ['expo-notifications', { color: '#109be6' }],
     [
       'expo-contacts',
       {
@@ -63,7 +66,7 @@ const config: ExpoConfig = {
         image: './assets/splash-icon.png',
         imageWidth: 200,
         resizeMode: 'contain',
-        backgroundColor: '#007aff',
+        backgroundColor: '#0082c9',
       },
     ],
   ],
