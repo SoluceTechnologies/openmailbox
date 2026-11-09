@@ -40,6 +40,13 @@ impl Store {
         account_id: &str,
         remote_mailboxes: &[RemoteMailbox],
     ) -> Result<()> {
+        // Every account has an INBOX: a listing without one is a failed LIST, not an empty account.
+        if !remote_mailboxes
+            .iter()
+            .any(|mailbox| mailbox.role == Some(MailboxRole::Inbox))
+        {
+            return Err(Error::Server("the server listed no INBOX".into()));
+        }
         self.write(|transaction| {
             transaction
                 .execute("CREATE TEMP TABLE IF NOT EXISTS seen_mailbox (remote_name TEXT PRIMARY KEY)", [])
@@ -244,5 +251,25 @@ mod tests {
                 .id,
             inbox_id
         );
+    }
+
+    #[test]
+    fn replace_mailboxes_refuses_a_list_without_inbox() {
+        let (store, _directory) = test_support::store();
+        store
+            .insert_account(&test_support::account("alice"))
+            .unwrap();
+        let listed = [
+            remote("INBOX", Some(MailboxRole::Inbox)),
+            remote("Sent", Some(MailboxRole::Sent)),
+        ];
+        store.replace_mailboxes("alice", &listed).unwrap();
+
+        assert!(matches!(
+            store.replace_mailboxes("alice", &[]),
+            Err(Error::Server(_))
+        ));
+
+        assert_eq!(store.list_mailboxes(Some("alice")).unwrap().len(), 2);
     }
 }
