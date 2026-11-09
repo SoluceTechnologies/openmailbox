@@ -41,6 +41,9 @@ pub enum Command {
     },
     DrainOperations,
     Disconnect,
+    SyncInboxes {
+        reply: oneshot::Sender<()>,
+    },
 }
 
 pub type Secret = Arc<RwLock<Option<String>>>;
@@ -148,6 +151,16 @@ impl Worker {
                 }
             }
             Command::Disconnect => self.disconnect().await,
+            Command::SyncInboxes { reply } => {
+                let inboxes = self
+                    .store
+                    .mailbox_by_role(&self.account.id, MailboxRole::Inbox)
+                    .ok()
+                    .flatten()
+                    .map(|inbox| vec![inbox.id]);
+                self.sync(inboxes, true).await;
+                let _ = reply.send(());
+            }
             urgent => self.handle_urgent(urgent).await,
         }
     }

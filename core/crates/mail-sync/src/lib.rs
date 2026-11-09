@@ -11,8 +11,8 @@ use std::time::Duration;
 use mail_mime::{AttachmentContent, OutgoingMessage};
 use mail_model::{
     Account, AccountConfig, Address, CoreEvent, Draft, EmailSummary, Error, Keyword,
-    MAX_ATTACHMENTS_BYTES, Mailbox, MailboxRole, OutgoingAttachment, RenderedBody, Result,
-    ServerConfig, ThreadPage, ThreadScope, UnsubscribeOutcome, now_millis,
+    MAX_ATTACHMENTS_BYTES, Mailbox, MailboxRole, NewMessage, OutgoingAttachment, RenderedBody,
+    Result, ServerConfig, ThreadPage, ThreadScope, UnsubscribeOutcome, now_millis,
 };
 use mail_store::Store;
 use tokio::runtime::Handle;
@@ -148,6 +148,7 @@ impl Engine {
             created_at: now_millis(),
         };
         self.store.insert_account(&account)?;
+        self.store.set_notified_until(&account.id, now_millis())?;
         self.start_worker(account.clone(), Some(secret));
         if self.foreground.load(Ordering::SeqCst) {
             self.start_idle(&account.id);
@@ -582,7 +583,41 @@ impl Engine {
         }
     }
 
+    /// Brings every inbox up to date within `budget` and returns the unread messages that arrived
+    /// since the last check or since the app last went to the background, each one only once.
+    pub async fn check_new_mail(&self, budget: Duration) -> Result<Vec<NewMessage>> {
+        let replies: Vec<oneshot::Receiver<()>> = self
+            .accounts()
+            .values()
+            .filter_map(|handle| {
+                let (reply, receiver) = oneshot::channel();
+                handle
+                    .commands
+                    .send(Command::SyncInboxes { reply })
+                    .ok()
+                    .map(|_| receiver)
+            })
+            .collect();
+        let _ = tokio::time::timeout(budget, async {
+            for reply in replies {
+                let _ = reply.await;
+            }
+        })
+        .await;
+        let mut found = Vec::new();
+        for account in self.store.list_accounts()? {
+            let after = self.store.notified_until(&account.id)?;
+            found.extend(self.store.unread_inbox_emails_after(&account.id, after)?);
+            self.store.advance_notified_until(&account.id)?;
+        }
+        found.sort_by_key(|message| message.email.received_at);
+        Ok(found)
+    }
+
     pub fn on_background(&self) {
+        for account in self.store.list_accounts().unwrap_or_default() {
+            let _ = self.store.advance_notified_until(&account.id);
+        }
         if !self.foreground.swap(false, Ordering::SeqCst) {
             return;
         }
@@ -737,9 +772,9 @@ pub(crate) mod test_support {
 #[cfg(test)]
 mod tests {
     use mail_model::{
-        Address, FetchedMessage, Flags, MAX_ATTACHMENTS_BYTES, MailboxRole, OutgoingAttachment,
-        ParsedHeaders, RemoteMailbox, RenderedBody, ThreadScope, Unsubscribe, UnsubscribeOutcome,
-        now_millis,
+        Address, FetchedMessage, Flags, MAX_ATTACHMENTS_BYTES, MailboxRole, NewMessage,
+        OutgoingAttachment, ParsedHeaders, RemoteMailbox, RenderedBody, ThreadScope, Unsubscribe,
+        UnsubscribeOutcome, now_millis,
     };
 
     use super::*;
@@ -816,6 +851,16 @@ mod tests {
             )
         }
 
+        fn deliver_at(&self, uid: u32, received_at: i64, seen: bool) {
+            deliver_to(&self.engine.store, "alice", uid, received_at, seen);
+        }
+
+        fn check(&self) -> Vec<NewMessage> {
+            self._runtime
+                .block_on(self.engine.check_new_mail(Duration::from_secs(5)))
+                .unwrap()
+        }
+
         fn threads(&self, mailbox_id: i64) -> Vec<i64> {
             self.engine
                 .store
@@ -826,6 +871,38 @@ mod tests {
                 .map(|thread| thread.thread_id)
                 .collect()
         }
+    }
+
+    fn deliver_to(store: &Store, account_id: &str, uid: u32, received_at: i64, seen: bool) {
+        let inbox = store
+            .mailbox_by_role(account_id, MailboxRole::Inbox)
+            .unwrap()
+            .unwrap()
+            .id;
+        store
+            .insert_messages(
+                account_id,
+                inbox,
+                &[FetchedMessage {
+                    uid,
+                    flags: Flags {
+                        seen,
+                        ..Flags::default()
+                    },
+                    internal_date: Some(received_at),
+                    size: 1,
+                    headers: ParsedHeaders {
+                        message_id: Some(format!("{account_id}-{uid}@example.org")),
+                        subject: Some(format!("Message {uid}")),
+                        from: vec![Address {
+                            name: None,
+                            email: "bob@example.org".into(),
+                        }],
+                        ..ParsedHeaders::default()
+                    },
+                }],
+            )
+            .unwrap();
     }
 
     const STANDARD: &[(&str, MailboxRole)] = &[
@@ -1163,5 +1240,88 @@ mod tests {
             fixture.engine.suggest_addresses("bob", 8).unwrap()[0].email,
             "bob@example.org"
         );
+    }
+
+    fn subjects(found: &[NewMessage]) -> Vec<String> {
+        found
+            .iter()
+            .map(|message| message.email.subject.clone().unwrap_or_default())
+            .collect()
+    }
+
+    #[test]
+    fn returns_each_new_unread_message_once() {
+        let fixture = Fixture::new(STANDARD);
+        fixture.deliver_at(1, 100, false);
+        fixture.deliver_at(2, 200, true);
+        fixture.deliver_at(3, 300, false);
+
+        assert_eq!(subjects(&fixture.check()), vec!["Message 1", "Message 3"]);
+        assert!(fixture.check().is_empty());
+
+        fixture.deliver_at(4, 400, false);
+        assert_eq!(subjects(&fixture.check()), vec!["Message 4"]);
+    }
+
+    #[test]
+    fn going_to_background_skips_mail_already_in_the_app() {
+        let fixture = Fixture::new(STANDARD);
+        fixture.deliver_at(1, 100, false);
+        fixture.engine.on_background();
+        assert!(fixture.check().is_empty());
+    }
+
+    #[test]
+    fn mail_present_when_an_account_is_added_is_not_notified() {
+        let fixture = Fixture::new(STANDARD);
+        fixture.deliver_at(1, now_millis() - 60_000, false);
+        fixture
+            .engine
+            .store
+            .set_notified_until("alice", now_millis())
+            .unwrap();
+        assert!(fixture.check().is_empty());
+    }
+
+    #[test]
+    fn an_unreachable_account_does_not_hide_the_others() {
+        let directory =
+            std::env::temp_dir().join(format!("mail-sync-check-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&directory).unwrap();
+        {
+            let store = Store::open(&directory.join("mail.db")).unwrap();
+            let mut unreachable = account("carol");
+            unreachable.imap = mail_model::ServerEndpoint {
+                host: "127.0.0.1".into(),
+                port: 9,
+                security: mail_model::Security::Tls,
+            };
+            store.insert_account(&unreachable).unwrap();
+            store.insert_account(&account("alice")).unwrap();
+            store
+                .replace_mailboxes(
+                    "alice",
+                    &[RemoteMailbox {
+                        remote_name: "INBOX".into(),
+                        name: "INBOX".into(),
+                        depth: 0,
+                        role: Some(MailboxRole::Inbox),
+                        selectable: true,
+                    }],
+                )
+                .unwrap();
+            deliver_to(&store, "alice", 1, 100, false);
+        }
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        let engine = Engine::open(&directory, runtime.handle().clone()).unwrap();
+        engine.unlock_account("carol", "secret".into());
+
+        let started = std::time::Instant::now();
+        let found = runtime
+            .block_on(engine.check_new_mail(Duration::from_secs(5)))
+            .unwrap();
+
+        assert_eq!(subjects(&found), vec!["Message 1"]);
+        assert!(started.elapsed() < Duration::from_secs(5));
     }
 }

@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
 use mail_model::{
-    Address, EmailSummary, Error, FetchedMessage, Flags, Keyword, RenderedBody, Result, now_millis,
+    Address, EmailSummary, Error, FetchedMessage, Flags, Keyword, NewMessage, RenderedBody, Result,
+    now_millis,
 };
 use rusqlite::{OptionalExtension, Transaction, params, params_from_iter};
 
@@ -304,6 +305,33 @@ impl Store {
             .optional()
             .storage()?
             .ok_or(Error::NotFound)
+    }
+
+    pub fn unread_inbox_emails_after(
+        &self,
+        account_id: &str,
+        after: i64,
+    ) -> Result<Vec<NewMessage>> {
+        let connection = self.read();
+        let mut statement = connection
+            .prepare_cached(&format!(
+                "SELECT {EMAIL_COLUMNS}, m.id FROM email e
+                 JOIN email_mailbox em ON em.email_id = e.id
+                 JOIN mailbox m ON m.id = em.mailbox_id
+                 WHERE m.account_id = ?1 AND m.role = 'inbox' AND e.is_seen = 0 AND e.received_at > ?2
+                 ORDER BY e.received_at"
+            ))
+            .storage()?;
+        statement
+            .query_map(params![account_id, after], |row| {
+                Ok(NewMessage {
+                    email: email_from_row(row, 0)?,
+                    mailbox_id: row.get(13)?,
+                })
+            })
+            .storage()?
+            .collect::<rusqlite::Result<_>>()
+            .storage()
     }
 
     pub fn email_message_id(&self, email_id: i64) -> Result<Option<String>> {

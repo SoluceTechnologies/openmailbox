@@ -31,6 +31,7 @@ class NativeMailFfi : public jsi::HostObject {
     jsi::Value cpp_uniffi_mail_ffi_fn_constructor_mailcore_open(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_add_account(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_body(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
+    jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_check_new_mail(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_discover(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_list_accounts(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_list_mailboxes(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
@@ -106,6 +107,7 @@ class NativeMailFfi : public jsi::HostObject {
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_eventlistener_on_event(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_add_account(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_body(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
+    jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_check_new_mail(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_discover(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_list_accounts(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_list_mailboxes(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);

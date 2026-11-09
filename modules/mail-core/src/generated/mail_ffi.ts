@@ -672,6 +672,49 @@ const FfiConverterTypeMailbox = (() => {
     return new FFIConverter();
 })();
 
+export type NewMessage = {
+    mailboxId: string,
+    email: EmailSummary
+}
+
+/**
+ * Generated factory for {@link NewMessage} record objects.
+ */
+export const NewMessage = (() => {
+    const defaults = () => ({
+    });
+    const create = (() => {
+        return uniffiCreateRecord<NewMessage, ReturnType<typeof defaults>>(defaults);
+    })();
+    return Object.freeze({
+        create,
+        new: create,
+        defaults: () => Object.freeze(defaults()) as Partial<NewMessage>,
+    });
+})();
+
+const FfiConverterTypeNewMessage = (() => {
+    type TypeName = NewMessage;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            return {
+                mailboxId: FfiConverterString.readFromCursor(c), 
+                email: FfiConverterTypeEmailSummary.readFromCursor(c)
+            };
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            FfiConverterString.writeIntoCursor(value.mailboxId, c);
+            FfiConverterTypeEmailSummary.writeIntoCursor(value.email, c);
+        }
+        allocationSize(value: TypeName): number {
+            return FfiConverterString.allocationSize(value.mailboxId) +
+             FfiConverterTypeEmailSummary.allocationSize(value.email);
+            
+        }
+    };
+    return new FFIConverter();
+})();
+
 /**
  * Where a move left the messages; `target_mailbox_id` is absent when they were deleted for good.
  */
@@ -2478,6 +2521,10 @@ export interface MailCoreLike {
     
     addAccount(config: AccountConfig, secret: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Account>;
     body(emailId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<RenderedBody>;
+/**
+ * Syncs the inboxes within `budget_ms` and returns the unread messages not notified yet.
+ */
+    checkNewMail(budgetMs: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<NewMessage>>;
     discover(email: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<ServerConfig>;
     listAccounts(asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<Account>>;
     listMailboxes(accountId: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<Mailbox>>;
@@ -2602,6 +2649,50 @@ private constructor(pointer: UniffiHandle) {
             /*liftFunc:*/ (__rb) => {
                 try {
                     return FfiConverterTypeRenderedBody.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
+/**
+ * Syncs the inboxes within `budget_ms` and returns the unread messages not notified yet.
+ */
+    async checkNewMail(budgetMs: number, asyncOpts_?: { signal: AbortSignal }): Promise<Array<NewMessage>> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_check_new_mail(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterUInt32.lower(budgetMs, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterSequenceTypeNewMessage.lift(__rb);
                 } finally {
                     nativeModule().rustbuffer_free(__rb);
                 }
@@ -3431,6 +3522,9 @@ const FfiConverterSequenceTypeThreadSummary = new FfiConverterArray(FfiConverter
 // FfiConverter for number | undefined
 const FfiConverterOptionalFloat64 = new FfiConverterOptional(FfiConverterFloat64);
 
+// FfiConverter for Array<NewMessage>
+const FfiConverterSequenceTypeNewMessage = new FfiConverterArray(FfiConverterTypeNewMessage);
+
 // FfiConverter for Array<Account>
 const FfiConverterSequenceTypeAccount = new FfiConverterArray(FfiConverterTypeAccount);
 
@@ -3473,6 +3567,9 @@ function uniffiEnsureInitialized() {
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_body() !== 20776) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_body");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_check_new_mail() !== 48290) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_check_new_mail");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_discover() !== 13186) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_discover");
@@ -3567,6 +3664,7 @@ export default Object.freeze({
     FfiConverterTypeMailCore,
     FfiConverterTypeMailbox,
     FfiConverterTypeMailboxRole,
+    FfiConverterTypeNewMessage,
     FfiConverterTypeOutgoingAttachment,
     FfiConverterTypeRelocation,
     FfiConverterTypeRenderedBody,

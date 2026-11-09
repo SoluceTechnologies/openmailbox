@@ -151,6 +151,12 @@ pub struct ThreadSummary {
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
+pub struct NewMessage {
+    pub mailbox_id: String,
+    pub email: EmailSummary,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct ThreadPage {
     pub threads: Vec<ThreadSummary>,
     pub next_cursor: Option<String>,
@@ -691,6 +697,21 @@ impl MailCore {
             self.blocking(move |engine| engine.thread_emails(thread_id, context_mailbox_id))
                 .await?,
         ))
+    }
+
+    /// Syncs the inboxes within `budget_ms` and returns the unread messages not notified yet.
+    pub async fn check_new_mail(&self, budget_ms: u32) -> CoreResult<Vec<NewMessage>> {
+        let budget = Duration::from_millis(budget_ms.into());
+        let found = self
+            .asynchronous(async move |engine| engine.check_new_mail(budget).await)
+            .await?;
+        Ok(found
+            .into_iter()
+            .map(|message| NewMessage {
+                mailbox_id: message.mailbox_id.to_string(),
+                email: message.email.into(),
+            })
+            .collect())
     }
 
     pub async fn body(&self, email_id: String) -> CoreResult<RenderedBody> {

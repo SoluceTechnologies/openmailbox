@@ -457,3 +457,101 @@ async fn unsubscribes_from_a_list_by_mail() {
     );
     wait_on_server("INBOX", &format!("Leave {token}"), true).await;
 }
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn background_check_reports_new_mail() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let added_at = mail_model::now_millis();
+    engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    tokio::time::sleep(Duration::from_secs(3)).await;
+    engine.on_background();
+    let earlier = engine
+        .check_new_mail(Duration::from_secs(20))
+        .await
+        .unwrap();
+    assert!(
+        earlier
+            .iter()
+            .all(|message| message.email.received_at >= added_at - 1_000),
+        "mail from before the account was added was notified"
+    );
+
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    let raw = format!(
+        "From: alice@example.com\r\nTo: bob@example.com\r\nSubject: Background {token}\r\n\
+         Message-ID: <{token}@example.com>\r\nContent-Type: text/plain\r\n\r\nHello Bob.\r\n"
+    );
+    proto_smtp::send(
+        &endpoint(3465),
+        "alice@example.com",
+        "secret",
+        "alice@example.com",
+        &["bob@example.com".into()],
+        raw.as_bytes(),
+    )
+    .await
+    .unwrap();
+    wait_on_server("INBOX", &token, true).await;
+
+    let with_token = |found: Vec<mail_model::NewMessage>| -> Vec<mail_model::NewMessage> {
+        found
+            .into_iter()
+            .filter(|message| {
+                message
+                    .email
+                    .subject
+                    .as_deref()
+                    .is_some_and(|subject| subject.contains(&token))
+            })
+            .collect()
+    };
+    let found = with_token(
+        engine
+            .check_new_mail(Duration::from_secs(20))
+            .await
+            .unwrap(),
+    );
+    assert_eq!(found.len(), 1);
+    assert!(!found[0].email.is_seen);
+    assert!(
+        with_token(
+            engine
+                .check_new_mail(Duration::from_secs(20))
+                .await
+                .unwrap()
+        )
+        .is_empty()
+    );
+
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
+        .await
+        .unwrap();
+    connection.select("INBOX").await.unwrap();
+    let uids = connection
+        .search_message_id(&format!("{token}@example.com"))
+        .await
+        .unwrap();
+    let flags = connection
+        .fetch_flags(&uids[0].to_string(), None)
+        .await
+        .unwrap();
+    assert!(!flags[0].flags.seen);
+}

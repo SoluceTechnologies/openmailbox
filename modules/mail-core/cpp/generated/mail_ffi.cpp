@@ -176,6 +176,10 @@ extern "C" {
         /*handle*/ uint64_t ptr, 
         RustBuffer email_id
     );
+    /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_check_new_mail(
+        /*handle*/ uint64_t ptr, 
+        uint32_t budget_ms
+    );
     /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_discover(
         /*handle*/ uint64_t ptr, 
         RustBuffer email
@@ -498,6 +502,8 @@ extern "C" {
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_add_account(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_body(
+    );
+    uint16_t uniffi_mail_ffi_checksum_method_mailcore_check_new_mail(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_discover(
     );
@@ -2529,6 +2535,14 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_body(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_fn_method_mailcore_check_new_mail"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_check_new_mail"),
+        2,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_fn_method_mailcore_check_new_mail(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_fn_method_mailcore_discover"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_discover"),
@@ -3129,6 +3143,14 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_body(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_check_new_mail"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_check_new_mail"),
+        0,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_check_new_mail(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_discover"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_discover"),
@@ -3615,6 +3637,13 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_add_account(jsi
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_body(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_fn_method_mailcore_body(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1])
+        );
+
+        
+        return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_check_new_mail(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_fn_method_mailcore_check_new_mail(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi_jsi::Bridging<uint32_t>::fromJs(rt, callInvoker, args[1])
         );
 
         
@@ -4191,6 +4220,13 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_add_accou
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_body(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_checksum_method_mailcore_body(
+        );
+
+        
+        return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_check_new_mail(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_checksum_method_mailcore_check_new_mail(
         );
 
         

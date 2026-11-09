@@ -225,6 +225,13 @@ pub enum ThreadScope {
     Mailbox(i64),
 }
 
+/// An unread inbox message that arrived since the last background check.
+#[derive(Debug, Clone)]
+pub struct NewMessage {
+    pub mailbox_id: i64,
+    pub email: EmailSummary,
+}
+
 #[derive(Debug, Clone)]
 pub struct ThreadPage {
     pub threads: Vec<ThreadSummary>,

@@ -30,6 +30,8 @@ jest.mock('@/core/mailCore', () => {
     setThreadKeywords: jest.fn(async () => undefined),
     subscribe: jest.fn(),
     syncNow: jest.fn(),
+    checkNewMail: jest.fn(async () => []),
+    unsubscribe: jest.fn(async () => ({ tag: "Done" })),
     threadEmails: jest.fn(async () => []),
     unlockAccount: jest.fn(),
     updatePassword: jest.fn(async () => undefined),

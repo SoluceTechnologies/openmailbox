@@ -76,6 +76,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_fn_constructor_mailcore_open(dataDirectory: Uint8Array, uniffi_out_err: UniffiRustCallStatus): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_add_account(uniffiSelf: bigint, config: Uint8Array, secret: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_body(uniffiSelf: bigint, emailId: Uint8Array): bigint;
+    ubrn_uniffi_mail_ffi_fn_method_mailcore_check_new_mail(uniffiSelf: bigint, budgetMs: number): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_discover(uniffiSelf: bigint, email: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_list_accounts(uniffiSelf: bigint): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_list_mailboxes(uniffiSelf: bigint, accountId: Uint8Array): bigint;
@@ -105,6 +106,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_checksum_constructor_mailcore_open(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_add_account(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_body(): number;
+    ubrn_uniffi_mail_ffi_checksum_method_mailcore_check_new_mail(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_discover(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_list_accounts(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_list_mailboxes(): number;

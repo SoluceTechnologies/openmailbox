@@ -28,6 +28,48 @@ fn account_from_row(row: &Row) -> rusqlite::Result<Account> {
 }
 
 impl Store {
+    pub fn notified_until(&self, account_id: &str) -> Result<i64> {
+        self.read()
+            .query_row(
+                "SELECT notified_until FROM account WHERE id = ?1",
+                [account_id],
+                |row| row.get(0),
+            )
+            .optional()
+            .storage()?
+            .ok_or(Error::NotFound)
+    }
+
+    pub fn set_notified_until(&self, account_id: &str, at: i64) -> Result<()> {
+        self.write(|transaction| {
+            transaction
+                .execute(
+                    "UPDATE account SET notified_until = max(notified_until, ?2) WHERE id = ?1",
+                    params![account_id, at],
+                )
+                .storage()?;
+            Ok(())
+        })
+    }
+
+    /// Moves the notification watermark past every message already in the account's inbox.
+    pub fn advance_notified_until(&self, account_id: &str) -> Result<()> {
+        self.write(|transaction| {
+            transaction
+                .execute(
+                    "UPDATE account SET notified_until = max(notified_until, coalesce((
+                       SELECT max(e.received_at) FROM email e
+                       JOIN email_mailbox em ON em.email_id = e.id
+                       JOIN mailbox m ON m.id = em.mailbox_id
+                       WHERE m.account_id = ?1 AND m.role = 'inbox'), 0))
+                     WHERE id = ?1",
+                    [account_id],
+                )
+                .storage()?;
+            Ok(())
+        })
+    }
+
     pub fn insert_account(&self, account: &Account) -> Result<()> {
         self.write(|transaction| {
             transaction
