@@ -28,7 +28,7 @@ function share(uri: string, attachment: Attachment): Promise<void> {
 /** Downloads the attachment if needed and opens it with what the phone has for its type. */
 export async function openAttachment(emailId: string, attachment: Attachment): Promise<void> {
   const path = await mailCore().saveAttachment(emailId, attachment.index, attachmentsDirectory());
-  const uri = `file://${path}`;
+  const uri = `file://${path.split('/').map(encodeURIComponent).join('/')}`;
   if (attachment.mimeType === UNKNOWN_TYPE) return share(uri, attachment);
 
   if (Platform.OS === 'android') {
@@ -44,7 +44,8 @@ export async function openAttachment(emailId: string, attachment: Attachment): P
     return;
   }
 
-  if (VIEWABLE_ON_IOS.some((type) => attachment.mimeType.startsWith(type))) {
+  const hasExtension = /\.[a-z0-9]+$/i.test(attachment.filename);
+  if (hasExtension && VIEWABLE_ON_IOS.some((type) => attachment.mimeType.startsWith(type))) {
     router.push({ pathname: '/attachment', params: { uri, name: attachment.filename, mimeType: attachment.mimeType } });
     return;
   }

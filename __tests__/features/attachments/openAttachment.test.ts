@@ -47,6 +47,24 @@ describe('openAttachment', () => {
     });
   });
 
+  it('shares a file named without an extension on iOS, which the viewer could not show', async () => {
+    onPlatform('ios');
+    await openAttachment('email-1', { ...PDF, filename: 'Facture' });
+    expect(router.push).not.toHaveBeenCalled();
+    expect(Sharing.shareAsync).toHaveBeenCalled();
+  });
+
+  it('encodes the characters of a file name that would break its address', async () => {
+    onPlatform('ios');
+    core.saveAttachment.mockResolvedValueOnce('/cache/attachments/email-1-0/Plan #2 100%.pdf');
+    await openAttachment('email-1', { ...PDF, filename: 'Plan #2 100%.pdf' });
+    expect(router.push).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: expect.objectContaining({ uri: 'file:///cache/attachments/email-1-0/Plan%20%232%20100%25.pdf' }),
+      }),
+    );
+  });
+
   it('hands other types to the share sheet on iOS', async () => {
     onPlatform('ios');
     await openAttachment('email-1', ZIP);
