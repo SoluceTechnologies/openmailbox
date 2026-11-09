@@ -13,6 +13,8 @@ use tokio_rustls::client::TlsStream;
 use tokio_rustls::rustls::pki_types::ServerName;
 
 const NETWORK_TIMEOUT: Duration = Duration::from_secs(45);
+/// The slowest uplink a large upload is given time for.
+const SLOW_UPLINK_BYTES_PER_SECOND: u64 = 32 * 1024;
 const SUMMARY_HEADER_FIELDS: &str = "DATE FROM TO CC REPLY-TO SUBJECT MESSAGE-ID IN-REPLY-TO REFERENCES \
      CONTENT-TYPE CONTENT-TRANSFER-ENCODING MIME-VERSION";
 const PREVIEW_BYTES: u32 = 2048;
@@ -89,7 +91,18 @@ pub struct ImapConnection {
 async fn timed<T>(
     future: impl Future<Output = std::result::Result<T, async_imap::error::Error>>,
 ) -> Result<T> {
-    match tokio::time::timeout(NETWORK_TIMEOUT, future).await {
+    timed_within(NETWORK_TIMEOUT, future).await
+}
+
+fn transfer_timeout(bytes: usize) -> Duration {
+    NETWORK_TIMEOUT + Duration::from_secs(bytes as u64 / SLOW_UPLINK_BYTES_PER_SECOND)
+}
+
+async fn timed_within<T>(
+    timeout: Duration,
+    future: impl Future<Output = std::result::Result<T, async_imap::error::Error>>,
+) -> Result<T> {
+    match tokio::time::timeout(timeout, future).await {
         Ok(result) => result.map_err(map_error),
         Err(_) => Err(Error::Network("timed out".into())),
     }
@@ -548,7 +561,11 @@ impl ImapConnection {
     }
 
     pub async fn append(&mut self, remote_name: &str, raw: &[u8]) -> Result<()> {
-        timed(append_seen(&mut self.session, remote_name, raw)).await
+        timed_within(
+            transfer_timeout(raw.len()),
+            append_seen(&mut self.session, remote_name, raw),
+        )
+        .await
     }
 
     pub async fn wait_for_changes(
@@ -657,6 +674,12 @@ mod tests {
             Some(MailboxRole::All)
         );
         assert_eq!(role_of("Projets", &[]), None);
+    }
+
+    #[test]
+    fn large_appends_get_time_for_a_slow_uplink() {
+        assert_eq!(transfer_timeout(0), NETWORK_TIMEOUT);
+        assert!(transfer_timeout(34_000_000) >= Duration::from_secs(17 * 60));
     }
 
     #[tokio::test]
