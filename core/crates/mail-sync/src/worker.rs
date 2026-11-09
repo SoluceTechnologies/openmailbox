@@ -598,6 +598,10 @@ impl Worker {
     /// mailbox was synced, by looking them up by Message-ID. Messages no longer there are dropped.
     async fn locate_on_server(&mut self, sources: &[Source]) -> Result<Vec<Source>> {
         let mut located = Vec::with_capacity(sources.len());
+        let mut claimed: HashSet<(i64, u32)> = sources
+            .iter()
+            .filter_map(|source| source.uid.map(|uid| (source.mailbox_id, uid)))
+            .collect();
         for source in sources {
             if source.uid.is_some() {
                 located.push(*source);
@@ -612,7 +616,7 @@ impl Worker {
                     connection.search_message_id(&message_id).await
                 })
                 .await?;
-            if let Some(uid) = uids.into_iter().max() {
+            if let Some(uid) = newest_unclaimed(source.mailbox_id, uids, &mut claimed) {
                 located.push(Source {
                     uid: Some(uid),
                     ..*source
@@ -730,6 +734,20 @@ impl Worker {
     }
 }
 
+/// The newest of `found` that no other copy in the mailbox took yet, claimed for this copy.
+fn newest_unclaimed(
+    mailbox_id: i64,
+    found: Vec<u32>,
+    claimed: &mut HashSet<(i64, u32)>,
+) -> Option<u32> {
+    let uid = found
+        .into_iter()
+        .filter(|uid| !claimed.contains(&(mailbox_id, *uid)))
+        .max()?;
+    claimed.insert((mailbox_id, uid));
+    Some(uid)
+}
+
 fn group_by_mailbox(sources: &[Source]) -> BTreeMap<i64, Vec<u32>> {
     let mut groups: BTreeMap<i64, Vec<u32>> = BTreeMap::new();
     for source in sources {
@@ -738,4 +756,17 @@ fn group_by_mailbox(sources: &[Source]) -> BTreeMap<i64, Vec<u32>> {
         }
     }
     groups
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn two_copies_of_a_message_take_different_uids() {
+        let mut claimed = HashSet::from([(1, 9)]);
+        assert_eq!(newest_unclaimed(1, vec![4, 9], &mut claimed), Some(4));
+        assert_eq!(newest_unclaimed(1, vec![4, 9], &mut claimed), None);
+        assert_eq!(newest_unclaimed(2, vec![4, 9], &mut claimed), Some(9));
+    }
 }
