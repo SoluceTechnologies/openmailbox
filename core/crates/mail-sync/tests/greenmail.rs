@@ -406,3 +406,54 @@ async fn sends_an_attachment_that_arrives_intact() {
         .unwrap();
     assert_eq!(std::fs::read(saved).unwrap(), content);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn unsubscribes_from_a_list_by_mail() {
+    ensure_mailboxes().await;
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    let newsletter = format!(
+        "From: news@lists.example\r\nTo: bob@example.com\r\nSubject: Newsletter {token}\r\n\
+         Message-ID: <{token}@lists.example>\r\n\
+         List-Unsubscribe: <mailto:bob@example.com?subject=Leave%20{token}>\r\n\
+         Content-Type: text/plain\r\n\r\nNews of the week.\r\n"
+    );
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
+        .await
+        .unwrap();
+    connection
+        .append("INBOX", newsletter.as_bytes())
+        .await
+        .unwrap();
+
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    let thread = eventually(&engine, || {
+        thread_with(&engine, &format!("Newsletter {token}"))
+    })
+    .await;
+    let body = engine.body(thread.latest.id).await.unwrap();
+    assert!(body.unsubscribe.is_some());
+
+    assert_eq!(
+        engine.unsubscribe(thread.latest.id).unwrap(),
+        mail_model::UnsubscribeOutcome::Done
+    );
+    wait_on_server("INBOX", &format!("Leave {token}"), true).await;
+}
