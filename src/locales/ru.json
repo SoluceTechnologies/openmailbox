@@ -38,6 +38,8 @@
       "otherProvider": "Другая",
       "otherProviderHint": "IMAP и SMTP",
       "outgoing": "Исходящая почта (SMTP)",
+      "ovhOfferHint": "Тариф указан в панели управления OVHcloud, в разделе Web Cloud, Электронная почта.",
+      "ovhOfferTitle": "Ваш тариф OVHcloud",
       "password": "Пароль",
       "port": "Порт",
       "privacy": "Пароль хранится на этом устройстве и отправляется только на ваши почтовые серверы.",

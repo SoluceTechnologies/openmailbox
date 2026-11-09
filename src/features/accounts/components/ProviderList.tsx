@@ -1,16 +1,16 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Server } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 
 import { FormSection, Typography } from '@/ui/components';
 
 import { LOCAL_TEST_PROVIDER, PROVIDERS, type MailProvider } from '../providers';
+import { ProviderMark } from './ProviderMark';
 
 function ProviderRow({ provider, onSelect }: { provider: MailProvider; onSelect: (provider: MailProvider) => void }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const generic = provider.identifier === 'other' || provider.identifier === 'local';
   const title = provider.identifier === 'other' ? t('accounts.setup.otherProvider') : provider.name;
 
   return (
@@ -20,17 +20,7 @@ function ProviderRow({ provider, onSelect }: { provider: MailProvider; onSelect:
       onPress={() => onSelect(provider)}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}
     >
-      {generic ? (
-        <View style={[styles.mark, { backgroundColor: colors.surface }]}>
-          <Server size={18} color={colors.textSecondary} />
-        </View>
-      ) : (
-        <View style={[styles.mark, { backgroundColor: provider.color ?? colors.surface }]}>
-          <Typography variant="body2" weight="700" color="#ffffff">
-            {provider.name.charAt(0)}
-          </Typography>
-        </View>
-      )}
+      <ProviderMark brand={provider.brand} />
       <View style={styles.text}>
         <Typography variant="body1" weight="500">
           {title}
@@ -71,6 +61,5 @@ export function ProviderList({ onSelect }: { onSelect: (provider: MailProvider) 
 const styles = StyleSheet.create({
   list: { gap: 28 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 56, paddingHorizontal: 16, paddingVertical: 10 },
-  mark: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
 });

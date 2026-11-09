@@ -38,6 +38,8 @@
       "otherProvider": "Andere",
       "otherProviderHint": "IMAP en SMTP",
       "outgoing": "Uitgaande e-mail (SMTP)",
+      "ovhOfferHint": "Het aanbod staat in het OVHcloud Control Panel, onder Web Cloud, E-mails.",
+      "ovhOfferTitle": "Je OVHcloud-aanbod",
       "password": "Wachtwoord",
       "port": "Poort",
       "privacy": "Je wachtwoord blijft op dit apparaat en wordt alleen naar je mailservers verstuurd.",

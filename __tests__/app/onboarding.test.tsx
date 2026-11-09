@@ -18,9 +18,10 @@ describe('onboarding', () => {
   it('welcomes the user with the list of providers', () => {
     renderWithProviders(<OnboardingScreen />);
     expect(screen.getByText('Welcome to OpenMailbox')).toBeOnTheScreen();
-    for (const name of ['iCloud', 'Google', 'Yahoo', 'Fastmail', 'Other']) {
+    for (const name of ['Google', 'iCloud', 'OVHcloud', 'Orange', 'Free', 'SFR', 'La Poste', 'Yahoo', 'Other']) {
       expect(screen.getByRole('button', { name })).toBeOnTheScreen();
     }
+    expect(screen.queryByText(/microsoft|outlook/i)).toBeNull();
     expect(screen.getByRole('button', { name: 'Language' })).toBeOnTheScreen();
   });
 
@@ -44,6 +45,34 @@ describe('onboarding', () => {
 
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/'));
     expect(core.addAccount.mock.calls[0][0]).toMatchObject({ email: 'alice@gmail.com', displayName: 'Alice Martin' });
+  });
+
+  it('signs in to a provider it knows without looking up its servers', async () => {
+    core.addAccount.mockResolvedValue(makeAccount({ email: 'alice@orange.fr' }));
+    renderWithProviders(<OnboardingScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Orange' }));
+    fireEvent.changeText(screen.getByLabelText('Email'), 'alice@orange.fr');
+    fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
+    fireEvent.press(screen.getByText('Sign In'));
+
+    await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/'));
+    expect(core.discover).not.toHaveBeenCalled();
+    expect(core.addAccount.mock.calls[0][0].imap.host).toBe('imap.orange.fr');
+  });
+
+  it('asks which OVHcloud offer the account is on before the form', () => {
+    renderWithProviders(<OnboardingScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'OVHcloud' }));
+    for (const name of ['MX Plan', 'Email Pro', 'Hosted Exchange', 'Zimbra']) {
+      expect(screen.getByRole('button', { name })).toBeOnTheScreen();
+    }
+
+    fireEvent.press(screen.getByRole('button', { name: 'Email Pro' }));
+    expect(screen.getByText('INCOMING MAIL (IMAP)')).toBeOnTheScreen();
+    expect(screen.getAllByLabelText('Port').map((field) => field.props.value)).toEqual(['993', '587']);
+
+    fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByRole('button', { name: 'Zimbra' })).toBeOnTheScreen();
   });
 
   it('shows why signing in failed next to the form', async () => {

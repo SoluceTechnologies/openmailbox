@@ -10,6 +10,7 @@ import i18n from '@/utils/i18n';
 import { core, makeAccount } from '../../helpers/fixtures';
 
 const GOOGLE = PROVIDERS.find((provider) => provider.identifier === 'gmail')!;
+const OTHER = PROVIDERS.find((provider) => provider.identifier === 'other')!;
 const DISCOVERED: ServerConfig = {
   imap: { host: 'imap.gmail.com', port: 993, security: Security.Tls },
   smtp: { host: 'smtp.gmail.com', port: 465, security: Security.Tls },
@@ -47,12 +48,12 @@ describe('account setup', () => {
     expect(result.current.canSubmit).toBe(true);
   });
 
-  it('discovers the servers, adds the account and keeps the password in the keychain', async () => {
+  it('discovers the servers of other providers, adds the account and keeps the password in the keychain', async () => {
     const account = makeAccount({ id: 'account-9', email: 'alice@gmail.com' });
     core.discover.mockResolvedValue(DISCOVERED);
     core.addAccount.mockResolvedValue(account);
     core.listAccounts.mockResolvedValue([account]);
-    const { result, onDone } = setup();
+    const { result, onDone } = setup(OTHER);
     await fill(result, 'alice@gmail.com', 'app-password');
 
     await act(() => result.current.submit());

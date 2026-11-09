@@ -26,7 +26,7 @@ export function useAccountSetup(provider: MailProvider, onDone: (account: Accoun
   const [password, setPassword] = useState(provider.account?.password ?? '');
   const [displayName, setDisplayName] = useState('');
   const [servers, setServers] = useState<ServerConfig | null>(provider.servers ?? null);
-  const [manual, setManual] = useState(provider.identifier === 'local');
+  const [manual, setManual] = useState(provider.identifier === 'local' || !!provider.editableServers);
   const [phase, setPhase] = useState<SetupPhase>('idle');
   const [error, setError] = useState<string | null>(null);
 

@@ -38,6 +38,8 @@
       "otherProvider": "Autre",
       "otherProviderHint": "IMAP e SMTP",
       "outgoing": "Corrièr sortent (SMTP)",
+      "ovhOfferHint": "L'ofèrta es indicada dins l'espaci client OVHcloud, rubrica Web Cloud, Corrièls.",
+      "ovhOfferTitle": "Vòstra ofèrta OVHcloud",
       "password": "Senhal",
       "port": "Pòrt",
       "privacy": "Vòstre senhal demòra sus aqueste aparelh e es pas mandat qu'a vòstres servidors de messatjariá.",

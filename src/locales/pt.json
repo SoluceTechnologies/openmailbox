@@ -38,6 +38,8 @@
       "otherProvider": "Outra",
       "otherProviderHint": "IMAP e SMTP",
       "outgoing": "Correio enviado (SMTP)",
+      "ovhOfferHint": "A oferta é indicada na Área de Cliente OVHcloud, em Web Cloud, E-mails.",
+      "ovhOfferTitle": "A sua oferta OVHcloud",
       "password": "Palavra-passe",
       "port": "Porta",
       "privacy": "A sua palavra-passe fica neste dispositivo e só é enviada para os seus servidores de correio.",

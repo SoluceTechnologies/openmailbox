@@ -38,6 +38,8 @@
       "otherProvider": "Other",
       "otherProviderHint": "IMAP and SMTP",
       "outgoing": "Outgoing Mail (SMTP)",
+      "ovhOfferHint": "The offer is shown in the OVHcloud Control Panel, under Web Cloud, Emails.",
+      "ovhOfferTitle": "Your OVHcloud Offer",
       "password": "Password",
       "port": "Port",
       "privacy": "Your password stays on this device and is only sent to your mail servers.",
