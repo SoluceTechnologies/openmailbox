@@ -68,7 +68,11 @@ async fn ensure_mailboxes() {
         .await
         .unwrap();
     let mailboxes = connection.list_mailboxes().await.unwrap();
-    for (name, role) in [("Sent", MailboxRole::Sent), ("Trash", MailboxRole::Trash)] {
+    for (name, role) in [
+        ("Sent", MailboxRole::Sent),
+        ("Trash", MailboxRole::Trash),
+        ("Junk", MailboxRole::Junk),
+    ] {
         if !mailboxes.iter().any(|mailbox| mailbox.role == Some(role)) {
             let _ = connection.create_mailbox(name).await;
         }
@@ -326,6 +330,25 @@ async fn moves_a_thread_out_of_the_trash_and_back_to_the_inbox() {
         .unwrap();
     wait_on_server("INBOX", &token, true).await;
     wait_on_server("Trash", &token, false).await;
+
+    let junk = engine
+        .move_thread(
+            thread.mailbox_id,
+            thread.thread_id,
+            Destination::Junk,
+            Duration::ZERO,
+        )
+        .unwrap()
+        .target_mailbox_id
+        .expect("bob has a Junk folder");
+    wait_on_server("Junk", &token, true).await;
+    engine.open_mailbox(junk).unwrap();
+    tokio::time::sleep(Duration::from_secs(4)).await;
+    engine
+        .move_thread(junk, thread.thread_id, Destination::Inbox, Duration::ZERO)
+        .unwrap();
+    wait_on_server("INBOX", &token, true).await;
+    wait_on_server("Junk", &token, false).await;
 }
 
 #[tokio::test(flavor = "multi_thread")]

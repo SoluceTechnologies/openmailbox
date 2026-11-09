@@ -357,6 +357,16 @@ impl ImapConnection {
         Ok(())
     }
 
+    pub async fn search_message_id(&mut self, message_id: &str) -> Result<Vec<u32>> {
+        let quoted = message_id.replace('\\', "\\\\").replace('"', "\\\"");
+        let uids = timed(
+            self.session
+                .uid_search(format!("HEADER Message-ID \"<{quoted}>\"")),
+        )
+        .await?;
+        Ok(uids.into_iter().collect())
+    }
+
     pub async fn search_since(&mut self, since_millis: i64) -> Result<Vec<u32>> {
         let date = chrono::DateTime::from_timestamp_millis(since_millis)
             .unwrap_or_default()

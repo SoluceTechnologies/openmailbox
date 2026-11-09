@@ -119,6 +119,8 @@ pub fn enqueue_keywords(
 /// A message moved locally has no UID in its new mailbox until the server confirms the move.
 /// Moving it again must act on the location still known to the server, which lives in the
 /// pending `Move` operation: that operation gives up the message and the new one takes it over.
+/// When the first move already reached the server, the source keeps no UID and the worker finds
+/// the message by its Message-ID when the operation runs.
 pub fn enqueue_relocation(
     store: &Store,
     account_id: &str,
@@ -171,7 +173,6 @@ pub fn enqueue_relocation(
             });
         }
     }
-    sources.retain(|source| source.uid.is_some());
     if sources.is_empty() && rewrites.is_empty() {
         return Ok(());
     }
@@ -292,6 +293,81 @@ mod tests {
                     email_id,
                     mailbox_id: inbox,
                     uid: Some(7)
+                }],
+                target_mailbox_id: trash
+            }]
+        );
+    }
+
+    #[test]
+    fn a_message_moved_again_after_the_server_took_the_first_move_is_still_moved() {
+        let store = store();
+        store.insert_account(&account("alice")).unwrap();
+        let remote = |name: &str, role| RemoteMailbox {
+            remote_name: name.into(),
+            name: name.into(),
+            depth: 0,
+            role: Some(role),
+            selectable: true,
+        };
+        store
+            .replace_mailboxes(
+                "alice",
+                &[
+                    remote("INBOX", MailboxRole::Inbox),
+                    remote("Archive", MailboxRole::Archive),
+                    remote("Trash", MailboxRole::Trash),
+                ],
+            )
+            .unwrap();
+        let id = |role| store.mailbox_by_role("alice", role).unwrap().unwrap().id;
+        let (inbox, archive, trash) = (
+            id(MailboxRole::Inbox),
+            id(MailboxRole::Archive),
+            id(MailboxRole::Trash),
+        );
+        store
+            .insert_messages(
+                "alice",
+                inbox,
+                &[FetchedMessage {
+                    uid: 7,
+                    flags: Flags::default(),
+                    internal_date: Some(1),
+                    size: 1,
+                    headers: ParsedHeaders {
+                        message_id: Some("m@x".into()),
+                        ..ParsedHeaders::default()
+                    },
+                }],
+            )
+            .unwrap();
+        let thread_id = store
+            .list_threads(mail_model::ThreadScope::Mailbox(inbox), false, None, 1)
+            .unwrap()
+            .threads[0]
+            .thread_id;
+        let email_id = store.thread_email_ids(inbox, thread_id).unwrap()[0];
+        let first = store
+            .move_emails(&[email_id], inbox, Some(archive))
+            .unwrap();
+        enqueue_relocation(&store, "alice", first, Some(archive), 0).unwrap();
+        for operation in store.waiting_operations("alice", "move").unwrap() {
+            store.complete_operation(operation.id).unwrap();
+        }
+
+        let second = store
+            .move_emails(&[email_id], archive, Some(trash))
+            .unwrap();
+        enqueue_relocation(&store, "alice", second, Some(trash), 0).unwrap();
+
+        assert_eq!(
+            waiting(&store, "move"),
+            vec![Operation::Move {
+                sources: vec![Source {
+                    email_id,
+                    mailbox_id: archive,
+                    uid: None
                 }],
                 target_mailbox_id: trash
             }]

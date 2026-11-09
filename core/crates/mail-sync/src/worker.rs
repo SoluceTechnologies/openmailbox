@@ -576,6 +576,34 @@ impl Worker {
         Ok(())
     }
 
+    /// Fills in the UID of messages whose last move reached the server before their new
+    /// mailbox was synced, by looking them up by Message-ID. Messages no longer there are dropped.
+    async fn locate_on_server(&mut self, sources: &[Source]) -> Result<Vec<Source>> {
+        let mut located = Vec::with_capacity(sources.len());
+        for source in sources {
+            if source.uid.is_some() {
+                located.push(*source);
+                continue;
+            }
+            let Some(message_id) = self.store.email_message_id(source.email_id)? else {
+                continue;
+            };
+            let remote_name = self.store.mailbox(source.mailbox_id)?.remote_name;
+            let uids = self
+                .with_imap(Some(&remote_name), async |connection| {
+                    connection.search_message_id(&message_id).await
+                })
+                .await?;
+            if let Some(uid) = uids.into_iter().max() {
+                located.push(Source {
+                    uid: Some(uid),
+                    ..*source
+                });
+            }
+        }
+        Ok(located)
+    }
+
     async fn execute(
         &mut self,
         operation: &Operation,
@@ -613,7 +641,8 @@ impl Worker {
                 target_mailbox_id,
             } => {
                 let target = self.store.mailbox(*target_mailbox_id)?.remote_name;
-                for (mailbox_id, uids) in group_by_mailbox(sources) {
+                let sources = self.locate_on_server(sources).await?;
+                for (mailbox_id, uids) in group_by_mailbox(&sources) {
                     let remote_name = self.store.mailbox(mailbox_id)?.remote_name;
                     self.with_imap(Some(&remote_name), async |connection| {
                         connection.move_messages(&uids, &target).await
@@ -625,7 +654,8 @@ impl Worker {
                 Ok(())
             }
             Operation::Delete { sources } => {
-                for (mailbox_id, uids) in group_by_mailbox(sources) {
+                let sources = self.locate_on_server(sources).await?;
+                for (mailbox_id, uids) in group_by_mailbox(&sources) {
                     let remote_name = self.store.mailbox(mailbox_id)?.remote_name;
                     self.with_imap(Some(&remote_name), async |connection| {
                         connection.delete_messages(&uids).await

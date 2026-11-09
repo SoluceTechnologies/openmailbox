@@ -289,6 +289,18 @@ impl Store {
             .ok_or(Error::NotFound)
     }
 
+    pub fn email_message_id(&self, email_id: i64) -> Result<Option<String>> {
+        self.read()
+            .query_row(
+                "SELECT message_id FROM email WHERE id = ?1",
+                [email_id],
+                |row| row.get(0),
+            )
+            .optional()
+            .storage()
+            .map(Option::flatten)
+    }
+
     pub fn reply_context(&self, email_id: i64) -> Result<ReplyContext> {
         let connection = self.read();
         connection
