@@ -78,6 +78,7 @@
     "discard": "Descartar",
     "discardTitle": "Descartar este rascunho?",
     "forward": "Reencaminhar",
+    "forwardedAttachmentsFailed": "Não foi possível transferir os anexos originais, por isso não serão reencaminhados.",
     "forwardedHeader": "---------- Mensagem reencaminhada ----------",
     "from": "De:",
     "headerDate": "Data:",

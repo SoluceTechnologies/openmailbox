@@ -75,6 +75,40 @@ describe('composer', () => {
       expect(forwardedAttachments).toHaveBeenCalledWith('email-1', original);
     });
 
+    it("waits for the original's attachments before a forward can be sent, keeping files picked meanwhile", async () => {
+      mockParams = { mode: 'forward', emailId: 'email-1', threadId: 'thread-1', mailboxId: 'mailbox-inbox' };
+      core.threadEmails.mockResolvedValue([makeEmail({ hasAttachment: true })]);
+      const original = [{ index: 0, filename: 'Plan.pdf', mimeType: 'application/pdf', size: 1_000 }];
+      core.body.mockResolvedValue({ text: 'Voici le plan.', hasRemoteContent: false, attachments: original });
+      let finish: (attachments: (typeof DEVIS)[]) => void = () => undefined;
+      (forwardedAttachments as jest.Mock).mockReturnValue(new Promise((resolve) => (finish = resolve)));
+      renderWithProviders(<ComposeScreen />);
+      await waitFor(() => expect(forwardedAttachments).toHaveBeenCalled());
+      fireEvent.changeText(screen.getByLabelText('To'), 'bob@example.org');
+
+      expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+      await pickFiles([DEVIS]);
+      await act(async () => finish([{ ...DEVIS, path: '/cache/Plan.pdf', filename: 'Plan.pdf', size: 1_000 }]));
+
+      expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
+      expect(screen.getByText('Plan.pdf')).toBeOnTheScreen();
+      expect(screen.getByText('Devis.pdf')).toBeOnTheScreen();
+    });
+
+    it("says when the original's attachments could not be downloaded", async () => {
+      const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+      mockParams = { mode: 'forward', emailId: 'email-1', threadId: 'thread-1', mailboxId: 'mailbox-inbox' };
+      core.threadEmails.mockResolvedValue([makeEmail({ hasAttachment: true })]);
+      const original = [{ index: 0, filename: 'Plan.pdf', mimeType: 'application/pdf', size: 1_000 }];
+      core.body.mockResolvedValue({ text: 'Voici le plan.', hasRemoteContent: false, attachments: original });
+      (forwardedAttachments as jest.Mock).mockRejectedValue(new Error('offline'));
+      renderWithProviders(<ComposeScreen />);
+
+      await waitFor(() => expect(alert).toHaveBeenCalledWith(i18n.t('compose.forwardedAttachmentsFailed')));
+      fireEvent.changeText(screen.getByLabelText('To'), 'bob@example.org');
+      expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
+    });
+
     it('sends the attached files', async () => {
       renderWithProviders(<ComposeScreen />);
       fireEvent.changeText(screen.getByLabelText('To'), 'bob@example.org');

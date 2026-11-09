@@ -78,6 +78,7 @@
     "discard": "Supprimer",
     "discardTitle": "Supprimer ce brouillon ?",
     "forward": "Transférer",
+    "forwardedAttachmentsFailed": "Les pièces jointes d’origine n’ont pas pu être téléchargées : elles ne seront pas transférées.",
     "forwardedHeader": "---------- Message transféré ----------",
     "from": "De :",
     "headerDate": "Date :",

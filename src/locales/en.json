@@ -78,6 +78,7 @@
     "discard": "Discard",
     "discardTitle": "Discard this draft?",
     "forward": "Forward",
+    "forwardedAttachmentsFailed": "The original attachments couldn't be downloaded, so they won't be forwarded.",
     "forwardedHeader": "---------- Forwarded message ----------",
     "from": "From:",
     "headerDate": "Date:",

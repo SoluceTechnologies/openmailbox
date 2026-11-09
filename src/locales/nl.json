@@ -78,6 +78,7 @@
     "discard": "Gooi weg",
     "discardTitle": "Dit concept weggooien?",
     "forward": "Stuur door",
+    "forwardedAttachmentsFailed": "De oorspronkelijke bijlagen konden niet worden gedownload en worden dus niet doorgestuurd.",
     "forwardedHeader": "---------- Doorgestuurd bericht ----------",
     "from": "Van:",
     "headerDate": "Datum:",

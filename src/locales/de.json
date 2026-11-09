@@ -78,6 +78,7 @@
     "discard": "Verwerfen",
     "discardTitle": "Entwurf verwerfen?",
     "forward": "Weiterleiten",
+    "forwardedAttachmentsFailed": "Die ursprünglichen Anhänge konnten nicht geladen werden und werden nicht weitergeleitet.",
     "forwardedHeader": "---------- Weitergeleitete Nachricht ----------",
     "from": "Von:",
     "headerDate": "Datum:",

@@ -78,6 +78,7 @@
     "discard": "Suprimir",
     "discardTitle": "Suprimir aqueste borrolhon ?",
     "forward": "Transferir",
+    "forwardedAttachmentsFailed": "Las pèças juntas d’origina an pas pogut èsser telecargadas : seràn pas transferidas.",
     "forwardedHeader": "---------- Messatge transferit ----------",
     "from": "De :",
     "headerDate": "Data :",

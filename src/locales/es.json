@@ -78,6 +78,7 @@
     "discard": "Descartar",
     "discardTitle": "¿Descartar este borrador?",
     "forward": "Reenviar",
+    "forwardedAttachmentsFailed": "No se han podido descargar los adjuntos originales, así que no se reenviarán.",
     "forwardedHeader": "---------- Mensaje reenviado ----------",
     "from": "De:",
     "headerDate": "Fecha:",

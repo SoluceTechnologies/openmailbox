@@ -78,6 +78,7 @@
     "discard": "Elimina",
     "discardTitle": "Eliminare questa bozza?",
     "forward": "Inoltra",
+    "forwardedAttachmentsFailed": "Non è stato possibile scaricare gli allegati originali, quindi non verranno inoltrati.",
     "forwardedHeader": "---------- Messaggio inoltrato ----------",
     "from": "Da:",
     "headerDate": "Data:",

@@ -63,6 +63,7 @@ export default function ComposeScreen() {
   const [prefilled, setPrefilled] = useState(mode === 'new');
   const [sending, setSending] = useState(false);
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  const [forwarding, setForwarding] = useState(false);
   const [attachMenuVisible, setAttachMenuVisible] = useState(false);
   const bodyInput = useRef<TextInput>(null);
   const [initialContent, setInitialContent] = useState(() => snapshot('', '', '', '', body));
@@ -89,9 +90,11 @@ export default function ComposeScreen() {
     setPrefilled(true);
     const originalAttachments = originalBody.data?.attachments ?? [];
     if (mode === 'forward' && params.emailId && originalAttachments.length > 0) {
+      setForwarding(true);
       forwardedAttachments(params.emailId, originalAttachments)
-        .then(setAttachments)
-        .catch(() => undefined);
+        .then((forwarded) => setAttachments((picked) => [...forwarded, ...picked]))
+        .catch(() => Alert.alert(t('compose.forwardedAttachmentsFailed')))
+        .finally(() => setForwarding(false));
     }
   }, [prefilled, original, originalBody.isLoading, originalBody.data, accounts, mode, t, params.emailId]);
 
@@ -198,7 +201,7 @@ export default function ComposeScreen() {
                 size={40}
                 variant="filled"
                 accessibilityLabel={t('compose.send')}
-                disabled={sending || !prefilled || !hasRecipient}
+                disabled={sending || forwarding || !prefilled || !hasRecipient}
                 onPress={send}
               >
                 <ArrowUp size={20} color={colors.primary} />
