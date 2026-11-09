@@ -414,7 +414,12 @@ impl Worker {
         let local_uids: HashSet<u32> = self.store.local_uids(mailbox.id)?.into_iter().collect();
         let removed: Vec<u32> = local_uids.difference(&server_uids).copied().collect();
         self.store.remove_uids(mailbox.id, &removed)?;
-        let mut new_uids: Vec<u32> = server_uids.difference(&local_uids).copied().collect();
+        let held = operations::held_uids(&self.store, &self.account.id, mailbox.id)?;
+        let mut new_uids: Vec<u32> = server_uids
+            .difference(&local_uids)
+            .filter(|uid| !held.contains(uid))
+            .copied()
+            .collect();
         new_uids.sort_unstable_by(|left, right| right.cmp(left));
         for batch in new_uids.chunks(FETCH_BATCH_SIZE) {
             let summaries = self

@@ -353,6 +353,53 @@ async fn moves_a_thread_out_of_the_trash_and_back_to_the_inbox() {
 
 #[tokio::test(flavor = "multi_thread")]
 #[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn a_thread_waiting_to_be_trashed_stays_out_of_the_inbox_when_it_syncs() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let account = engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(&account.id, format!("Hold {token}"), "Body", None))
+        .unwrap();
+    let thread = eventually(&engine, || thread_with(&engine, &token)).await;
+    tokio::time::sleep(Duration::from_secs(4)).await;
+
+    engine
+        .move_thread(
+            thread.mailbox_id,
+            thread.thread_id,
+            Destination::Trash,
+            Duration::from_secs(60),
+        )
+        .unwrap();
+    assert!(thread_with(&engine, &token).is_none());
+    engine.sync_now(None);
+    tokio::time::sleep(Duration::from_secs(5)).await;
+
+    assert!(
+        thread_with(&engine, &token).is_none(),
+        "the held thread came back into the inbox"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
 async fn sends_an_attachment_that_arrives_intact() {
     ensure_mailboxes().await;
     let directory =

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use mail_model::{Keyword, Result};
 use mail_store::{MessageLocation, OperationRewrite, Store};
@@ -193,6 +193,27 @@ pub fn enqueue_relocation(
     Ok(())
 }
 
+/// UIDs of `mailbox_id` that a waiting move or delete already took out locally: a sync during the
+/// undo hold must not bring them back.
+pub fn held_uids(store: &Store, account_id: &str, mailbox_id: i64) -> Result<HashSet<u32>> {
+    let mut held = HashSet::new();
+    for kind in ["move", "delete"] {
+        for waiting in store.waiting_operations(account_id, kind)? {
+            if let Ok(Operation::Move { sources, .. } | Operation::Delete { sources }) =
+                serde_json::from_str(&waiting.payload)
+            {
+                held.extend(
+                    sources
+                        .iter()
+                        .filter(|source| source.mailbox_id == mailbox_id)
+                        .filter_map(|source| source.uid),
+                );
+            }
+        }
+    }
+    Ok(held)
+}
+
 pub fn enqueue(store: &Store, account_id: &str, operation: &Operation) -> Result<()> {
     store.enqueue_operation(account_id, operation.kind(), &serialize(operation), &[], 0)?;
     Ok(())
@@ -216,6 +237,39 @@ mod tests {
             .into_iter()
             .map(|operation| serde_json::from_str(&operation.payload).unwrap())
             .collect()
+    }
+
+    #[test]
+    fn uids_that_waiting_moves_and_deletes_took_out_are_held() {
+        let store = store();
+        store.insert_account(&account("alice")).unwrap();
+        let source = |mailbox_id, uid| Source {
+            email_id: 1,
+            mailbox_id,
+            uid,
+        };
+        enqueue(
+            &store,
+            "alice",
+            &Operation::Move {
+                sources: vec![source(1, Some(7)), source(2, Some(8)), source(1, None)],
+                target_mailbox_id: 3,
+            },
+        )
+        .unwrap();
+        enqueue(
+            &store,
+            "alice",
+            &Operation::Delete {
+                sources: vec![source(1, Some(9))],
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            held_uids(&store, "alice", 1).unwrap(),
+            std::collections::HashSet::from([7, 9])
+        );
     }
 
     #[test]
