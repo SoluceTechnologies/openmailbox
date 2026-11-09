@@ -245,6 +245,21 @@ pub struct RenderedBody {
     pub text: String,
     pub has_remote_content: bool,
     pub attachments: Vec<Attachment>,
+    pub unsubscribe: Option<Unsubscribe>,
+}
+
+/// The ways a mailing list offers to unsubscribe (RFC 2369 and RFC 8058).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Unsubscribe {
+    pub https_url: Option<String>,
+    pub mailto: Option<String>,
+    pub one_click: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum UnsubscribeOutcome {
+    Done,
+    OpenInBrowser { url: String },
 }
 
 /// Largest total size of the files attached to one outgoing message.

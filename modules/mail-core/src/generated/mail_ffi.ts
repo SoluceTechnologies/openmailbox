@@ -718,11 +718,59 @@ const FfiConverterTypeRelocation = (() => {
     return new FFIConverter();
 })();
 
+export type Unsubscribe = {
+    httpsUrl?: string,
+    mailto?: string,
+    oneClick: boolean
+}
+
+/**
+ * Generated factory for {@link Unsubscribe} record objects.
+ */
+export const Unsubscribe = (() => {
+    const defaults = () => ({
+    });
+    const create = (() => {
+        return uniffiCreateRecord<Unsubscribe, ReturnType<typeof defaults>>(defaults);
+    })();
+    return Object.freeze({
+        create,
+        new: create,
+        defaults: () => Object.freeze(defaults()) as Partial<Unsubscribe>,
+    });
+})();
+
+const FfiConverterTypeUnsubscribe = (() => {
+    type TypeName = Unsubscribe;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            return {
+                httpsUrl: FfiConverterOptionalString.readFromCursor(c), 
+                mailto: FfiConverterOptionalString.readFromCursor(c), 
+                oneClick: FfiConverterBool.readFromCursor(c)
+            };
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            FfiConverterOptionalString.writeIntoCursor(value.httpsUrl, c);
+            FfiConverterOptionalString.writeIntoCursor(value.mailto, c);
+            FfiConverterBool.writeIntoCursor(value.oneClick, c);
+        }
+        allocationSize(value: TypeName): number {
+            return FfiConverterOptionalString.allocationSize(value.httpsUrl) +
+             FfiConverterOptionalString.allocationSize(value.mailto) +
+             FfiConverterBool.allocationSize(value.oneClick);
+            
+        }
+    };
+    return new FFIConverter();
+})();
+
 export type RenderedBody = {
     html?: string,
     text: string,
     hasRemoteContent: boolean,
-    attachments: Array<Attachment>
+    attachments: Array<Attachment>,
+    unsubscribe?: Unsubscribe
 }
 
 /**
@@ -749,7 +797,8 @@ const FfiConverterTypeRenderedBody = (() => {
                 html: FfiConverterOptionalString.readFromCursor(c), 
                 text: FfiConverterString.readFromCursor(c), 
                 hasRemoteContent: FfiConverterBool.readFromCursor(c), 
-                attachments: FfiConverterSequenceTypeAttachment.readFromCursor(c)
+                attachments: FfiConverterSequenceTypeAttachment.readFromCursor(c), 
+                unsubscribe: FfiConverterOptionalTypeUnsubscribe.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
@@ -757,12 +806,14 @@ const FfiConverterTypeRenderedBody = (() => {
             FfiConverterString.writeIntoCursor(value.text, c);
             FfiConverterBool.writeIntoCursor(value.hasRemoteContent, c);
             FfiConverterSequenceTypeAttachment.writeIntoCursor(value.attachments, c);
+            FfiConverterOptionalTypeUnsubscribe.writeIntoCursor(value.unsubscribe, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterOptionalString.allocationSize(value.html) +
              FfiConverterString.allocationSize(value.text) +
              FfiConverterBool.allocationSize(value.hasRemoteContent) +
-             FfiConverterSequenceTypeAttachment.allocationSize(value.attachments);
+             FfiConverterSequenceTypeAttachment.allocationSize(value.attachments) +
+             FfiConverterOptionalTypeUnsubscribe.allocationSize(value.unsubscribe);
             
         }
     };
@@ -2152,6 +2203,130 @@ const FfiConverterTypeThreadScope = (() => {
     return new FFIConverter();
 })();
 
+
+// Enum: UnsubscribeOutcome
+export enum UnsubscribeOutcome_Tags {
+    Done = "Done",
+    OpenInBrowser = "OpenInBrowser"
+}
+export const UnsubscribeOutcome = (() => {
+
+    type Done__interface = {
+        tag: UnsubscribeOutcome_Tags.Done
+    };
+    class Done_ extends UniffiEnum implements Done__interface {
+        /**
+         * @private
+         * This field is private and should not be used, use `tag` instead.
+         */
+        readonly [uniffiTypeNameSymbol] = "UnsubscribeOutcome";
+        readonly tag = UnsubscribeOutcome_Tags.Done;
+        constructor() {
+            super("UnsubscribeOutcome", "Done");
+        }
+
+        static new(): Done_ {
+            return new Done_();
+        }
+
+        static instanceOf(obj: any): obj is Done_ {
+            return obj.tag === UnsubscribeOutcome_Tags.Done;
+        }
+
+    }
+
+    type OpenInBrowser__interface = {
+        tag: UnsubscribeOutcome_Tags.OpenInBrowser;
+        inner: 
+Readonly<{url: string}>
+    };
+    class OpenInBrowser_ extends UniffiEnum implements OpenInBrowser__interface {
+        /**
+         * @private
+         * This field is private and should not be used, use `tag` instead.
+         */
+        readonly [uniffiTypeNameSymbol] = "UnsubscribeOutcome";
+        readonly tag = UnsubscribeOutcome_Tags.OpenInBrowser;
+        readonly inner: 
+Readonly<{url: string}>;
+        constructor(
+inner: {url: string }) {
+            super("UnsubscribeOutcome", "OpenInBrowser");
+
+            this.inner = Object.freeze(inner);
+        }
+        static new(
+inner: {url: string }): OpenInBrowser_ {
+            return new OpenInBrowser_(inner);
+        }
+
+        static instanceOf(obj: any): obj is OpenInBrowser_ {
+            return obj.tag === UnsubscribeOutcome_Tags.OpenInBrowser;
+        }
+
+    }
+
+    function instanceOf(obj: any): obj is UnsubscribeOutcome {
+        return obj[uniffiTypeNameSymbol] === "UnsubscribeOutcome";
+    }
+
+    return Object.freeze({
+        instanceOf,
+  Done: Done_, 
+  OpenInBrowser: OpenInBrowser_
+    });
+
+})();
+export type UnsubscribeOutcome = InstanceType<
+    typeof UnsubscribeOutcome['Done' | 'OpenInBrowser']
+>;
+
+// FfiConverter for enum UnsubscribeOutcome
+const FfiConverterTypeUnsubscribeOutcome = (() => {
+    type TypeName = UnsubscribeOutcome;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            switch (c.readI32()) {
+                case 1: return new UnsubscribeOutcome.Done();
+                case 2: return new UnsubscribeOutcome.OpenInBrowser({url: FfiConverterString.readFromCursor(c) });
+                default: throw new UniffiInternalError.UnexpectedEnumCase();
+            }
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            switch (value.tag) {
+                case UnsubscribeOutcome_Tags.Done: {
+                    c.writeI32(1);
+                    return;
+                }
+                case UnsubscribeOutcome_Tags.OpenInBrowser: {
+                    c.writeI32(2);
+                    const inner = value.inner;
+                    FfiConverterString.writeIntoCursor(inner.url, c);
+                    return;
+                }
+                default:
+                    // Throwing from here means that UnsubscribeOutcome_Tags hasn't matched an ordinal.
+                    throw new UniffiInternalError.UnexpectedEnumCase();
+            }
+        }
+        allocationSize(value: TypeName): number {
+            switch (value.tag) {
+                case UnsubscribeOutcome_Tags.Done: {
+                    return 4;
+                }
+                case UnsubscribeOutcome_Tags.OpenInBrowser: {
+                    const inner = value.inner;
+                    let size = 4;
+                    size += FfiConverterString.allocationSize(inner.url);
+                    return size;
+                }
+                default: throw new UniffiInternalError.UnexpectedEnumCase();
+            }
+        }
+    }
+    return new FFIConverter();
+})();
+
 export interface EventListener {
     
     onEvent(event: CoreEvent): void;
@@ -2324,6 +2499,7 @@ export interface MailCoreLike {
     syncNow(accountId: string | undefined): void;
     threadEmails(threadId: string, contextMailboxId: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<EmailSummary>>;
     unlockAccount(accountId: string, secret: string): void;
+    unsubscribe(emailId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<UnsubscribeOutcome>;
     updatePassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
 }
 /**
@@ -3048,6 +3224,47 @@ private constructor(pointer: UniffiHandle) {
     );
     }
     
+    async unsubscribe(emailId: string, asyncOpts_?: { signal: AbortSignal }): Promise<UnsubscribeOutcome> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_unsubscribe(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(emailId, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterTypeUnsubscribeOutcome.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
     async updatePassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3163,6 +3380,9 @@ const FfiConverterSequenceString = new FfiConverterArray(FfiConverterString);
 // FfiConverter for Array<Attachment>
 const FfiConverterSequenceTypeAttachment = new FfiConverterArray(FfiConverterTypeAttachment);
 
+// FfiConverter for Unsubscribe | undefined
+const FfiConverterOptionalTypeUnsubscribe = new FfiConverterOptional(FfiConverterTypeUnsubscribe);
+
 // FfiConverter for Array<ThreadSummary>
 const FfiConverterSequenceTypeThreadSummary = new FfiConverterArray(FfiConverterTypeThreadSummary);
 
@@ -3275,6 +3495,9 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_unlock_account() !== 18429) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_unlock_account");
     }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_unsubscribe() !== 41042) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_unsubscribe");
+    }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_password() !== 26042) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_update_password");
     }
@@ -3310,5 +3533,7 @@ export default Object.freeze({
     FfiConverterTypeThreadPage,
     FfiConverterTypeThreadScope,
     FfiConverterTypeThreadSummary,
+    FfiConverterTypeUnsubscribe,
+    FfiConverterTypeUnsubscribeOutcome,
   }
 });

@@ -97,6 +97,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_fn_method_mailcore_sync_now(uniffiSelf: bigint, accountId: Uint8Array, uniffi_out_err: UniffiRustCallStatus): void;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_thread_emails(uniffiSelf: bigint, threadId: Uint8Array, contextMailboxId: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_unlock_account(uniffiSelf: bigint, accountId: Uint8Array, secret: Uint8Array, uniffi_out_err: UniffiRustCallStatus): void;
+    ubrn_uniffi_mail_ffi_fn_method_mailcore_unsubscribe(uniffiSelf: bigint, emailId: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_update_password(uniffiSelf: bigint, accountId: Uint8Array, secret: Uint8Array): bigint;
     ubrn_ffi_mail_ffi_uniffi_contract_version(): number;
     ubrn_uniffi_mail_ffi_checksum_method_eventlistener_on_event(): number;
@@ -124,6 +125,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_sync_now(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_thread_emails(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_unlock_account(): number;
+    ubrn_uniffi_mail_ffi_checksum_method_mailcore_unsubscribe(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_password(): number;
     ubrn_uniffi_internal_fn_method_eventlistener_ffi__bless_pointer(pointer: bigint, uniffi_out_err: UniffiRustCallStatus): UniffiGcObject;
     ubrn_uniffi_internal_fn_method_mailcore_ffi__bless_pointer(pointer: bigint, uniffi_out_err: UniffiRustCallStatus): UniffiGcObject;

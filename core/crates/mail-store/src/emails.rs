@@ -319,7 +319,7 @@ impl Store {
         let connection = self.read();
         connection
             .query_row(
-                "SELECT html, text, attachments_json, has_remote_content FROM email_body WHERE email_id = ?1",
+                "SELECT html, text, attachments_json, has_remote_content, unsubscribe_json FROM email_body WHERE email_id = ?1",
                 [email_id],
                 |row| {
                     Ok(RenderedBody {
@@ -327,6 +327,9 @@ impl Store {
                         text: row.get(1)?,
                         attachments: serde_json::from_str(&row.get::<_, String>(2)?).unwrap_or_default(),
                         has_remote_content: row.get(3)?,
+                        unsubscribe: row
+                            .get::<_, Option<String>>(4)?
+                            .and_then(|json| serde_json::from_str(&json).ok()),
                     })
                 },
             )
@@ -338,14 +341,17 @@ impl Store {
         self.write(|transaction| {
             transaction
                 .execute(
-                    "INSERT OR REPLACE INTO email_body (email_id, html, text, attachments_json, has_remote_content)
-                     VALUES (?1, ?2, ?3, ?4, ?5)",
+                    "INSERT OR REPLACE INTO email_body (email_id, html, text, attachments_json, has_remote_content, unsubscribe_json)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
                     params![
                         email_id,
                         body.html,
                         body.text,
                         serde_json::to_string(&body.attachments).unwrap_or_else(|_| "[]".into()),
                         body.has_remote_content,
+                        body.unsubscribe
+                            .as_ref()
+                            .and_then(|unsubscribe| serde_json::to_string(unsubscribe).ok()),
                     ],
                 )
                 .storage()?;

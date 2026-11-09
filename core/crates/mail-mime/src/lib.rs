@@ -6,7 +6,7 @@ use lettre::message::header::ContentType;
 use lettre::message::{
     Attachment as LettreAttachment, Mailbox as LettreMailbox, MessageBuilder, MultiPart, SinglePart,
 };
-use mail_model::{Address, Attachment, Error, ParsedHeaders, RenderedBody, Result};
+use mail_model::{Address, Attachment, Error, ParsedHeaders, RenderedBody, Result, Unsubscribe};
 use mail_parser::{AddressList, Message, MessageParser};
 
 const PREVIEW_LENGTH: usize = 180;
@@ -150,6 +150,38 @@ pub fn render(raw: &[u8]) -> Result<RenderedBody> {
         text,
         has_remote_content,
         attachments,
+        unsubscribe: unsubscribe(&message),
+    })
+}
+
+fn unsubscribe(message: &Message) -> Option<Unsubscribe> {
+    let list = message.list_unsubscribe()?;
+    let targets: Vec<&str> = list
+        .mailboxes()
+        .filter_map(|mailbox| mailbox.address())
+        .collect();
+    let https_url = targets
+        .iter()
+        .find(|target| target.to_ascii_lowercase().starts_with("https://"))
+        .map(|target| (*target).to_owned());
+    let mailto = targets
+        .iter()
+        .find(|target| target.to_ascii_lowercase().starts_with("mailto:"))
+        .map(|target| (*target).to_owned());
+    if https_url.is_none() && mailto.is_none() {
+        return None;
+    }
+    let one_click = https_url.is_some()
+        && message
+            .headers()
+            .get("List-Unsubscribe-Post")
+            .is_some_and(|post| {
+                String::from_utf8_lossy(post.raw_value()).contains("List-Unsubscribe=One-Click")
+            });
+    Some(Unsubscribe {
+        https_url,
+        mailto,
+        one_click,
     })
 }
 
@@ -447,5 +479,39 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
             render(&raw).unwrap().attachments[0].mime_type,
             "application/octet-stream"
         );
+    }
+
+    fn unsubscribe_of(headers: &str) -> Option<Unsubscribe> {
+        let raw = format!(
+            "From: news@x.example\r\nTo: bob@example.com\r\nSubject: News\r\n{headers}Content-Type: text/plain\r\n\r\nHello\r\n"
+        );
+        render(raw.as_bytes()).unwrap().unsubscribe
+    }
+
+    #[test]
+    fn parses_list_unsubscribe_variants() {
+        assert_eq!(
+            unsubscribe_of(
+                "List-Unsubscribe: <https://x.example/u?id=1>, <mailto:leave@x.example?subject=stop>\r\nList-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n"
+            ),
+            Some(Unsubscribe {
+                https_url: Some("https://x.example/u?id=1".into()),
+                mailto: Some("mailto:leave@x.example?subject=stop".into()),
+                one_click: true,
+            })
+        );
+        assert_eq!(
+            unsubscribe_of("List-Unsubscribe: <mailto:leave@x.example>\r\n"),
+            Some(Unsubscribe {
+                https_url: None,
+                mailto: Some("mailto:leave@x.example".into()),
+                one_click: false,
+            })
+        );
+        assert_eq!(
+            unsubscribe_of("List-Unsubscribe: <http://x.example/u>\r\n"),
+            None
+        );
+        assert_eq!(unsubscribe_of(""), None);
     }
 }

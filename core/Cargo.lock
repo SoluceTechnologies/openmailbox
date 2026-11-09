@@ -997,11 +997,14 @@ dependencies = [
  "mail-mime",
  "mail-model",
  "mail-store",
+ "percent-encoding",
  "proto-imap",
  "proto-smtp",
  "serde",
  "serde_json",
  "tokio",
+ "ureq",
+ "url",
  "uuid",
 ]
 

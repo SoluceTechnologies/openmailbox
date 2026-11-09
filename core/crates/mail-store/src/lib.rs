@@ -17,6 +17,7 @@ pub use operations::{OperationRewrite, PendingOperation};
 const MIGRATIONS: &[&str] = &[
     include_str!("migrations/0001_initial.sql"),
     include_str!("migrations/0002_search_by_date.sql"),
+    include_str!("migrations/0003_unsubscribe.sql"),
 ];
 
 pub struct Store {

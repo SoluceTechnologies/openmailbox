@@ -12,7 +12,7 @@ use mail_mime::{AttachmentContent, OutgoingMessage};
 use mail_model::{
     Account, AccountConfig, Address, CoreEvent, Draft, EmailSummary, Error, Keyword,
     MAX_ATTACHMENTS_BYTES, Mailbox, MailboxRole, OutgoingAttachment, RenderedBody, Result,
-    ServerConfig, ThreadPage, ThreadScope, now_millis,
+    ServerConfig, ThreadPage, ThreadScope, UnsubscribeOutcome, now_millis,
 };
 use mail_store::Store;
 use tokio::runtime::Handle;
@@ -27,6 +27,7 @@ use worker::{Command, Secret, Worker};
 const PERIODIC_SYNC_INTERVAL: Duration = Duration::from_secs(3 * 60);
 const IDLE_RENEWAL: Duration = Duration::from_secs(25 * 60);
 const IDLE_RECONNECT_DELAY: Duration = Duration::from_secs(30);
+const UNSUBSCRIBE_TIMEOUT: Duration = Duration::from_secs(15);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Destination {
@@ -442,6 +443,55 @@ impl Engine {
         Ok(())
     }
 
+    /// One-click unsubscribe when the list offers it, then a mail to the list's address, and as a
+    /// last resort the list's web page, which the app opens.
+    pub fn unsubscribe(&self, email_id: i64) -> Result<UnsubscribeOutcome> {
+        let not_a_list = || Error::InvalidInput("not from a mailing list".into());
+        let unsubscribe = self
+            .store
+            .body(email_id)?
+            .and_then(|body| body.unsubscribe)
+            .ok_or_else(not_a_list)?;
+        if let (true, Some(url)) = (unsubscribe.one_click, unsubscribe.https_url.as_deref()) {
+            match post_one_click(url) {
+                Ok(()) => return Ok(UnsubscribeOutcome::Done),
+                Err(error) if unsubscribe.mailto.is_none() => return Err(error),
+                Err(_) => {}
+            }
+        }
+        if let Some(mailto) = unsubscribe.mailto.as_deref() {
+            self.send(self.unsubscribe_draft(email_id, mailto)?)?;
+            return Ok(UnsubscribeOutcome::Done);
+        }
+        unsubscribe
+            .https_url
+            .map(|url| UnsubscribeOutcome::OpenInBrowser { url })
+            .ok_or_else(not_a_list)
+    }
+
+    fn unsubscribe_draft(&self, email_id: i64, mailto: &str) -> Result<Draft> {
+        let url = url::Url::parse(mailto)
+            .map_err(|_| Error::InvalidInput(format!("invalid unsubscribe address: {mailto}")))?;
+        let email = percent_encoding::percent_decode_str(url.path())
+            .decode_utf8_lossy()
+            .into_owned();
+        let parameter = |name: &str| {
+            url.query_pairs()
+                .find(|(key, _)| key.eq_ignore_ascii_case(name))
+                .map(|(_, value)| value.into_owned())
+        };
+        Ok(Draft {
+            account_id: self.store.account_of_email(email_id)?,
+            to: vec![Address { name: None, email }],
+            cc: vec![],
+            bcc: vec![],
+            subject: parameter("subject").unwrap_or_else(|| "unsubscribe".into()),
+            body_text: parameter("body").unwrap_or_else(|| "unsubscribe".into()),
+            in_reply_to_email_id: None,
+            attachments: vec![],
+        })
+    }
+
     pub fn sync_now(&self, account_id: Option<&str>) {
         let account_ids: Vec<String> = match account_id {
             Some(account_id) => vec![account_id.to_owned()],
@@ -599,6 +649,18 @@ async fn watch_inbox(
     }
 }
 
+fn post_one_click(url: &str) -> Result<()> {
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(UNSUBSCRIBE_TIMEOUT))
+        .build()
+        .into();
+    agent
+        .post(url)
+        .send_form([("List-Unsubscribe", "One-Click")])
+        .map(|_| ())
+        .map_err(|error| Error::Network(error.to_string()))
+}
+
 fn read_attachments(attachments: &[OutgoingAttachment]) -> Result<Vec<AttachmentContent>> {
     let unreadable = |attachment: &OutgoingAttachment| {
         Error::InvalidInput(format!("cannot read attachment {}", attachment.filename))
@@ -664,7 +726,8 @@ pub(crate) mod test_support {
 mod tests {
     use mail_model::{
         Address, FetchedMessage, Flags, MAX_ATTACHMENTS_BYTES, MailboxRole, OutgoingAttachment,
-        ParsedHeaders, RemoteMailbox, ThreadScope, now_millis,
+        ParsedHeaders, RemoteMailbox, RenderedBody, ThreadScope, Unsubscribe, UnsubscribeOutcome,
+        now_millis,
     };
 
     use super::*;
@@ -958,5 +1021,125 @@ mod tests {
         let rendered = mail_mime::render(raw.as_bytes()).unwrap();
         assert_eq!(rendered.attachments[0].filename, "plan.pdf");
         assert_eq!(rendered.attachments[0].size, 2_048);
+    }
+
+    fn newsletter(fixture: &Fixture, unsubscribe: Unsubscribe) -> i64 {
+        let (_, email_ids) = fixture.deliver(fixture.id(MailboxRole::Inbox), 9);
+        fixture
+            .engine
+            .store
+            .save_body(
+                email_ids[0],
+                &RenderedBody {
+                    html: None,
+                    text: "News".into(),
+                    has_remote_content: false,
+                    attachments: vec![],
+                    unsubscribe: Some(unsubscribe),
+                },
+            )
+            .unwrap();
+        email_ids[0]
+    }
+
+    #[test]
+    fn one_click_unsubscribe_posts_the_form() {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let server = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut request = Vec::new();
+            let mut chunk = [0; 1024];
+            loop {
+                let read = stream.read(&mut chunk).unwrap();
+                request.extend_from_slice(&chunk[..read]);
+                let text = String::from_utf8_lossy(&request).into_owned();
+                let Some((head, body)) = text.split_once("\r\n\r\n") else {
+                    continue;
+                };
+                let length = head
+                    .lines()
+                    .find_map(|line| {
+                        line.to_ascii_lowercase()
+                            .strip_prefix("content-length:")
+                            .map(|value| value.trim().parse::<usize>().unwrap())
+                    })
+                    .unwrap_or(0);
+                if body.len() >= length || read == 0 {
+                    break;
+                }
+            }
+            stream
+                .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                .unwrap();
+            String::from_utf8_lossy(&request).into_owned()
+        });
+        let fixture = Fixture::new(STANDARD);
+        let email_id = newsletter(
+            &fixture,
+            Unsubscribe {
+                https_url: Some(format!("http://127.0.0.1:{port}/u?id=1")),
+                mailto: None,
+                one_click: true,
+            },
+        );
+
+        let outcome = fixture.engine.unsubscribe(email_id).unwrap();
+
+        let request = server.join().unwrap();
+        assert_eq!(outcome, UnsubscribeOutcome::Done);
+        assert!(request.starts_with("POST /u?id=1 "));
+        assert!(request.ends_with("List-Unsubscribe=One-Click"));
+    }
+
+    #[test]
+    fn mailto_unsubscribe_queues_a_message() {
+        let fixture = Fixture::new(STANDARD);
+        let email_id = newsletter(
+            &fixture,
+            Unsubscribe {
+                https_url: None,
+                mailto: Some("mailto:leave@x.example?subject=stop%20now".into()),
+                one_click: false,
+            },
+        );
+
+        let outcome = fixture.engine.unsubscribe(email_id).unwrap();
+
+        assert_eq!(outcome, UnsubscribeOutcome::Done);
+        let queued = fixture
+            .engine
+            .store
+            .waiting_operations("alice", "send")
+            .unwrap();
+        let Operation::Send {
+            raw, recipients, ..
+        } = serde_json::from_str(&queued[0].payload).unwrap()
+        else {
+            panic!("not a send");
+        };
+        assert_eq!(recipients, vec!["leave@x.example"]);
+        assert!(raw.contains("Subject: stop now"));
+    }
+
+    #[test]
+    fn web_only_unsubscribe_asks_the_app_to_open_it() {
+        let fixture = Fixture::new(STANDARD);
+        let email_id = newsletter(
+            &fixture,
+            Unsubscribe {
+                https_url: Some("https://x.example/u".into()),
+                mailto: None,
+                one_click: false,
+            },
+        );
+
+        assert_eq!(
+            fixture.engine.unsubscribe(email_id).unwrap(),
+            UnsubscribeOutcome::OpenInBrowser {
+                url: "https://x.example/u".into()
+            }
+        );
     }
 }

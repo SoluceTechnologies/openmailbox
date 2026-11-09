@@ -170,6 +170,20 @@ pub struct RenderedBody {
     pub text: String,
     pub has_remote_content: bool,
     pub attachments: Vec<Attachment>,
+    pub unsubscribe: Option<Unsubscribe>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct Unsubscribe {
+    pub https_url: Option<String>,
+    pub mailto: Option<String>,
+    pub one_click: bool,
+}
+
+#[derive(Debug, Clone, uniffi::Enum)]
+pub enum UnsubscribeOutcome {
+    Done,
+    OpenInBrowser { url: String },
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -445,6 +459,11 @@ impl From<mail_model::RenderedBody> for RenderedBody {
                     size: attachment.size as f64,
                 })
                 .collect(),
+            unsubscribe: body.unsubscribe.map(|unsubscribe| Unsubscribe {
+                https_url: unsubscribe.https_url,
+                mailto: unsubscribe.mailto,
+                one_click: unsubscribe.one_click,
+            }),
         }
     }
 }
@@ -680,6 +699,19 @@ impl MailCore {
             .asynchronous(async move |engine| engine.body(email_id).await)
             .await?
             .into())
+    }
+
+    pub async fn unsubscribe(&self, email_id: String) -> CoreResult<UnsubscribeOutcome> {
+        let email_id = parse_id(&email_id)?;
+        self.blocking(move |engine| {
+            engine.unsubscribe(email_id).map(|outcome| match outcome {
+                mail_model::UnsubscribeOutcome::Done => UnsubscribeOutcome::Done,
+                mail_model::UnsubscribeOutcome::OpenInBrowser { url } => {
+                    UnsubscribeOutcome::OpenInBrowser { url }
+                }
+            })
+        })
+        .await
     }
 
     pub async fn save_attachment(

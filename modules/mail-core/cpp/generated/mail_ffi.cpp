@@ -282,6 +282,10 @@ extern "C" {
         RustBuffer secret, 
         RustCallStatus *uniffi_out_err
     );
+    /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_unsubscribe(
+        /*handle*/ uint64_t ptr, 
+        RustBuffer email_id
+    );
     /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_update_password(
         /*handle*/ uint64_t ptr, 
         RustBuffer account_id, 
@@ -531,6 +535,8 @@ extern "C" {
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_thread_emails(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_unlock_account(
+    );
+    uint16_t uniffi_mail_ffi_checksum_method_mailcore_unsubscribe(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_update_password(
     );
@@ -2684,6 +2690,14 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_unlock_account(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_fn_method_mailcore_unsubscribe"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_unsubscribe"),
+        2,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_fn_method_mailcore_unsubscribe(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_fn_method_mailcore_update_password"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_update_password"),
@@ -3268,6 +3282,14 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_unlock_account(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_unsubscribe"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_unsubscribe"),
+        0,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_unsubscribe(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_password"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_password"),
@@ -3736,6 +3758,13 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_unlock_account(
 
         
         return jsi::Value::undefined();
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_unsubscribe(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_fn_method_mailcore_unsubscribe(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1])
+        );
+
+        
+        return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_update_password(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_fn_method_mailcore_update_password(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[2])
@@ -4279,6 +4308,13 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_thread_em
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_unlock_account(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_checksum_method_mailcore_unlock_account(
+        );
+
+        
+        return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_unsubscribe(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_checksum_method_mailcore_unsubscribe(
         );
 
         
