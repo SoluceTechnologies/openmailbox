@@ -163,6 +163,9 @@
   },
   "threads": {
     "archive": "В архив",
+    "deleteForever": "Удалить навсегда",
+    "deleteForeverMessage": "Письма будут удалены с сервера. Это действие нельзя отменить.",
+    "deleteForeverTitle": "Удалить навсегда?",
     "empty": "Нет писем",
     "emptyHint": "Новые письма появятся здесь.",
     "emptyUnread": "Нет непрочитанных писем",
@@ -181,6 +184,14 @@
     "unreadCount_many": "{{count}} непрочитанных",
     "unreadCount_one": "{{count}} непрочитанное",
     "unreadCount_other": "{{count}} непрочитанных"
+  },
+  "undo": {
+    "archived": "В архиве",
+    "moved": "Перемещено в {{mailbox}}",
+    "movedToInbox": "Перемещено во входящие",
+    "movedToJunk": "Перемещено в спам",
+    "trashed": "Перемещено в корзину",
+    "undo": "Отменить"
   },
   "units": {
     "bytes": "{{value}} Б",

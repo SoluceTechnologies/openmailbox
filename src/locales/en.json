@@ -163,6 +163,9 @@
   },
   "threads": {
     "archive": "Archive",
+    "deleteForever": "Delete Permanently",
+    "deleteForeverMessage": "The messages will be deleted from the server. This can't be undone.",
+    "deleteForeverTitle": "Delete permanently?",
     "empty": "No Mail",
     "emptyHint": "New messages will appear here.",
     "emptyUnread": "No Unread Mail",
@@ -179,6 +182,14 @@
     "unread": "Unread",
     "unreadCount_one": "{{count}} unread",
     "unreadCount_other": "{{count}} unread"
+  },
+  "undo": {
+    "archived": "Archived",
+    "moved": "Moved to {{mailbox}}",
+    "movedToInbox": "Moved to Inbox",
+    "movedToJunk": "Moved to Junk",
+    "trashed": "Moved to Trash",
+    "undo": "Undo"
   },
   "units": {
     "bytes": "{{value}} B",

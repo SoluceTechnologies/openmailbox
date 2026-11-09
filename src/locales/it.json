@@ -163,6 +163,9 @@
   },
   "threads": {
     "archive": "Archivia",
+    "deleteForever": "Elimina definitivamente",
+    "deleteForeverMessage": "I messaggi verranno eliminati dal server. L'operazione non può essere annullata.",
+    "deleteForeverTitle": "Eliminare definitivamente?",
     "empty": "Nessun messaggio",
     "emptyHint": "I nuovi messaggi appariranno qui.",
     "emptyUnread": "Nessun messaggio da leggere",
@@ -179,6 +182,14 @@
     "unread": "Da leggere",
     "unreadCount_one": "{{count}} da leggere",
     "unreadCount_other": "{{count}} da leggere"
+  },
+  "undo": {
+    "archived": "Archiviato",
+    "moved": "Spostato in {{mailbox}}",
+    "movedToInbox": "Spostato in Posta in arrivo",
+    "movedToJunk": "Spostato in Indesiderata",
+    "trashed": "Spostato nel cestino",
+    "undo": "Annulla"
   },
   "units": {
     "bytes": "{{value}} B",

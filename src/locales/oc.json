@@ -163,6 +163,9 @@
   },
   "threads": {
     "archive": "Archivar",
+    "deleteForever": "Suprimir definitivament",
+    "deleteForeverMessage": "Los messatges seràn suprimits del servidor. Aquesta accion es irreversibla.",
+    "deleteForeverTitle": "Suprimir definitivament ?",
     "empty": "Cap de messatge",
     "emptyHint": "Los messatges novèls apareisseràn aquí.",
     "emptyUnread": "Cap de messatge pas legit",
@@ -179,6 +182,14 @@
     "unread": "Pas legit",
     "unreadCount_one": "{{count}} pas legit",
     "unreadCount_other": "{{count}} pas legits"
+  },
+  "undo": {
+    "archived": "Archivat",
+    "moved": "Desplaçat cap a {{mailbox}}",
+    "movedToInbox": "Mes dins la bóstia de recepcion",
+    "movedToJunk": "Mes dins los indesirables",
+    "trashed": "Mes a l'escobilhièr",
+    "undo": "Anullar"
   },
   "units": {
     "bytes": "{{value}} o",

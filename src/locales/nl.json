@@ -163,6 +163,9 @@
   },
   "threads": {
     "archive": "Archiveer",
+    "deleteForever": "Definitief verwijderen",
+    "deleteForeverMessage": "De berichten worden van de server verwijderd. Dit kan niet ongedaan worden gemaakt.",
+    "deleteForeverTitle": "Definitief verwijderen?",
     "empty": "Geen e-mail",
     "emptyHint": "Nieuwe berichten verschijnen hier.",
     "emptyUnread": "Geen ongelezen e-mail",
@@ -179,6 +182,14 @@
     "unread": "Ongelezen",
     "unreadCount_one": "{{count}} ongelezen",
     "unreadCount_other": "{{count}} ongelezen"
+  },
+  "undo": {
+    "archived": "Gearchiveerd",
+    "moved": "Verplaatst naar {{mailbox}}",
+    "movedToInbox": "Naar inbox verplaatst",
+    "movedToJunk": "Naar ongewenst verplaatst",
+    "trashed": "Naar prullenbak verplaatst",
+    "undo": "Ongedaan maken"
   },
   "units": {
     "bytes": "{{value}} B",

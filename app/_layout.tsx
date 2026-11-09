@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import FakeSplash from '@/components/FakeSplash';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { Providers } from '@/components/Providers';
+import { UndoToast } from '@/components/UndoToast';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useLanguageSync } from '@/hooks/useLanguageSync';
 import { useSyncOnReconnect } from '@/hooks/useSyncOnReconnect';
@@ -37,6 +38,7 @@ export default function RootLayout() {
         <ThemedStatusBar />
         {isReady ? <OfflineBanner /> : null}
         {isReady ? <Navigator /> : <FakeSplash />}
+        {isReady ? <UndoToast /> : null}
       </View>
     </Providers>
   );

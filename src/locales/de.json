@@ -163,6 +163,9 @@
   },
   "threads": {
     "archive": "Archivieren",
+    "deleteForever": "Endgültig löschen",
+    "deleteForeverMessage": "Die Nachrichten werden vom Server gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "deleteForeverTitle": "Endgültig löschen?",
     "empty": "Keine E-Mails",
     "emptyHint": "Neue Nachrichten erscheinen hier.",
     "emptyUnread": "Keine ungelesenen E-Mails",
@@ -179,6 +182,14 @@
     "unread": "Ungelesen",
     "unreadCount_one": "{{count}} ungelesen",
     "unreadCount_other": "{{count}} ungelesen"
+  },
+  "undo": {
+    "archived": "Archiviert",
+    "moved": "Nach {{mailbox}} verschoben",
+    "movedToInbox": "In den Posteingang verschoben",
+    "movedToJunk": "In Werbung verschoben",
+    "trashed": "In den Papierkorb gelegt",
+    "undo": "Widerrufen"
   },
   "units": {
     "bytes": "{{value}} B",

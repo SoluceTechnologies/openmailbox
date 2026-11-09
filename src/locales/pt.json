@@ -163,6 +163,9 @@
   },
   "threads": {
     "archive": "Arquivar",
+    "deleteForever": "Eliminar definitivamente",
+    "deleteForeverMessage": "As mensagens serão eliminadas do servidor. Não é possível anular.",
+    "deleteForeverTitle": "Eliminar definitivamente?",
     "empty": "Sem correio",
     "emptyHint": "As novas mensagens aparecerão aqui.",
     "emptyUnread": "Sem correio por ler",
@@ -179,6 +182,14 @@
     "unread": "Por ler",
     "unreadCount_one": "{{count}} por ler",
     "unreadCount_other": "{{count}} por ler"
+  },
+  "undo": {
+    "archived": "Arquivado",
+    "moved": "Movido para {{mailbox}}",
+    "movedToInbox": "Movido para a caixa de entrada",
+    "movedToJunk": "Movido para lixo eletrónico",
+    "trashed": "Movido para o lixo",
+    "undo": "Anular"
   },
   "units": {
     "bytes": "{{value}} B",

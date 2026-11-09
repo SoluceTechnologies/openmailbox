@@ -163,6 +163,9 @@
   },
   "threads": {
     "archive": "Archiver",
+    "deleteForever": "Supprimer définitivement",
+    "deleteForeverMessage": "Les messages seront supprimés du serveur. Cette action est irréversible.",
+    "deleteForeverTitle": "Supprimer définitivement ?",
     "empty": "Aucun message",
     "emptyHint": "Les nouveaux messages apparaîtront ici.",
     "emptyUnread": "Aucun message non lu",
@@ -179,6 +182,14 @@
     "unread": "Non lu",
     "unreadCount_one": "{{count}} non lu",
     "unreadCount_other": "{{count}} non lus"
+  },
+  "undo": {
+    "archived": "Archivé",
+    "moved": "Déplacé vers {{mailbox}}",
+    "movedToInbox": "Remis dans la boîte de réception",
+    "movedToJunk": "Placé dans les indésirables",
+    "trashed": "Placé dans la corbeille",
+    "undo": "Annuler"
   },
   "units": {
     "bytes": "{{value}} o",
