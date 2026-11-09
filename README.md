@@ -38,7 +38,7 @@ Every action is applied locally first, then replayed against the server by the c
 ## Requirements
 
 - Node 22 and Yarn 4 (`corepack enable`)
-- Rust through rustup; `core/rust-toolchain.toml` pins the version and targets
+- Rust through rustup; `core/rust-toolchain.toml` pins the version and targets, which `yarn core:*` installs
 - Android: SDK, NDK 27 and `cargo install cargo-ndk`
 - iOS: macOS with Xcode
 
@@ -59,7 +59,6 @@ Rust core itself is built into `OpenmailboxMailCoreFramework.xcframework`, which
 Xcode. Installing on an iPhone for more than seven days needs a paid Apple Developer account.
 
 ```bash
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim
 yarn core:ios        # or yarn core:ios:dev to trust the local test server
 npx expo run:ios --device
 ```

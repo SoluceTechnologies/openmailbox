@@ -9,6 +9,10 @@ platform="${1:?android or ios}"
 shift
 
 toolchain="$(sed -n 's/^channel = "\(.*\)"/\1/p' "$root/core/rust-toolchain.toml")"
+targets="$(sed -n 's/^targets = \[\(.*\)\]/\1/p' "$root/core/rust-toolchain.toml" | tr -d '",')"
+# With RUSTUP_TOOLCHAIN set, rustup ignores rust-toolchain.toml and would not add its targets.
+rustup toolchain install "$toolchain" --profile minimal --component rustfmt,clippy --no-self-update
+rustup target add --toolchain "$toolchain" $targets
 export RUSTUP_TOOLCHAIN="$toolchain"
 
 config=ubrn.config.yaml
