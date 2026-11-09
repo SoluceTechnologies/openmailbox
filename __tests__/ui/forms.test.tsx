@@ -71,4 +71,9 @@ describe('form components', () => {
     fireEvent.press(screen.getByText('Sign In'));
     expect(onPress).not.toHaveBeenCalled();
   });
+
+  it('presents buttons as buttons to screen readers, with their state', () => {
+    renderWithProviders(<Button title="Sign In" disabled onPress={jest.fn()} />);
+    expect(screen.getByRole('button', { name: 'Sign In' })).toBeDisabled();
+  });
 });

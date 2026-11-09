@@ -70,6 +70,8 @@ function Button({
 
   return (
     <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       {...rest}
       hapticFeedback={hapticFeedback ?? undefined}
       animated={!disableAnimation && !disabled}
