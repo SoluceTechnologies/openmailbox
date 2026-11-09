@@ -63,6 +63,10 @@
     "retry": "Probeer opnieuw"
   },
   "compose": {
+    "attach": "Bijvoegen",
+    "attachFiles": "Bestanden",
+    "attachPhotos": "Foto's en video's",
+    "attachmentsTooLarge": "Bijlagen zijn beperkt tot 25 MB in totaal.",
     "bcc": "Bcc:",
     "bodyPlaceholder": "Bericht",
     "cc": "Cc:",
@@ -79,6 +83,7 @@
     "invalidAddresses": "Ongeldige adressen",
     "newMessage": "Nieuw bericht",
     "noRecipient": "Voeg minstens één ontvanger toe.",
+    "removeAttachment": "{{name}} verwijderen",
     "reply": "Beantwoord",
     "replyAll": "Beantwoord allen",
     "send": "Verstuur",

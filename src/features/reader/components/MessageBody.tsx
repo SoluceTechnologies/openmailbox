@@ -9,19 +9,11 @@ import { useBody } from '@/core/hooks';
 import { describeCoreError } from '@/features/accounts/coreErrors';
 import { openAttachment } from '@/features/attachments/openAttachment';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { formatSize } from '@/utils/sizes';
 import { Button, Spinner, Typography } from '@/ui/components';
 
 import { HtmlBody } from './HtmlBody';
 import { UnsubscribeBanner } from './UnsubscribeBanner';
-
-function useFormatSize(): (bytes: number) => string {
-  const { t } = useTranslation();
-  return (bytes) => {
-    if (bytes < 1024) return t('units.bytes', { value: bytes });
-    if (bytes < 1024 * 1024) return t('units.kilobytes', { value: Math.round(bytes / 1024) });
-    return t('units.megabytes', { value: (bytes / (1024 * 1024)).toFixed(1) });
-  };
-}
 
 function attachmentIcon(mimeType: string): LucideIcon {
   if (mimeType.startsWith('image/')) return FileImage;
@@ -34,7 +26,6 @@ function attachmentIcon(mimeType: string): LucideIcon {
 function AttachmentChip({ emailId, attachment }: { emailId: string; attachment: Attachment }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const formatSize = useFormatSize();
   const [opening, setOpening] = useState(false);
   const Icon = attachmentIcon(attachment.mimeType);
 
@@ -67,7 +58,7 @@ function AttachmentChip({ emailId, attachment }: { emailId: string; attachment: 
           {attachment.filename}
         </Typography>
         <Typography variant="caption" color="secondary">
-          {formatSize(attachment.size)}
+          {formatSize(attachment.size, t)}
         </Typography>
       </View>
     </Pressable>

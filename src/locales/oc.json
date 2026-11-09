@@ -63,6 +63,10 @@
     "retry": "Tornar ensajar"
   },
   "compose": {
+    "attach": "Jónher",
+    "attachFiles": "Fichièrs",
+    "attachPhotos": "Fotos e vidèos",
+    "attachmentsTooLarge": "Las pèças juntas son limitadas a 25 Mo en tot.",
     "bcc": "Cci :",
     "bodyPlaceholder": "Messatge",
     "cc": "Cc :",
@@ -79,6 +83,7 @@
     "invalidAddresses": "Adreças invalidas",
     "newMessage": "Messatge novèl",
     "noRecipient": "Apondètz almens un destinatari.",
+    "removeAttachment": "Levar {{name}}",
     "reply": "Respondre",
     "replyAll": "Respondre a totes",
     "send": "Mandar",

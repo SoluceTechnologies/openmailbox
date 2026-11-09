@@ -63,6 +63,10 @@
     "retry": "Erneut versuchen"
   },
   "compose": {
+    "attach": "Anhängen",
+    "attachFiles": "Dateien",
+    "attachPhotos": "Fotos und Videos",
+    "attachmentsTooLarge": "Anhänge sind auf insgesamt 25 MB begrenzt.",
     "bcc": "Blindkopie:",
     "bodyPlaceholder": "Nachricht",
     "cc": "Kopie:",
@@ -79,6 +83,7 @@
     "invalidAddresses": "Ungültige Adressen",
     "newMessage": "Neue E-Mail",
     "noRecipient": "Füge mindestens einen Empfänger hinzu.",
+    "removeAttachment": "{{name}} entfernen",
     "reply": "Antworten",
     "replyAll": "Allen antworten",
     "send": "Senden",

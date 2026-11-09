@@ -63,6 +63,10 @@
     "retry": "Riprova"
   },
   "compose": {
+    "attach": "Allega",
+    "attachFiles": "File",
+    "attachPhotos": "Foto e video",
+    "attachmentsTooLarge": "Gli allegati sono limitati a 25 MB in totale.",
     "bcc": "Ccn:",
     "bodyPlaceholder": "Messaggio",
     "cc": "Cc:",
@@ -79,6 +83,7 @@
     "invalidAddresses": "Indirizzi non validi",
     "newMessage": "Nuovo messaggio",
     "noRecipient": "Aggiungi almeno un destinatario.",
+    "removeAttachment": "Rimuovi {{name}}",
     "reply": "Rispondi",
     "replyAll": "Rispondi a tutti",
     "send": "Invia",

@@ -63,6 +63,10 @@
     "retry": "Try Again"
   },
   "compose": {
+    "attach": "Attach",
+    "attachFiles": "Files",
+    "attachPhotos": "Photos and Videos",
+    "attachmentsTooLarge": "Attachments are limited to 25 MB in total.",
     "bcc": "Bcc:",
     "bodyPlaceholder": "Message",
     "cc": "Cc:",
@@ -79,6 +83,7 @@
     "invalidAddresses": "Invalid addresses",
     "newMessage": "New Message",
     "noRecipient": "Add at least one recipient.",
+    "removeAttachment": "Remove {{name}}",
     "reply": "Reply",
     "replyAll": "Reply All",
     "send": "Send",

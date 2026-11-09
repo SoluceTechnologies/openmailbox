@@ -3,17 +3,20 @@ import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleShee
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ArrowUp, X } from 'lucide-react-native';
+import { ArrowUp, FolderOpen, Images, Paperclip, X } from 'lucide-react-native';
 
 import { sendDraft } from '@/core/actions';
 import { useAccounts, useBody, useThreadEmails } from '@/core/hooks';
+import { canAdd, forwardedAttachments, pickAttachments, type ComposerAttachment } from '@/features/composer/attachments';
+import { AttachmentList } from '@/features/composer/components/AttachmentList';
 import { prefill, type ComposeMode } from '@/features/composer/prefill';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { IconButton, Select, Typography, ViewContainer } from '@/ui/components';
+import { ActionList, IconButton, Select, Sheet, Typography, ViewContainer } from '@/ui/components';
 import { formatAddressList, parseAddressList, type MailAddress } from '@/utils/addresses';
 import { formatFullDate } from '@/utils/dates';
 
 const snapshot = (...fields: string[]) => fields.map((field) => field.trim()).join('\u0000');
+const fieldName = (label: string) => label.replace(/\s*:$/, '');
 
 type ComposeParams = { mode?: ComposeMode; emailId?: string; threadId?: string; mailboxId?: string; accountId?: string };
 
@@ -52,6 +55,8 @@ export default function ComposeScreen() {
   const [showCopies, setShowCopies] = useState(false);
   const [prefilled, setPrefilled] = useState(mode === 'new');
   const [sending, setSending] = useState(false);
+  const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  const [attachMenuVisible, setAttachMenuVisible] = useState(false);
   const bodyInput = useRef<TextInput>(null);
   const [initialContent, setInitialContent] = useState(() => snapshot('', '', '', '', ''));
 
@@ -74,7 +79,13 @@ export default function ComposeScreen() {
     setBody(content.body);
     setInitialContent(snapshot(formatAddressList(content.to), formatAddressList(content.cc), '', content.subject, content.body));
     setPrefilled(true);
-  }, [prefilled, original, originalBody.isLoading, originalBody.data, accounts, mode, t]);
+    const originalAttachments = originalBody.data?.attachments ?? [];
+    if (mode === 'forward' && params.emailId && originalAttachments.length > 0) {
+      forwardedAttachments(params.emailId, originalAttachments)
+        .then(setAttachments)
+        .catch(() => undefined);
+    }
+  }, [prefilled, original, originalBody.isLoading, originalBody.data, accounts, mode, t, params.emailId]);
 
   useEffect(() => {
     if (!prefilled || (mode !== 'reply' && mode !== 'replyAll')) return;
@@ -90,7 +101,18 @@ export default function ComposeScreen() {
     [accounts],
   );
   const sender = accounts.find((account) => account.id === accountId);
-  const dirty = prefilled && snapshot(to, cc, bcc, subject, body) !== initialContent;
+  const dirty = prefilled && (snapshot(to, cc, bcc, subject, body) !== initialContent || (mode !== 'forward' && attachments.length > 0));
+
+  const attach = async (source: 'photos' | 'files') => {
+    setAttachMenuVisible(false);
+    const picked = await pickAttachments(source).catch(() => []);
+    if (picked.length === 0) return;
+    if (!canAdd(attachments, picked)) {
+      Alert.alert(t('compose.attachmentsTooLarge'));
+      return;
+    }
+    setAttachments((current) => [...current, ...picked]);
+  };
 
   const close = () => {
     if (!dirty) {
@@ -128,7 +150,7 @@ export default function ComposeScreen() {
         subject: subject.trim(),
         bodyText: body,
         inReplyToEmailId: mode === 'reply' || mode === 'replyAll' ? params.emailId : undefined,
-        attachments: [],
+        attachments: attachments.map(({ path, filename, mimeType }) => ({ path, filename, mimeType })),
       });
       setDefaultAccountId(accountId);
       router.back();
@@ -148,16 +170,21 @@ export default function ComposeScreen() {
             <IconButton round glass size={40} accessibilityLabel={t('common.close')} onPress={close}>
               <X size={20} color={colors.text} />
             </IconButton>
-            <IconButton
-              round
-              size={40}
-              variant="filled"
-              accessibilityLabel={t('compose.send')}
-              disabled={sending || !prefilled || to.trim().length + cc.trim().length + bcc.trim().length === 0}
-              onPress={send}
-            >
-              <ArrowUp size={20} color={colors.primary} />
-            </IconButton>
+            <View style={styles.headerActions}>
+              <IconButton round glass size={40} accessibilityLabel={t('compose.attach')} onPress={() => setAttachMenuVisible(true)}>
+                <Paperclip size={20} color={colors.text} />
+              </IconButton>
+              <IconButton
+                round
+                size={40}
+                variant="filled"
+                accessibilityLabel={t('compose.send')}
+                disabled={sending || !prefilled || to.trim().length + cc.trim().length + bcc.trim().length === 0}
+                onPress={send}
+              >
+                <ArrowUp size={20} color={colors.primary} />
+              </IconButton>
+            </View>
           </View>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
             <Typography variant="h3" style={styles.title}>
@@ -167,6 +194,7 @@ export default function ComposeScreen() {
               <TextInput
                 value={to}
                 onChangeText={setTo}
+                accessibilityLabel={fieldName(t('compose.to'))}
                 autoFocus={mode === 'new' || mode === 'forward'}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -177,10 +205,10 @@ export default function ComposeScreen() {
             {showCopies ? (
               <>
                 <FieldRow label={t('compose.cc')}>
-                  <TextInput value={cc} onChangeText={setCc} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" style={[styles.input, { color: colors.text }]} />
+                  <TextInput value={cc} onChangeText={setCc} accessibilityLabel={fieldName(t('compose.cc'))} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" style={[styles.input, { color: colors.text }]} />
                 </FieldRow>
                 <FieldRow label={t('compose.bcc')}>
-                  <TextInput value={bcc} onChangeText={setBcc} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" style={[styles.input, { color: colors.text }]} />
+                  <TextInput value={bcc} onChangeText={setBcc} accessibilityLabel={fieldName(t('compose.bcc'))} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" style={[styles.input, { color: colors.text }]} />
                 </FieldRow>
                 <FieldRow label={t('compose.from')}>
                   <Select value={accountId} options={accountOptions} onChange={setAccountId} accessibilityLabel={t('compose.from')} />
@@ -194,8 +222,17 @@ export default function ComposeScreen() {
               </Pressable>
             )}
             <FieldRow label={t('compose.subject')}>
-              <TextInput value={subject} onChangeText={setSubject} style={[styles.input, { color: colors.text }]} />
+              <TextInput
+                value={subject}
+                onChangeText={setSubject}
+                accessibilityLabel={fieldName(t('compose.subject'))}
+                style={[styles.input, { color: colors.text }]}
+              />
             </FieldRow>
+            <AttachmentList
+              attachments={attachments}
+              onRemove={(removed) => setAttachments((current) => current.filter((attachment) => attachment !== removed))}
+            />
             <TextInput
               value={body}
               onChangeText={setBody}
@@ -209,6 +246,14 @@ export default function ComposeScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <Sheet visible={attachMenuVisible} onClose={() => setAttachMenuVisible(false)} title={t('compose.attach')}>
+        <ActionList
+          actions={[
+            { key: 'photos', title: t('compose.attachPhotos'), icon: <Images />, onPress: () => void attach('photos') },
+            { key: 'files', title: t('compose.attachFiles'), icon: <FolderOpen />, onPress: () => void attach('files') },
+          ]}
+        />
+      </Sheet>
     </ViewContainer>
   );
 }
@@ -216,6 +261,7 @@ export default function ComposeScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 },
+  headerActions: { flexDirection: 'row', gap: 10 },
   content: { paddingHorizontal: 16, paddingBottom: 40 },
   title: { marginVertical: 12 },
   field: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, borderBottomWidth: StyleSheet.hairlineWidth },

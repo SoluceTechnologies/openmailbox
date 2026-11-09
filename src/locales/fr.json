@@ -63,6 +63,10 @@
     "retry": "Réessayer"
   },
   "compose": {
+    "attach": "Joindre",
+    "attachFiles": "Fichiers",
+    "attachPhotos": "Photos et vidéos",
+    "attachmentsTooLarge": "Les pièces jointes sont limitées à 25 Mo au total.",
     "bcc": "Cci :",
     "bodyPlaceholder": "Message",
     "cc": "Cc :",
@@ -79,6 +83,7 @@
     "invalidAddresses": "Adresses invalides",
     "newMessage": "Nouveau message",
     "noRecipient": "Ajoutez au moins un destinataire.",
+    "removeAttachment": "Retirer {{name}}",
     "reply": "Répondre",
     "replyAll": "Répondre à tous",
     "send": "Envoyer",

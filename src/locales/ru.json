@@ -63,6 +63,10 @@
     "retry": "Повторить"
   },
   "compose": {
+    "attach": "Прикрепить",
+    "attachFiles": "Файлы",
+    "attachPhotos": "Фото и видео",
+    "attachmentsTooLarge": "Общий размер вложений не может превышать 25 МБ.",
     "bcc": "Скрытая копия:",
     "bodyPlaceholder": "Сообщение",
     "cc": "Копия:",
@@ -79,6 +83,7 @@
     "invalidAddresses": "Недопустимые адреса",
     "newMessage": "Новое письмо",
     "noRecipient": "Добавьте хотя бы одного получателя.",
+    "removeAttachment": "Удалить {{name}}",
     "reply": "Ответить",
     "replyAll": "Ответить всем",
     "send": "Отправить",
