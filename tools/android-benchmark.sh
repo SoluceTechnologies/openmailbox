@@ -19,7 +19,7 @@ for _ in $(seq "$launches"); do
   sleep 2
 done
 sorted=($(printf '%s\n' "${cold_starts[@]}" | sort -n))
-echo "Cold start to first frame: median ${sorted[$((launches / 2))]} ms, best ${sorted[0]} ms, worst ${sorted[-1]} ms"
+echo "Cold start to first frame: median ${sorted[$((launches / 2))]} ms, best ${sorted[0]} ms, worst ${sorted[${#sorted[@]}-1]} ms"
 
 adb shell am start -W -a android.intent.action.VIEW -d "openmailbox://mailbox/unified" "$package" > /dev/null
 sleep 3

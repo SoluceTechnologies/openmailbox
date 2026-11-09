@@ -35,4 +35,4 @@ if [[ $platform == android ]]; then
 fi
 
 cd "$root/modules/mail-core"
-"$root/node_modules/.bin/ubrn" build "$platform" --config "$config" --and-generate "${arguments[@]}"
+"$root/node_modules/.bin/ubrn" build "$platform" --config "$config" --and-generate ${arguments[@]+"${arguments[@]}"}
