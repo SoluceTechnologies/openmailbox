@@ -122,12 +122,17 @@
     "expandHint": "Shows the full message",
     "loadFailed": "The message couldn't be downloaded.",
     "loadRemoteContent": "Load Images",
+    "mailingList": "This message is from a mailing list.",
     "noSubject": "No Subject",
     "openLink": "Open",
     "openLinkTitle": "Open this link?",
     "remoteContentBlocked": "Remote images are blocked.",
     "threadGone": "This conversation is no longer available.",
-    "toRecipients": "To: {{recipients}}"
+    "toRecipients": "To: {{recipients}}",
+    "unsubscribe": "Unsubscribe",
+    "unsubscribeMessage": "The list's sender is asked to stop sending these messages.",
+    "unsubscribeTitle": "Unsubscribe from this list?",
+    "unsubscribed": "Unsubscribed from this list."
   },
   "search": {
     "localOnly": "Search covers the messages downloaded to this device.",

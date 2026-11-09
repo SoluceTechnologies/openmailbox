@@ -3,16 +3,22 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Archive, Flag, Forward, Mail, Reply, ReplyAll, Trash2 } from 'lucide-react-native';
-import { Keyword, MailboxRole } from '@openmailbox/mail-core';
+import { Ellipsis, Flag, FolderInput, Forward, Reply, ReplyAll, Trash2 } from 'lucide-react-native';
+import { Keyword, type ThreadSummary } from '@openmailbox/mail-core';
 
-import { archiveThread, setThreadFlagged, setThreadRead, trashThread, type ThreadReference } from '@/core/actions';
+import { setThreadRead, type ThreadReference } from '@/core/actions';
 import { useMailboxes, useThreadEmails } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
+import { MailboxPicker } from '@/features/mailboxes/components/MailboxPicker';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { MessageCard } from '@/features/reader/components/MessageCard';
 import type { ComposeMode } from '@/features/composer/prefill';
+import { ThreadActionSheet } from '@/features/threads/components/ThreadActionSheet';
+import type { ThreadActionId } from '@/features/threads/threadActions';
+import { useThreadActions } from '@/features/threads/useThreadActions';
 import { ActionList, EmptyState, IconButton, ScreenHeader, Sheet, Typography, ViewContainer } from '@/ui/components';
+
+const LEAVING_ACTIONS: ThreadActionId[] = ['delete', 'archive', 'moveToInbox', 'junk', 'notJunk', 'markUnread'];
 
 export default function ThreadScreen() {
   const { threadId, mailboxId } = useLocalSearchParams<{ threadId: string; mailboxId?: string }>();
@@ -25,11 +31,32 @@ export default function ThreadScreen() {
   const emails = useMemo(() => emailsQuery.data ?? [], [emailsQuery.data]);
   const [expanded, setExpanded] = useState<Set<string> | null>(null);
   const [replyMenuVisible, setReplyMenuVisible] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [moving, setMoving] = useState<ThreadSummary | null>(null);
+  const threadActions = useThreadActions(setMoving);
 
   const mailbox = mailboxes.find((candidate) => candidate.id === mailboxId);
   const reference: ThreadReference | null = mailboxId ? { mailboxId, threadId } : null;
   const latest = emails[emails.length - 1];
   const flagged = emails.some((email) => email.isFlagged);
+  const thread: ThreadSummary | null = useMemo(
+    () =>
+      latest && mailboxId
+        ? {
+            key: `${mailboxId}:${threadId}`,
+            threadId,
+            mailboxId,
+            accountId: latest.accountId,
+            latest,
+            messageCount: emails.length,
+            unreadCount: 0,
+            isFlagged: flagged,
+            hasAttachment: emails.some((email) => email.hasAttachment),
+            lastReceivedAt: latest.receivedAt,
+          }
+        : null,
+    [latest, mailboxId, threadId, emails, flagged],
+  );
   const unreadIds = emails.filter((email) => !email.isSeen).map((email) => email.id);
   const unreadKey = unreadIds.join(',');
 
@@ -60,9 +87,12 @@ export default function ThreadScreen() {
     router.push({ pathname: '/compose', params: { mode, emailId: latest.id, threadId, mailboxId: mailboxId ?? '' } });
   };
 
-  const leaveAfter = (action: () => Promise<void>) => {
-    action().catch(() => undefined);
-    router.back();
+  const leave = async (work: Promise<unknown>) => {
+    if ((await work) !== false) router.back();
+  };
+  const onAction = (action: ThreadActionId, target: ThreadSummary) => {
+    const work = threadActions.run(action, target);
+    if (LEAVING_ACTIONS.includes(action)) leave(work).catch(() => undefined);
   };
 
   const toolbarIcon = (label: string, icon: ReactNode, onPress: () => void, disabled = false) => (
@@ -70,11 +100,6 @@ export default function ThreadScreen() {
       {icon}
     </IconButton>
   );
-
-  const canArchive =
-    !!reference &&
-    mailbox?.role !== MailboxRole.Archive &&
-    mailboxes.some((candidate) => candidate.accountId === mailbox?.accountId && (candidate.role === MailboxRole.Archive || candidate.role === MailboxRole.All));
 
   return (
     <ViewContainer>
@@ -104,16 +129,16 @@ export default function ThreadScreen() {
         )}
       </SafeAreaView>
       <View style={[styles.toolbar, { paddingBottom: Math.max(insets.bottom, 8), backgroundColor: colors.tabBar, borderTopColor: colors.tabBarBorder }]}>
-        {toolbarIcon(t('threads.archive'), <Archive size={22} color={colors.primary} />, () => reference && leaveAfter(() => archiveThread(reference)), !canArchive)}
-        {toolbarIcon(t('threads.trash'), <Trash2 size={22} color={colors.primary} />, () => reference && leaveAfter(() => trashThread(reference)), !reference)}
+        {toolbarIcon(t('threads.delete'), <Trash2 size={22} color={colors.primary} />, () => thread && onAction('delete', thread), !thread)}
+        {toolbarIcon(t('threads.move'), <FolderInput size={22} color={colors.primary} />, () => thread && setMoving(thread), !thread)}
         {toolbarIcon(
           flagged ? t('threads.unflag') : t('threads.flag'),
           <Flag size={22} color={colors.primary} fill={flagged ? colors.primary : 'transparent'} />,
-          () => reference && setThreadFlagged(reference, !flagged).catch(() => undefined),
-          !reference,
+          () => thread && onAction(flagged ? 'unflag' : 'flag', thread),
+          !thread,
         )}
-        {toolbarIcon(t('threads.markUnread'), <Mail size={22} color={colors.primary} />, () => reference && leaveAfter(() => setThreadRead(reference, false)), !reference)}
         {toolbarIcon(t('compose.reply'), <Reply size={22} color={colors.primary} />, () => setReplyMenuVisible(true), !latest)}
+        {toolbarIcon(t('threads.more'), <Ellipsis size={22} color={colors.primary} />, () => setSheetVisible(true), !thread)}
       </View>
       <Sheet visible={replyMenuVisible} onClose={() => setReplyMenuVisible(false)} title={t('compose.reply')}>
         <ActionList
@@ -124,6 +149,19 @@ export default function ThreadScreen() {
           ]}
         />
       </Sheet>
+      <ThreadActionSheet
+        thread={sheetVisible ? thread : null}
+        actions={thread ? threadActions.actionsFor(thread) : []}
+        onAction={onAction}
+        onClose={() => setSheetVisible(false)}
+      />
+      <MailboxPicker
+        accountId={moving?.accountId}
+        excludeMailboxId={moving?.mailboxId}
+        visible={moving !== null}
+        onSelect={(target) => moving && leave(threadActions.moveTo(moving, target))}
+        onClose={() => setMoving(null)}
+      />
     </ViewContainer>
   );
 }

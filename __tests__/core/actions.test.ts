@@ -1,6 +1,6 @@
-import { Destination, Keyword } from '@openmailbox/mail-core';
+import { Keyword } from '@openmailbox/mail-core';
 
-import { archiveThread, setThreadFlagged, setThreadRead, trashThread } from '@/core/actions';
+import { setThreadFlagged, setThreadRead } from '@/core/actions';
 
 import { core } from '../helpers/fixtures';
 
@@ -21,13 +21,5 @@ describe('thread actions', () => {
   it('adds or removes the flagged keyword', async () => {
     await setThreadFlagged(thread, true);
     expect(core.setThreadKeywords).toHaveBeenCalledWith('mailbox-inbox', 'thread-1', [Keyword.Flagged], []);
-  });
-
-  it('moves threads to the archive or the trash of their account', async () => {
-    await archiveThread(thread);
-    await trashThread(thread);
-    const destinations = core.moveThread.mock.calls.map(([, , destination]) => destination);
-    expect(Destination.Archive.instanceOf(destinations[0])).toBe(true);
-    expect(Destination.Trash.instanceOf(destinations[1])).toBe(true);
   });
 });

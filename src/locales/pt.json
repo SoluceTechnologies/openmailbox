@@ -122,12 +122,17 @@
     "expandHint": "Mostra a mensagem completa",
     "loadFailed": "Não foi possível transferir a mensagem.",
     "loadRemoteContent": "Carregar imagens",
+    "mailingList": "Esta mensagem provém de uma lista de distribuição.",
     "noSubject": "Sem assunto",
     "openLink": "Abrir",
     "openLinkTitle": "Abrir esta ligação?",
     "remoteContentBlocked": "As imagens remotas estão bloqueadas.",
     "threadGone": "Esta conversa já não está disponível.",
-    "toRecipients": "Para: {{recipients}}"
+    "toRecipients": "Para: {{recipients}}",
+    "unsubscribe": "Cancelar subscrição",
+    "unsubscribeMessage": "O remetente da lista é solicitado a deixar de enviar estas mensagens.",
+    "unsubscribeTitle": "Cancelar a subscrição desta lista?",
+    "unsubscribed": "Subscrição desta lista cancelada."
   },
   "search": {
     "localOnly": "A pesquisa abrange as mensagens transferidas para este dispositivo.",

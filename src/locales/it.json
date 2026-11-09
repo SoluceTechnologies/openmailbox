@@ -122,12 +122,17 @@
     "expandHint": "Mostra il messaggio completo",
     "loadFailed": "Impossibile scaricare il messaggio.",
     "loadRemoteContent": "Carica immagini",
+    "mailingList": "Questo messaggio proviene da una mailing list.",
     "noSubject": "Nessun oggetto",
     "openLink": "Apri",
     "openLinkTitle": "Aprire questo link?",
     "remoteContentBlocked": "Le immagini remote sono bloccate.",
     "threadGone": "Questa conversazione non è più disponibile.",
-    "toRecipients": "A: {{recipients}}"
+    "toRecipients": "A: {{recipients}}",
+    "unsubscribe": "Annulla iscrizione",
+    "unsubscribeMessage": "Il mittente della lista viene invitato a non inviare più questi messaggi.",
+    "unsubscribeTitle": "Annullare l'iscrizione a questa lista?",
+    "unsubscribed": "Iscrizione a questa lista annullata."
   },
   "search": {
     "localOnly": "La ricerca riguarda i messaggi scaricati su questo dispositivo.",

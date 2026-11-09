@@ -122,12 +122,17 @@
     "expandHint": "Toont het volledige bericht",
     "loadFailed": "Het bericht kon niet worden gedownload.",
     "loadRemoteContent": "Laad afbeeldingen",
+    "mailingList": "Dit bericht komt van een mailinglijst.",
     "noSubject": "Geen onderwerp",
     "openLink": "Open",
     "openLinkTitle": "Deze link openen?",
     "remoteContentBlocked": "Externe afbeeldingen zijn geblokkeerd.",
     "threadGone": "Dit gesprek is niet meer beschikbaar.",
-    "toRecipients": "Aan: {{recipients}}"
+    "toRecipients": "Aan: {{recipients}}",
+    "unsubscribe": "Afmelden",
+    "unsubscribeMessage": "De afzender van de lijst wordt gevraagd deze berichten niet meer te sturen.",
+    "unsubscribeTitle": "Afmelden voor deze lijst?",
+    "unsubscribed": "Afgemeld voor deze lijst."
   },
   "search": {
     "localOnly": "De zoekopdracht omvat de berichten die op dit apparaat zijn gedownload.",

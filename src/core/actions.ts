@@ -1,6 +1,4 @@
-import { Destination, Keyword, type Draft, type ThreadSummary } from '@openmailbox/mail-core';
-
-import { haptic } from '@/utils/haptics';
+import { Keyword, type Draft, type ThreadSummary } from '@openmailbox/mail-core';
 
 import { mailCore } from './mailCore';
 
@@ -14,16 +12,6 @@ export function setThreadRead(thread: ThreadReference, read: boolean): Promise<v
 export function setThreadFlagged(thread: ThreadReference, flagged: boolean): Promise<void> {
   const keywords = [Keyword.Flagged];
   return mailCore().setThreadKeywords(thread.mailboxId, thread.threadId, flagged ? keywords : [], flagged ? [] : keywords);
-}
-
-export async function archiveThread(thread: ThreadReference): Promise<void> {
-  haptic();
-  await mailCore().moveThread(thread.mailboxId, thread.threadId, new Destination.Archive(), 0);
-}
-
-export async function trashThread(thread: ThreadReference): Promise<void> {
-  haptic();
-  await mailCore().moveThread(thread.mailboxId, thread.threadId, new Destination.Trash(), 0);
 }
 
 export function sendDraft(draft: Draft): Promise<void> {

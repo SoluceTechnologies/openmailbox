@@ -13,6 +13,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { Button, Spinner, Typography } from '@/ui/components';
 
 import { HtmlBody } from './HtmlBody';
+import { UnsubscribeBanner } from './UnsubscribeBanner';
 
 function useFormatSize(): (bytes: number) => string {
   const { t } = useTranslation();
@@ -83,9 +84,10 @@ function MessageBodyImpl({ emailId }: { emailId: string }) {
     );
   }
 
-  const { html, text, hasRemoteContent, attachments } = body.data;
+  const { html, text, hasRemoteContent, attachments, unsubscribe } = body.data;
   return (
     <View style={styles.body}>
+      {unsubscribe ? <UnsubscribeBanner emailId={emailId} /> : null}
       {html && hasRemoteContent && !remoteAllowed ? (
         <Pressable onPress={() => setRemoteAllowed(true)} style={[styles.remoteBanner, { backgroundColor: colors.surface }]}>
           <ImageOff size={16} color={colors.textSecondary} />

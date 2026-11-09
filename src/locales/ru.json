@@ -122,12 +122,17 @@
     "expandHint": "Показывает письмо целиком",
     "loadFailed": "Не удалось загрузить письмо.",
     "loadRemoteContent": "Загрузить изображения",
+    "mailingList": "Это письмо из рассылки.",
     "noSubject": "Без темы",
     "openLink": "Открыть",
     "openLinkTitle": "Открыть эту ссылку?",
     "remoteContentBlocked": "Внешние изображения заблокированы.",
     "threadGone": "Эта переписка больше недоступна.",
-    "toRecipients": "Кому: {{recipients}}"
+    "toRecipients": "Кому: {{recipients}}",
+    "unsubscribe": "Отписаться",
+    "unsubscribeMessage": "Отправителю рассылки будет отправлен запрос прекратить отправку этих писем.",
+    "unsubscribeTitle": "Отписаться от этой рассылки?",
+    "unsubscribed": "Вы отписались от этой рассылки."
   },
   "search": {
     "localOnly": "Поиск выполняется по письмам, загруженным на это устройство.",

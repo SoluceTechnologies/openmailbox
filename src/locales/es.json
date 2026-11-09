@@ -122,12 +122,17 @@
     "expandHint": "Muestra el mensaje completo",
     "loadFailed": "No se ha podido descargar el mensaje.",
     "loadRemoteContent": "Cargar imágenes",
+    "mailingList": "Este mensaje procede de una lista de correo.",
     "noSubject": "Sin asunto",
     "openLink": "Abrir",
     "openLinkTitle": "¿Abrir este enlace?",
     "remoteContentBlocked": "Las imágenes remotas están bloqueadas.",
     "threadGone": "Esta conversación ya no está disponible.",
-    "toRecipients": "Para: {{recipients}}"
+    "toRecipients": "Para: {{recipients}}",
+    "unsubscribe": "Darse de baja",
+    "unsubscribeMessage": "Se pide al remitente de la lista que deje de enviar estos mensajes.",
+    "unsubscribeTitle": "¿Darse de baja de esta lista?",
+    "unsubscribed": "Te has dado de baja de esta lista."
   },
   "search": {
     "localOnly": "La búsqueda abarca los mensajes descargados en este dispositivo.",

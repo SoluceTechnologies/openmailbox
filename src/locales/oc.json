@@ -122,12 +122,17 @@
     "expandHint": "Aficha lo messatge complet",
     "loadFailed": "Lo messatge a pas pogut èsser telecargat.",
     "loadRemoteContent": "Cargar los imatges",
+    "mailingList": "Aqueste messatge ven d'una lista de difusion.",
     "noSubject": "Sens objècte",
     "openLink": "Dobrir",
     "openLinkTitle": "Dobrir aqueste ligam ?",
     "remoteContentBlocked": "Los imatges distants son blocats.",
     "threadGone": "Aquesta conversacion es pas mai disponibla.",
-    "toRecipients": "A : {{recipients}}"
+    "toRecipients": "A : {{recipients}}",
+    "unsubscribe": "Se desabonar",
+    "unsubscribeMessage": "Lo mandaire de la lista es pregat de pas pus mandar aqueles messatges.",
+    "unsubscribeTitle": "Se desabonar d'aquesta lista ?",
+    "unsubscribed": "Desabonat d'aquesta lista."
   },
   "search": {
     "localOnly": "La recèrca pòrta sus los messatges telecargats sus aqueste aparelh.",

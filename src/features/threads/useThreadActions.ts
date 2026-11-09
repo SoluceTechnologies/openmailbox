@@ -57,7 +57,7 @@ export function useThreadActions(onMove?: (thread: ThreadSummary) => void) {
               : move(new Destination.Trash(), t('undo.trashed'));
         }
       })();
-      work?.catch(() => undefined);
+      return Promise.resolve(work).catch(() => undefined);
     },
     [router, t, mailboxes, onMove],
   );
