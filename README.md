@@ -33,6 +33,21 @@ yarn android          # or yarn ios
 
 `yarn core:*` must run again after any change in `core/`.
 
+### iOS
+
+The iOS side of `modules/mail-core` (`ios/`, `MailCore.podspec`) is generated and committed; the
+Rust core itself is built into `OpenmailboxMailCoreFramework.xcframework`, which needs macOS with
+Xcode. Installing on an iPhone for more than seven days needs a paid Apple Developer account.
+
+```bash
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+yarn core:ios        # or yarn core:ios:dev to trust the local test server
+npx expo run:ios --device
+```
+
+An EAS build needs the same framework: Rust and `yarn core:ios` must run on the build worker before
+the native build. That step is not set up yet.
+
 ## Tests
 
 ```bash

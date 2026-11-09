@@ -4,6 +4,8 @@
   "private": true,
   "license": "MPL-2.0",
   "description": "OpenMailbox Rust mail core, bound to React Native through uniffi",
+  "homepage": "https://github.com/SoluceTechnologies/openmailbox",
+  "author": "Soluce Technologies",
   "main": "src/index.tsx",
   "react-native": "src/index.tsx",
   "source": "src/index.tsx",
