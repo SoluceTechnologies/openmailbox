@@ -14,9 +14,12 @@ export function useAvatar(email: string | undefined): string | null {
   useEffect(() => {
     if (!address || cached !== undefined) return;
     let active = true;
-    void loadAvatar(address).then((uri) => {
-      if (active) setLoaded({ address, uri });
-    });
+    loadAvatar(address).then(
+      (uri) => {
+        if (active) setLoaded({ address, uri });
+      },
+      () => undefined,
+    );
     return () => {
       active = false;
     };

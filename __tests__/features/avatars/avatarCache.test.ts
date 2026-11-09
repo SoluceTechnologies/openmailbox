@@ -86,11 +86,26 @@ describe('avatar cache', () => {
     expect(cachedAvatar('alice@gmail.com')).toBeUndefined();
   });
 
-  it('tries again later when the network fails', async () => {
+  it('waits a few minutes before trying again when offline', async () => {
+    jest.useFakeTimers({ now: new Date('2026-11-09T10:00:00Z'), doNotFake: ['nextTick', 'setImmediate'] });
     fetchMock.mockRejectedValue(new TypeError('Network request failed'));
 
     expect(await loadAvatar('bob@gmail.com')).toBeNull();
+    expect(cachedAvatar('bob@gmail.com')).toBeNull();
+
+    jest.setSystemTime(new Date('2026-11-09T10:11:00Z'));
     expect(cachedAvatar('bob@gmail.com')).toBeUndefined();
+  });
+
+  it('counts a company website that cannot be reached as having no logo', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.startsWith('https://gravatar.com/')) return respond(404);
+      throw new TypeError('Network request failed');
+    });
+
+    expect(await loadAvatar('thomas@unreachable.example')).toBeNull();
+    expect(await loadAvatar('thomas@unreachable.example')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it('looks an address up once while several rows wait for it', async () => {
