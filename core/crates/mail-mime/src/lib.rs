@@ -247,7 +247,7 @@ pub struct OutgoingMessage<'a> {
     pub body_text: &'a str,
     pub in_reply_to: Option<&'a str>,
     pub references: &'a [String],
-    pub attachments: &'a [AttachmentContent],
+    pub attachments: Vec<AttachmentContent>,
 }
 
 pub struct AttachmentContent {
@@ -262,7 +262,7 @@ pub struct BuiltMessage {
     pub recipients: Vec<String>,
 }
 
-pub fn build_message(outgoing: &OutgoingMessage) -> Result<BuiltMessage> {
+pub fn build_message(outgoing: OutgoingMessage) -> Result<BuiltMessage> {
     let mut builder = MessageBuilder::new()
         .from(mailbox(outgoing.from)?)
         .subject(outgoing.subject)
@@ -293,14 +293,13 @@ pub fn build_message(outgoing: &OutgoingMessage) -> Result<BuiltMessage> {
             .header(ContentType::TEXT_PLAIN)
             .body(outgoing.body_text.to_owned())
     } else {
-        let parts = outgoing.attachments.iter().fold(
+        let parts = outgoing.attachments.into_iter().fold(
             MultiPart::mixed().singlepart(SinglePart::plain(outgoing.body_text.to_owned())),
             |parts, attachment| {
                 let content_type = ContentType::parse(&attachment.mime_type)
                     .unwrap_or_else(|_| ContentType::parse("application/octet-stream").unwrap());
                 parts.singlepart(
-                    LettreAttachment::new(attachment.filename.clone())
-                        .body(attachment.bytes.clone(), content_type),
+                    LettreAttachment::new(attachment.filename).body(attachment.bytes, content_type),
                 )
             },
         );
@@ -372,7 +371,7 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
             name: None,
             email: "carol@example.com".into(),
         };
-        let built = build_message(&OutgoingMessage {
+        let built = build_message(OutgoingMessage {
             message_id: "new@example.com",
             from: &from,
             to: &[bob],
@@ -382,7 +381,7 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
             body_text: "Merci !",
             in_reply_to: Some("reply@example.com"),
             references: &["root@example.com".into(), "reply@example.com".into()],
-            attachments: &[],
+            attachments: vec![],
         })
         .unwrap();
         let raw = String::from_utf8(built.raw).unwrap();
@@ -394,7 +393,7 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
         );
     }
 
-    fn with_attachments(attachments: &[AttachmentContent]) -> Vec<u8> {
+    fn with_attachments(attachments: Vec<AttachmentContent>) -> Vec<u8> {
         let from = Address {
             name: Some("Alice".into()),
             email: "alice@example.com".into(),
@@ -403,7 +402,7 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
             name: None,
             email: "bob@example.com".into(),
         };
-        build_message(&OutgoingMessage {
+        build_message(OutgoingMessage {
             message_id: "files@example.com",
             from: &from,
             to: &[bob],
@@ -421,7 +420,7 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
 
     #[test]
     fn builds_multipart_mixed_with_attachments() {
-        let raw = with_attachments(&[
+        let raw = with_attachments(vec![
             AttachmentContent {
                 filename: "devis.pdf".into(),
                 mime_type: "application/pdf".into(),
@@ -457,7 +456,7 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
 
     #[test]
     fn keeps_non_ascii_and_slashed_filenames() {
-        let raw = with_attachments(&[AttachmentContent {
+        let raw = with_attachments(vec![AttachmentContent {
             filename: "Facture n°12/2026.pdf".into(),
             mime_type: "application/pdf".into(),
             bytes: vec![0; 10],
@@ -470,7 +469,7 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
 
     #[test]
     fn an_unknown_mime_type_is_sent_as_octet_stream() {
-        let raw = with_attachments(&[AttachmentContent {
+        let raw = with_attachments(vec![AttachmentContent {
             filename: "notes".into(),
             mime_type: "not a type".into(),
             bytes: vec![0; 10],

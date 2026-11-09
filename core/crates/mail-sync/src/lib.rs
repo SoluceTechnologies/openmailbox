@@ -422,7 +422,7 @@ impl Engine {
             name: Some(account.display_name.clone()),
             email: account.email.clone(),
         };
-        let built = mail_mime::build_message(&OutgoingMessage {
+        let built = mail_mime::build_message(OutgoingMessage {
             message_id: &message_id,
             from: &from,
             to: &draft.to,
@@ -434,7 +434,7 @@ impl Engine {
                 .as_ref()
                 .and_then(|context| context.message_id.as_deref()),
             references: &references,
-            attachments: &attachments,
+            attachments,
         })?;
         let raw = String::from_utf8(built.raw)
             .map_err(|_| Error::InvalidInput("message is not 7-bit safe".into()))?;
