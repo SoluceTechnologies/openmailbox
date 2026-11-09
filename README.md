@@ -12,11 +12,14 @@ It talks directly to the user's IMAP/SMTP servers: there is no OpenMailbox serve
 - Attachments opened in place when the phone can (an in-app viewer on iOS, the system's apps on
   Android), sent from photos or files up to 25 MB, kept when forwarding
 - Recipients suggested from past mail and from the phone's contacts, and a signature per account
+- Contact pictures from Gravatar, else the icon of the sender's company website, else initials
 - New mail notifications and an unread badge; unsubscribe from mailing lists
 - Sign-in for Google, iCloud, OVHcloud, Orange, Free, SFR, La Poste, Yahoo, or any IMAP/SMTP account
 
 Notifications rely on the system's background scheduling, since there is no push server: Android
-runs the check at best every 15 minutes and iOS less often, depending on how the app is used.
+runs the check at best every 15 minutes and iOS less often, depending on how the app is used, at
+times only a few times a day. Contact pictures tell Gravatar and company websites which addresses
+you correspond with; they are fetched once a month per address and can be turned off in Settings.
 Microsoft accounts need OAuth and are not supported yet.
 
 ## Layout
