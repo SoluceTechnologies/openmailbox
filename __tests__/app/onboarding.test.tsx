@@ -62,6 +62,14 @@ describe('onboarding', () => {
     expect(core.addAccount.mock.calls[0][0].imap.host).toBe('imap.orange.fr');
   });
 
+  it('hints the outgoing server with an SMTP name when servers are set by hand', () => {
+    renderWithProviders(<OnboardingScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Other' }));
+    fireEvent.press(screen.getByText('Configure Servers Manually'));
+    expect(screen.getByPlaceholderText('imap.example.com')).toBeOnTheScreen();
+    expect(screen.getByPlaceholderText('smtp.example.com')).toBeOnTheScreen();
+  });
+
   it('asks which OVHcloud offer the account is on before the form', () => {
     renderWithProviders(<OnboardingScreen />);
     fireEvent.press(screen.getByRole('button', { name: 'OVHcloud' }));

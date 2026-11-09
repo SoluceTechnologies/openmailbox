@@ -12,10 +12,12 @@ import { useAccountSetup } from '../useAccountSetup';
 
 function EndpointSection({
   title,
+  hostPlaceholder,
   endpoint,
   onChange,
 }: {
   title: string;
+  hostPlaceholder: string;
   endpoint: ServerEndpoint;
   onChange: (endpoint: ServerEndpoint) => void;
 }) {
@@ -26,7 +28,7 @@ function EndpointSection({
         label={t('accounts.setup.host')}
         value={endpoint.host}
         onChangeText={(host) => onChange({ ...endpoint, host: host.trim() })}
-        placeholder="imap.example.com"
+        placeholder={hostPlaceholder}
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType="url"
@@ -152,11 +154,13 @@ export function SignInForm({ provider, onDone }: SignInFormProps) {
         <>
           <EndpointSection
             title={t('accounts.setup.incoming')}
+            hostPlaceholder="imap.example.com"
             endpoint={setup.servers.imap}
             onChange={(imap) => setup.setServers({ ...setup.servers!, imap })}
           />
           <EndpointSection
             title={t('accounts.setup.outgoing')}
+            hostPlaceholder="smtp.example.com"
             endpoint={setup.servers.smtp}
             onChange={(smtp) => setup.setServers({ ...setup.servers!, smtp })}
           />
