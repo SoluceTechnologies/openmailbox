@@ -123,6 +123,10 @@
     },
     "title": "Bóstias de letras"
   },
+  "notifications": {
+    "newMessages_one": "{{count}} messatge novèl",
+    "newMessages_other": "{{count}} messatges novèls"
+  },
   "offline": {
     "banner": "Sètz fòra linha. Las modificacions seràn mandadas quand la connexion tornarà."
   },
@@ -161,6 +165,11 @@
     "languageHint": "Las datas e los tèxtes seguisson aquesta lenga.",
     "loadRemoteImages": "Cargar los imatges distants",
     "loadRemoteImagesHint": "Los imatges distants pòdon indicar als expeditors que avètz dobèrt lor messatge.",
+    "notifications": "Notificacions",
+    "notificationsDenied": "Las notificacions d'OpenMailbox son desactivadas dins los paramètres del sistèma.",
+    "notificationsHint": "Lo telefòn decidís la frequéncia de verificacion quand OpenMailbox es tampat : al melhor cada 15 minutas, mens sovent sus iPhone.",
+    "notifyNewMail": "Messatges novèls",
+    "openSystemSettings": "Dobrir los paramètres",
     "reading": "Lectura",
     "theme": "Tèma",
     "themes": {

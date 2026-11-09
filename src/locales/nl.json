@@ -123,6 +123,10 @@
     },
     "title": "Postvakken"
   },
+  "notifications": {
+    "newMessages_one": "{{count}} nieuw bericht",
+    "newMessages_other": "{{count}} nieuwe berichten"
+  },
   "offline": {
     "banner": "Je bent offline. Wijzigingen worden verstuurd zodra er weer verbinding is."
   },
@@ -161,6 +165,11 @@
     "languageHint": "Datums en teksten volgen deze taal.",
     "loadRemoteImages": "Laad externe afbeeldingen",
     "loadRemoteImagesHint": "Externe afbeeldingen kunnen afzenders laten weten wanneer je hun berichten opent.",
+    "notifications": "Meldingen",
+    "notificationsDenied": "Meldingen voor OpenMailbox staan uit in de systeeminstellingen.",
+    "notificationsHint": "De telefoon bepaalt hoe vaak er op nieuwe e-mail wordt gecontroleerd als OpenMailbox gesloten is: hooguit elke 15 minuten, minder vaak op de iPhone.",
+    "notifyNewMail": "Nieuwe e-mail",
+    "openSystemSettings": "Instellingen openen",
     "reading": "Lezen",
     "theme": "Thema",
     "themes": {

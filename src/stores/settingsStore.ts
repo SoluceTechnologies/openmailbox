@@ -14,6 +14,8 @@ interface SettingsState {
   loadRemoteImages: boolean;
   defaultAccountId: string | null;
   signatures: Record<string, string>;
+  notificationsEnabled: boolean;
+  silencedAccountIds: string[];
   setThemePreference: (preference: ThemePreference) => void;
   setLanguage: (language: AppLanguage) => void;
   setHapticsEnabled: (enabled: boolean) => void;
@@ -21,6 +23,8 @@ interface SettingsState {
   setDefaultAccountId: (accountId: string | null) => void;
   /** An empty signature removes the account's entry. */
   setSignature: (accountId: string, signature: string) => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
+  setAccountNotified: (accountId: string, notified: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -33,11 +37,20 @@ export const useSettingsStore = create<SettingsState>()(
       loadRemoteImages: false,
       defaultAccountId: null,
       signatures: {},
+      notificationsEnabled: true,
+      silencedAccountIds: [],
       setThemePreference: (themePreference) => set({ themePreference }),
       setLanguage: (language) => set({ language }),
       setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
       setLoadRemoteImages: (loadRemoteImages) => set({ loadRemoteImages }),
       setDefaultAccountId: (defaultAccountId) => set({ defaultAccountId }),
+      setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
+      setAccountNotified: (accountId, notified) =>
+        set(({ silencedAccountIds }) => ({
+          silencedAccountIds: notified
+            ? silencedAccountIds.filter((silenced) => silenced !== accountId)
+            : [...new Set([...silencedAccountIds, accountId])],
+        })),
       setSignature: (accountId, signature) =>
         set(({ signatures }) => {
           const { [accountId]: _previous, ...others } = signatures;
@@ -47,7 +60,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'settings-store',
       storage: createJSONStorage(() => zustandStorage),
-      partialize: ({ themePreference, language, hapticsEnabled, reduceMotion, loadRemoteImages, defaultAccountId, signatures }) => ({
+      partialize: ({
         themePreference,
         language,
         hapticsEnabled,
@@ -55,6 +68,18 @@ export const useSettingsStore = create<SettingsState>()(
         loadRemoteImages,
         defaultAccountId,
         signatures,
+        notificationsEnabled,
+        silencedAccountIds,
+      }) => ({
+        themePreference,
+        language,
+        hapticsEnabled,
+        reduceMotion,
+        loadRemoteImages,
+        defaultAccountId,
+        signatures,
+        notificationsEnabled,
+        silencedAccountIds,
       }),
     },
   ),

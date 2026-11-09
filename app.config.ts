@@ -41,6 +41,8 @@ const config: ExpoConfig = {
     'expo-secure-store',
     'expo-localization',
     'expo-font',
+    'expo-background-task',
+    ['expo-notifications', { color: '#007aff' }],
     [
       'expo-contacts',
       {

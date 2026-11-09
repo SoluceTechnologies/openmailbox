@@ -123,6 +123,10 @@
     },
     "title": "Boîtes aux lettres"
   },
+  "notifications": {
+    "newMessages_one": "{{count}} nouveau message",
+    "newMessages_other": "{{count}} nouveaux messages"
+  },
   "offline": {
     "banner": "Vous êtes hors ligne. Les modifications seront envoyées au retour de la connexion."
   },
@@ -161,6 +165,11 @@
     "languageHint": "Les dates et les textes suivent cette langue.",
     "loadRemoteImages": "Charger les images distantes",
     "loadRemoteImagesHint": "Les images distantes peuvent indiquer aux expéditeurs que vous avez ouvert leur message.",
+    "notifications": "Notifications",
+    "notificationsDenied": "Les notifications d'OpenMailbox sont désactivées dans les réglages du système.",
+    "notificationsHint": "Le téléphone décide de la fréquence de vérification quand OpenMailbox est fermé : au mieux toutes les 15 minutes, moins souvent sur iPhone.",
+    "notifyNewMail": "Nouveaux messages",
+    "openSystemSettings": "Ouvrir les réglages",
     "reading": "Lecture",
     "theme": "Thème",
     "themes": {

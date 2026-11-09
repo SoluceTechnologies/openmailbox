@@ -123,6 +123,10 @@
     },
     "title": "Postfächer"
   },
+  "notifications": {
+    "newMessages_one": "{{count}} neue Nachricht",
+    "newMessages_other": "{{count}} neue Nachrichten"
+  },
   "offline": {
     "banner": "Du bist offline. Änderungen werden gesendet, sobald die Verbindung wieder besteht."
   },
@@ -161,6 +165,11 @@
     "languageHint": "Datumsangaben und Texte folgen dieser Sprache.",
     "loadRemoteImages": "Externe Bilder laden",
     "loadRemoteImagesHint": "Externe Bilder können Absendern verraten, wann du ihre Nachricht öffnest.",
+    "notifications": "Mitteilungen",
+    "notificationsDenied": "Mitteilungen für OpenMailbox sind in den Systemeinstellungen deaktiviert.",
+    "notificationsHint": "Das Telefon entscheidet, wie oft bei geschlossenem OpenMailbox nach neuen E-Mails gesucht wird: bestenfalls alle 15 Minuten, auf dem iPhone seltener.",
+    "notifyNewMail": "Neue E-Mails",
+    "openSystemSettings": "Einstellungen öffnen",
     "reading": "Lesen",
     "theme": "Design",
     "themes": {

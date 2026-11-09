@@ -123,6 +123,12 @@
     },
     "title": "Почтовые ящики"
   },
+  "notifications": {
+    "newMessages_few": "{{count}} новых письма",
+    "newMessages_many": "{{count}} новых писем",
+    "newMessages_one": "{{count}} новое письмо",
+    "newMessages_other": "{{count}} новых писем"
+  },
   "offline": {
     "banner": "Нет подключения к сети. Изменения будут отправлены, когда соединение восстановится."
   },
@@ -161,6 +167,11 @@
     "languageHint": "Даты и тексты отображаются на этом языке.",
     "loadRemoteImages": "Загружать внешние изображения",
     "loadRemoteImagesHint": "Внешние изображения могут сообщить отправителям, что вы открыли их письмо.",
+    "notifications": "Уведомления",
+    "notificationsDenied": "Уведомления OpenMailbox отключены в настройках системы.",
+    "notificationsHint": "Телефон сам решает, как часто проверять почту, когда OpenMailbox закрыт: не чаще раза в 15 минут, на iPhone реже.",
+    "notifyNewMail": "Новые письма",
+    "openSystemSettings": "Открыть настройки",
     "reading": "Чтение",
     "theme": "Тема",
     "themes": {

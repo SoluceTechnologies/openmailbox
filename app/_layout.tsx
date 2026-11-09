@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import FakeSplash from '@/components/FakeSplash';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { Providers } from '@/components/Providers';
+import { NotificationBridge } from '@/components/NotificationBridge';
 import { UndoToast } from '@/components/UndoToast';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useLanguageSync } from '@/hooks/useLanguageSync';
@@ -40,6 +41,7 @@ export default function RootLayout() {
         {isReady ? <OfflineBanner /> : null}
         {isReady ? <Navigator /> : <FakeSplash />}
         {isReady ? <UndoToast /> : null}
+        {isReady ? <NotificationBridge /> : null}
       </View>
     </Providers>
   );

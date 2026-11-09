@@ -52,6 +52,27 @@ jest.mock('expo-secure-store', () => {
   };
 });
 
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  getPermissionsAsync: jest.fn(async () => ({ granted: false, canAskAgain: true })),
+  requestPermissionsAsync: jest.fn(async () => ({ granted: true })),
+  scheduleNotificationAsync: jest.fn(async () => 'notification'),
+  setBadgeCountAsync: jest.fn(async () => true),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  getLastNotificationResponseAsync: jest.fn(async () => null),
+}));
+
+jest.mock('expo-background-task', () => ({
+  registerTaskAsync: jest.fn(async () => undefined),
+  unregisterTaskAsync: jest.fn(async () => undefined),
+  BackgroundTaskResult: { Success: 1, Failed: 2 },
+}));
+
+jest.mock('expo-task-manager', () => ({
+  defineTask: jest.fn(),
+  isTaskRegisteredAsync: jest.fn(async () => false),
+}));
+
 jest.mock('expo-contacts', () => ({
   Fields: { Emails: 'emails', Name: 'name' },
   getPermissionsAsync: jest.fn(async () => ({ granted: false })),

@@ -123,6 +123,10 @@
     },
     "title": "Buzones"
   },
+  "notifications": {
+    "newMessages_one": "{{count}} mensaje nuevo",
+    "newMessages_other": "{{count}} mensajes nuevos"
+  },
   "offline": {
     "banner": "Estás sin conexión. Los cambios se enviarán cuando vuelva la conexión."
   },
@@ -161,6 +165,11 @@
     "languageHint": "Las fechas y los textos siguen este idioma.",
     "loadRemoteImages": "Cargar imágenes remotas",
     "loadRemoteImagesHint": "Las imágenes remotas pueden indicar a los remitentes cuándo abres sus mensajes.",
+    "notifications": "Notificaciones",
+    "notificationsDenied": "Las notificaciones de OpenMailbox están desactivadas en los ajustes del sistema.",
+    "notificationsHint": "El teléfono decide con qué frecuencia se comprueba el correo con OpenMailbox cerrado: como mucho cada 15 minutos, menos a menudo en iPhone.",
+    "notifyNewMail": "Correo nuevo",
+    "openSystemSettings": "Abrir Ajustes",
     "reading": "Lectura",
     "theme": "Tema",
     "themes": {

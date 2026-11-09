@@ -123,6 +123,10 @@
     },
     "title": "Caixas de correio"
   },
+  "notifications": {
+    "newMessages_one": "{{count}} nova mensagem",
+    "newMessages_other": "{{count}} novas mensagens"
+  },
   "offline": {
     "banner": "Está offline. As alterações serão enviadas quando a ligação voltar."
   },
@@ -161,6 +165,11 @@
     "languageHint": "As datas e os textos seguem este idioma.",
     "loadRemoteImages": "Carregar imagens remotas",
     "loadRemoteImagesHint": "As imagens remotas podem indicar aos remetentes quando abre as mensagens deles.",
+    "notifications": "Notificações",
+    "notificationsDenied": "As notificações do OpenMailbox estão desativadas nas definições do sistema.",
+    "notificationsHint": "O telefone decide com que frequência verifica o correio com o OpenMailbox fechado: no máximo a cada 15 minutos, menos vezes no iPhone.",
+    "notifyNewMail": "Novo correio",
+    "openSystemSettings": "Abrir Definições",
     "reading": "Leitura",
     "theme": "Tema",
     "themes": {

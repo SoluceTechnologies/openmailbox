@@ -2,29 +2,11 @@ import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { CoreEventListener } from '@/core/events';
+import { boot } from '@/core/boot';
 import { mailCore } from '@/core/mailCore';
-import { queryClient, queryKeys } from '@/core/queryClient';
-import { readSecret } from '@/core/secrets';
 import { setupOnlineManager } from '@/services/shared/network';
-import { useSyncStore } from '@/stores/syncStore';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
-
-async function boot(): Promise<void> {
-  const core = mailCore();
-  core.subscribe(new CoreEventListener());
-  const accounts = await core.listAccounts();
-  queryClient.setQueryData(queryKeys.accounts, accounts);
-  await Promise.all(
-    accounts.map(async (account) => {
-      const secret = await readSecret(account.id);
-      if (secret) core.unlockAccount(account.id, secret);
-      else useSyncStore.getState().setAuthRequired(account.id, true);
-    }),
-  );
-  if (AppState.currentState === 'active') core.onForeground();
-}
 
 export function useAppInitialization(): { isReady: boolean } {
   const [isReady, setIsReady] = useState(false);

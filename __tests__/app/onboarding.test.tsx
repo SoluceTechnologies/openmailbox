@@ -1,5 +1,6 @@
 import { BackHandler } from 'react-native';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import * as Notifications from 'expo-notifications';
 import { Security } from '@openmailbox/mail-core';
 
 import OnboardingScreen from '../../app/onboarding';
@@ -45,6 +46,7 @@ describe('onboarding', () => {
 
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/'));
     expect(core.addAccount.mock.calls[0][0]).toMatchObject({ email: 'alice@gmail.com', displayName: 'Alice Martin' });
+    expect(Notifications.requestPermissionsAsync).toHaveBeenCalledTimes(1);
   });
 
   it('signs in to a provider it knows without looking up its servers', async () => {
