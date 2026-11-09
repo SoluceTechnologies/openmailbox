@@ -72,6 +72,7 @@ describe('account settings', () => {
 
   it('removes the account and its password after confirmation', async () => {
     useSettingsStore.getState().setSignature('account-1', 'Charles');
+    useSettingsStore.getState().setAccountNotified('account-1', false);
     const alert = jest.spyOn(Alert, 'alert');
     renderWithProviders(<AccountSettingsScreen />);
     fireEvent.press(screen.getByRole('button', { name: 'Remove Account' }));
@@ -84,5 +85,6 @@ describe('account settings', () => {
     expect(core.removeAccount).toHaveBeenCalledWith('account-1');
     expect(await readSecret('account-1')).toBeNull();
     expect(useSettingsStore.getState().signatures['account-1']).toBeUndefined();
+    expect(useSettingsStore.getState().silencedAccountIds).not.toContain('account-1');
   });
 });

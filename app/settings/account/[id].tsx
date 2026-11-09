@@ -69,6 +69,7 @@ export default function AccountSettingsScreen() {
           await mailCore().removeAccount(account.id);
           await deleteSecret(account.id);
           setSignature(account.id, '');
+          useSettingsStore.getState().setAccountNotified(account.id, true);
           await queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
           router.back();
         },
