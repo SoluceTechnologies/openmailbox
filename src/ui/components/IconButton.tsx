@@ -4,6 +4,7 @@ import { StyleSheet, type AccessibilityProps } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import AnimatedPressable from './AnimatedPressable';
+import Typography from './Typography';
 
 type Variant = 'ghost' | 'filled' | 'plain';
 
@@ -15,12 +16,14 @@ interface IconButtonProps extends AccessibilityProps {
   glass?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
+  /** Text shown instead of an icon: the button grows into a pill. */
+  label?: string;
   hapticFeedback?: Haptics.ImpactFeedbackStyle | null;
   testID?: string;
 }
 
 function IconButton({
-  onPress, size = 44, variant = 'ghost', round = false, glass = false, disabled = false, children,
+  onPress, size = 44, variant = 'ghost', round = false, glass = false, disabled = false, children, label,
   hapticFeedback = Haptics.ImpactFeedbackStyle.Light,
   ...accessibility
 }: IconButtonProps) {
@@ -31,13 +34,16 @@ function IconButton({
   return (
     <AnimatedPressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       {...accessibility}
       onPress={onPress}
       disabled={disabled}
       animated={!disabled}
       hapticFeedback={hapticFeedback ?? undefined}
       style={{
-        width: size,
+        width: label ? undefined : size,
+        minWidth: size,
+        paddingHorizontal: label ? 16 : 0,
         height: size,
         borderRadius,
         alignItems: 'center',
@@ -55,7 +61,13 @@ function IconButton({
           style={[StyleSheet.absoluteFill, { borderRadius }]}
         />
       )}
-      {children}
+      {label ? (
+        <Typography variant="body1" weight="600" numberOfLines={1}>
+          {label}
+        </Typography>
+      ) : (
+        children
+      )}
     </AnimatedPressable>
   );
 }

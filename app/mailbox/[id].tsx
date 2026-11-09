@@ -21,7 +21,7 @@ import { SelectionToolbar } from '@/features/threads/components/SelectionToolbar
 import { useThreadActions } from '@/features/threads/useThreadActions';
 import { useThreadSelection } from '@/features/threads/useThreadSelection';
 import { accountColor } from '@/theme';
-import { Button, EmptyState, ScreenHeader, SegmentedControl, Spinner, Typography, ViewContainer } from '@/ui/components';
+import { EmptyState, IconButton, ScreenHeader, SegmentedControl, Spinner, Typography, ViewContainer } from '@/ui/components';
 
 const MINIMUM_REFRESH_MS = 700;
 
@@ -130,10 +130,11 @@ export default function MailboxScreen() {
         <ScreenHeader
           onBack={() => router.back()}
           right={
-            <Button
-              variant="link"
-              inline
-              title={selection.active ? t('threads.selectDone') : t('threads.select')}
+            <IconButton
+              glass
+              round
+              size={40}
+              label={selection.active ? t('threads.selectDone') : t('threads.select')}
               onPress={selection.active ? selection.end : selection.start}
               disabled={!selection.active && data.length === 0}
             />
@@ -188,7 +189,9 @@ export default function MailboxScreen() {
             threads.isFetchingNextPage ? (
               <Spinner style={styles.footer} />
             ) : !threads.hasNextPage && data.length > 0 && !unreadOnly ? (
-              <Button variant="link" title={t('threads.loadOlder')} onPress={loadOlder} style={styles.footer} />
+              <View style={styles.footer}>
+                <IconButton glass round size={40} label={t('threads.loadOlder')} onPress={loadOlder} />
+              </View>
             ) : null
           }
         />

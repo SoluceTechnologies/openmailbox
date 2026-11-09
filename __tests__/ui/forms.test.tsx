@@ -1,7 +1,7 @@
 import { Text } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { Button, FormField, FormSection, ListRow, ScreenHeader, SegmentedControl } from '@/ui/components';
+import { Button, FormField, FormSection, IconButton, ListRow, ScreenHeader, SegmentedControl } from '@/ui/components';
 
 import { renderWithProviders } from '../helpers/render';
 
@@ -82,5 +82,13 @@ describe('form components', () => {
     renderWithProviders(<ScreenHeader title="Settings" onBack={onBack} />);
     fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     expect(onBack).toHaveBeenCalled();
+  });
+
+  it('shows a glass button with a text label, like the back button', () => {
+    const onPress = jest.fn();
+    renderWithProviders(<IconButton glass round size={40} label="Select" onPress={onPress} />);
+    fireEvent.press(screen.getByRole('button', { name: 'Select' }));
+    expect(onPress).toHaveBeenCalled();
+    expect(screen.getByText('Select')).toBeOnTheScreen();
   });
 });
