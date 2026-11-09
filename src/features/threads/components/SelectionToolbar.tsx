@@ -12,7 +12,7 @@ import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { ActionList, Sheet, Typography } from '@/ui/components';
 
 import { deleteThreadsForever, moveWithUndo } from '../moves';
-import { availableThreadActions, deletesForGood, threadActionContext } from '../threadActions';
+import { availableThreadActions, deletesForGood, indexMailboxes, threadActionContext } from '../threadActions';
 
 interface SelectionToolbarProps {
   threads: ThreadSummary[];
@@ -27,7 +27,8 @@ export function SelectionToolbar({ threads, onDone }: SelectionToolbarProps) {
   const [marking, setMarking] = useState(false);
   const [moving, setMoving] = useState(false);
 
-  const contexts = threads.map((thread) => threadActionContext(thread, mailboxes));
+  const index = indexMailboxes(mailboxes);
+  const contexts = threads.map((thread) => threadActionContext(thread, index));
   const accountIds = new Set(threads.map((thread) => thread.accountId));
   const canArchive = threads.length > 0 && contexts.every((context) => availableThreadActions(context).includes('archive'));
   const finish = (work: Promise<unknown>) => {

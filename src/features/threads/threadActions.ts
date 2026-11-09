@@ -52,11 +52,27 @@ export function availableThreadActions({ role, accountRoles, flagged, unread }: 
   return actions;
 }
 
-export function threadActionContext(thread: ThreadSummary, mailboxes: Mailbox[]): ThreadActionContext {
-  const accountMailboxes = mailboxes.filter((mailbox) => mailbox.accountId === thread.accountId);
+export interface MailboxIndex {
+  roleOf: Map<string, MailboxRole | undefined>;
+  rolesOfAccount: Map<string, Set<MailboxRole>>;
+}
+
+/** Built once per mailbox list, so each row of a long list only reads two maps. */
+export function indexMailboxes(mailboxes: Mailbox[]): MailboxIndex {
+  const index: MailboxIndex = { roleOf: new Map(), rolesOfAccount: new Map() };
+  for (const mailbox of mailboxes) {
+    index.roleOf.set(mailbox.id, mailbox.role);
+    let roles = index.rolesOfAccount.get(mailbox.accountId);
+    if (!roles) index.rolesOfAccount.set(mailbox.accountId, (roles = new Set()));
+    if (mailbox.role !== undefined) roles.add(mailbox.role);
+  }
+  return index;
+}
+
+export function threadActionContext(thread: ThreadSummary, index: MailboxIndex): ThreadActionContext {
   return {
-    role: accountMailboxes.find((mailbox) => mailbox.id === thread.mailboxId)?.role,
-    accountRoles: new Set(accountMailboxes.flatMap((mailbox) => (mailbox.role === undefined ? [] : [mailbox.role]))),
+    role: index.roleOf.get(thread.mailboxId),
+    accountRoles: index.rolesOfAccount.get(thread.accountId) ?? new Set(),
     flagged: thread.isFlagged,
     unread: thread.unreadCount > 0,
   };
