@@ -53,6 +53,9 @@
       "welcome": "Bienvenue dans OpenMailbox",
       "welcomeHint": "Ajoutez un compte de messagerie pour commencer. Vos messages sont stockés uniquement sur cet appareil."
     },
+    "signature": "Signature",
+    "signatureHint": "Ajoutée aux nouveaux messages, réponses et transferts envoyés depuis ce compte.",
+    "signaturePlaceholder": "Aucune signature",
     "syncNow": "Relever les messages",
     "updatePassword": "Mettre à jour le mot de passe"
   },

@@ -11,6 +11,7 @@ import { canAdd, forwardedAttachments, pickAttachments, type ComposerAttachment 
 import { AttachmentList } from '@/features/composer/components/AttachmentList';
 import { RecipientField } from '@/features/composer/components/RecipientField';
 import { prefill, type ComposeMode } from '@/features/composer/prefill';
+import { replaceSignature, withSignature } from '@/features/composer/signature';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { ActionList, IconButton, Select, Sheet, Typography, ViewContainer } from '@/ui/components';
 import { formatAddressList, parseAddressList, type MailAddress } from '@/utils/addresses';
@@ -55,14 +56,16 @@ export default function ComposeScreen() {
   const [ccText, setCcText] = useState('');
   const [bccText, setBccText] = useState('');
   const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+  const signatures = useSettingsStore((state) => state.signatures);
+  const signatureOf = (id: string | undefined) => (id ? (signatures[id] ?? '') : '');
+  const [body, setBody] = useState(() => (mode === 'new' ? withSignature('', signatureOf(accountId)) : ''));
   const [showCopies, setShowCopies] = useState(false);
   const [prefilled, setPrefilled] = useState(mode === 'new');
   const [sending, setSending] = useState(false);
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
   const [attachMenuVisible, setAttachMenuVisible] = useState(false);
   const bodyInput = useRef<TextInput>(null);
-  const [initialContent, setInitialContent] = useState(() => snapshot('', '', '', '', ''));
+  const [initialContent, setInitialContent] = useState(() => snapshot('', '', '', '', body));
 
   useEffect(() => {
     if (prefilled || !original || originalBody.isLoading) return;
@@ -80,8 +83,9 @@ export default function ComposeScreen() {
     setCc(content.cc);
     setShowCopies(content.cc.length > 0);
     setSubject(content.subject);
-    setBody(content.body);
-    setInitialContent(snapshot(formatAddressList(content.to), formatAddressList(content.cc), '', content.subject, content.body));
+    const signed = withSignature(content.body, signatureOf(original.accountId));
+    setBody(signed);
+    setInitialContent(snapshot(formatAddressList(content.to), formatAddressList(content.cc), '', content.subject, signed));
     setPrefilled(true);
     const originalAttachments = originalBody.data?.attachments ?? [];
     if (mode === 'forward' && params.emailId && originalAttachments.length > 0) {
@@ -111,6 +115,12 @@ export default function ComposeScreen() {
     (snapshot(recipientsText(to, toText), recipientsText(cc, ccText), recipientsText(bcc, bccText), subject, body) !== initialContent ||
       (mode !== 'forward' && attachments.length > 0));
   const hasRecipient = to.length + cc.length + bcc.length > 0 || (toText + ccText + bccText).trim().length > 0;
+
+  const changeAccount = (next: string) => {
+    const replaced = replaceSignature(body, signatureOf(accountId), signatureOf(next));
+    if (replaced !== null) setBody(replaced);
+    setAccountId(next);
+  };
 
   const attach = async (source: 'photos' | 'files') => {
     setAttachMenuVisible(false);
@@ -212,7 +222,7 @@ export default function ComposeScreen() {
                 <RecipientField label={t('compose.cc')} value={cc} onChange={setCc} text={ccText} onTextChange={setCcText} />
                 <RecipientField label={t('compose.bcc')} value={bcc} onChange={setBcc} text={bccText} onTextChange={setBccText} />
                 <FieldRow label={t('compose.from')}>
-                  <Select value={accountId} options={accountOptions} onChange={setAccountId} accessibilityLabel={t('compose.from')} />
+                  <Select value={accountId} options={accountOptions} onChange={changeAccount} accessibilityLabel={fieldName(t('compose.from'))} />
                 </FieldRow>
               </>
             ) : (

@@ -53,6 +53,9 @@
       "welcome": "Welkom bij OpenMailbox",
       "welcomeHint": "Voeg een e-mailaccount toe om te beginnen. Je berichten worden alleen op dit apparaat bewaard."
     },
+    "signature": "Handtekening",
+    "signatureHint": "Toegevoegd aan nieuwe berichten, antwoorden en doorgestuurde berichten van dit account.",
+    "signaturePlaceholder": "Geen handtekening",
     "syncNow": "Haal nieuwe e-mail op",
     "updatePassword": "Werk wachtwoord bij"
   },

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw } from 'lucide-react-native';
@@ -12,6 +12,7 @@ import { deleteSecret, saveSecret } from '@/core/secrets';
 import { describeCoreError } from '@/features/accounts/coreErrors';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { useSyncFailureMessage, useSyncLabel } from '@/features/sync/useSyncLabel';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { Button, FormField, FormSection, ListRow, Typography } from '@/ui/components';
 
@@ -30,6 +31,8 @@ export default function AccountSettingsScreen() {
   const syncFailure = useSyncFailureMessage(id);
   const [displayName, setDisplayName] = useState(account?.displayName ?? '');
   const [password, setPassword] = useState('');
+  const signature = useSettingsStore((state) => state.signatures[id] ?? '');
+  const setSignature = useSettingsStore((state) => state.setSignature);
   const [updating, setUpdating] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ text: string; failed: boolean } | null>(null);
 
@@ -65,6 +68,7 @@ export default function AccountSettingsScreen() {
         onPress: async () => {
           await mailCore().removeAccount(account.id);
           await deleteSecret(account.id);
+          setSignature(account.id, '');
           await queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
           router.back();
         },
@@ -102,6 +106,19 @@ export default function AccountSettingsScreen() {
         <ListRow title={t('accounts.setup.username')} subtitle={account.username} />
       </FormSection>
 
+      <FormSection title={t('accounts.signature')} footer={t('accounts.signatureHint')}>
+        <TextInput
+          value={signature}
+          onChangeText={(text) => setSignature(account.id, text)}
+          accessibilityLabel={t('accounts.signature')}
+          placeholder={t('accounts.signaturePlaceholder')}
+          placeholderTextColor={colors.textTertiary}
+          multiline
+          textAlignVertical="top"
+          style={[styles.signature, { color: colors.text }]}
+        />
+      </FormSection>
+
       <View style={styles.group}>
         <FormSection
           title={t('accounts.password')}
@@ -135,4 +152,5 @@ export default function AccountSettingsScreen() {
 const styles = StyleSheet.create({
   group: { gap: 12 },
   message: { marginHorizontal: 16 },
+  signature: { minHeight: 96, fontSize: 16, lineHeight: 22, paddingHorizontal: 16, paddingVertical: 12 },
 });

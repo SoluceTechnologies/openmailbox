@@ -38,7 +38,7 @@ describe('composer', () => {
     jest.clearAllMocks();
     mockParams = {};
     queryClient.clear();
-    useSettingsStore.setState({ defaultAccountId: null });
+    useSettingsStore.setState({ defaultAccountId: null, signatures: {} });
     queryClient.setQueryData(queryKeys.accounts, [makeAccount()]);
   });
 
@@ -107,6 +107,24 @@ describe('composer', () => {
         'claire@atlas.example',
         'nadia@x.org',
       ]);
+    });
+  });
+
+  describe('signatures', () => {
+    it("starts a new message with the account's signature", () => {
+      useSettingsStore.setState({ signatures: { 'account-1': 'Charles' } });
+      renderWithProviders(<ComposeScreen />);
+      expect(screen.getByPlaceholderText('Message').props.value).toBe('\n\n-- \nCharles');
+    });
+
+    it('swaps an untouched signature when the sending account changes', async () => {
+      queryClient.setQueryData(queryKeys.accounts, [makeAccount(), makeAccount({ id: 'account-2', email: 'charles@soluce.example' })]);
+      useSettingsStore.setState({ signatures: { 'account-1': 'Alice', 'account-2': 'Charles, Soluce' } });
+      renderWithProviders(<ComposeScreen />);
+      fireEvent.press(screen.getByText(/Cc\/Bcc/));
+      fireEvent.press(screen.getByRole('button', { name: 'From' }));
+      fireEvent.press(await screen.findByText('charles@soluce.example'));
+      expect(screen.getByPlaceholderText('Message').props.value).toBe('\n\n-- \nCharles, Soluce');
     });
   });
 });

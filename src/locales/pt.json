@@ -53,6 +53,9 @@
       "welcome": "Bem-vindo ao OpenMailbox",
       "welcomeHint": "Adicione uma conta de correio para começar. As suas mensagens ficam guardadas apenas neste dispositivo."
     },
+    "signature": "Assinatura",
+    "signatureHint": "Adicionada às novas mensagens, respostas e reencaminhamentos enviados desta conta.",
+    "signaturePlaceholder": "Sem assinatura",
     "syncNow": "Verificar correio novo",
     "updatePassword": "Atualizar palavra-passe"
   },

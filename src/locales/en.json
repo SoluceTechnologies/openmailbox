@@ -53,6 +53,9 @@
       "welcome": "Welcome to OpenMailbox",
       "welcomeHint": "Add a mail account to get started. Your messages are stored on this device only."
     },
+    "signature": "Signature",
+    "signatureHint": "Added to new messages, replies and forwards sent from this account.",
+    "signaturePlaceholder": "No signature",
     "syncNow": "Check for New Mail",
     "updatePassword": "Update Password"
   },

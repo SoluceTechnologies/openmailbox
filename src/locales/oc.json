@@ -53,6 +53,9 @@
       "welcome": "Benvenguda dins OpenMailbox",
       "welcomeHint": "Apondètz un compte de messatjariá per començar. Vòstres messatges son gardats sonque sus aqueste aparelh."
     },
+    "signature": "Signatura",
+    "signatureHint": "Aponduda als messatges novèls, responsas e transferiments mandats dempuèi aqueste compte.",
+    "signaturePlaceholder": "Cap de signatura",
     "syncNow": "Relevar los messatges",
     "updatePassword": "Metre a jorn lo senhal"
   },

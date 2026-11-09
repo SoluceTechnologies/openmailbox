@@ -5,6 +5,7 @@ import { CoreError } from '@openmailbox/mail-core';
 import AccountSettingsScreen from '../../app/settings/account/[id]';
 import { queryClient, queryKeys } from '@/core/queryClient';
 import { readSecret, saveSecret } from '@/core/secrets';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import i18n from '@/utils/i18n';
 
@@ -63,7 +64,14 @@ describe('account settings', () => {
     expect(await readSecret('account-1')).toBe('old-secret');
   });
 
+  it('keeps a signature for the account', () => {
+    renderWithProviders(<AccountSettingsScreen />);
+    fireEvent.changeText(screen.getByLabelText(i18n.t('accounts.signature')), 'Charles\nSoluce Technologies');
+    expect(useSettingsStore.getState().signatures['account-1']).toBe('Charles\nSoluce Technologies');
+  });
+
   it('removes the account and its password after confirmation', async () => {
+    useSettingsStore.getState().setSignature('account-1', 'Charles');
     const alert = jest.spyOn(Alert, 'alert');
     renderWithProviders(<AccountSettingsScreen />);
     fireEvent.press(screen.getByRole('button', { name: 'Remove Account' }));
@@ -75,5 +83,6 @@ describe('account settings', () => {
     expect(mockRouter.back).toHaveBeenCalled();
     expect(core.removeAccount).toHaveBeenCalledWith('account-1');
     expect(await readSecret('account-1')).toBeNull();
+    expect(useSettingsStore.getState().signatures['account-1']).toBeUndefined();
   });
 });
