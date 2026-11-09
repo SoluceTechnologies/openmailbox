@@ -19,7 +19,7 @@ describe('settings', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useSettingsStore.setState({ language: 'en', loadRemoteImages: false });
+    useSettingsStore.setState({ language: 'en', loadRemoteImages: false, contactPictures: true });
     useSyncStore.setState({ statuses: {}, authRequired: {} });
     queryClient.setQueryData(queryKeys.accounts, [
       makeAccount(),
@@ -48,6 +48,15 @@ describe('settings', () => {
     expect(toggle).not.toBeChecked();
     fireEvent(toggle, 'valueChange', true);
     expect(useSettingsStore.getState().loadRemoteImages).toBe(true);
+  });
+
+  it('shows contact pictures until switched off', () => {
+    renderWithProviders(<SettingsScreen />);
+    const toggle = screen.getByRole('switch', { name: 'Contact Pictures' });
+    expect(toggle).toBeChecked();
+    fireEvent(toggle, 'valueChange', false);
+    expect(useSettingsStore.getState().contactPictures).toBe(false);
+    expect(screen.getByText('Pictures come from Gravatar or the website of the sender’s company, which can tell that you are in touch.')).toBeOnTheScreen();
   });
 
   it('shows the current language next to Appearance', () => {

@@ -12,6 +12,7 @@ interface SettingsState {
   hapticsEnabled: boolean;
   reduceMotion: boolean;
   loadRemoteImages: boolean;
+  contactPictures: boolean;
   defaultAccountId: string | null;
   signatures: Record<string, string>;
   notificationsEnabled: boolean;
@@ -20,6 +21,7 @@ interface SettingsState {
   setLanguage: (language: AppLanguage) => void;
   setHapticsEnabled: (enabled: boolean) => void;
   setLoadRemoteImages: (enabled: boolean) => void;
+  setContactPictures: (enabled: boolean) => void;
   setDefaultAccountId: (accountId: string | null) => void;
   /** An empty signature removes the account's entry. */
   setSignature: (accountId: string, signature: string) => void;
@@ -35,6 +37,7 @@ export const useSettingsStore = create<SettingsState>()(
       hapticsEnabled: true,
       reduceMotion: false,
       loadRemoteImages: false,
+      contactPictures: true,
       defaultAccountId: null,
       signatures: {},
       notificationsEnabled: true,
@@ -43,6 +46,7 @@ export const useSettingsStore = create<SettingsState>()(
       setLanguage: (language) => set({ language }),
       setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
       setLoadRemoteImages: (loadRemoteImages) => set({ loadRemoteImages }),
+      setContactPictures: (contactPictures) => set({ contactPictures }),
       setDefaultAccountId: (defaultAccountId) => set({ defaultAccountId }),
       setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
       setAccountNotified: (accountId, notified) =>
@@ -66,6 +70,7 @@ export const useSettingsStore = create<SettingsState>()(
         hapticsEnabled,
         reduceMotion,
         loadRemoteImages,
+        contactPictures,
         defaultAccountId,
         signatures,
         notificationsEnabled,
@@ -76,6 +81,7 @@ export const useSettingsStore = create<SettingsState>()(
         hapticsEnabled,
         reduceMotion,
         loadRemoteImages,
+        contactPictures,
         defaultAccountId,
         signatures,
         notificationsEnabled,

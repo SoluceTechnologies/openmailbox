@@ -160,6 +160,8 @@
     "about": "Acerca de",
     "accounts": "Cuentas",
     "appearance": "Apariencia e idioma",
+    "contactPictures": "Fotos de contactos",
+    "contactPicturesHint": "Las fotos vienen de Gravatar o del sitio web de la empresa del remitente, que pueden saber que estáis en contacto.",
     "general": "General",
     "language": "Idioma",
     "languageHint": "Las fechas y los textos siguen este idioma.",

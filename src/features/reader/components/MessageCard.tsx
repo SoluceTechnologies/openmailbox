@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Flag } from 'lucide-react-native';
 import type { EmailSummary } from '@openmailbox/mail-core';
 
-import { avatarColor } from '@/theme';
-import { Avatar, Typography } from '@/ui/components';
+import { ContactAvatar } from '@/features/avatars/ContactAvatar';
+import { Typography } from '@/ui/components';
 import { displayName, formatAddressList } from '@/utils/addresses';
 import { formatFullDate, formatListDate } from '@/utils/dates';
 
@@ -34,7 +34,7 @@ function MessageCardImpl({ email, expanded, onToggle }: MessageCardProps) {
         onPress={() => onToggle(email.id)}
         style={styles.header}
       >
-        <Avatar name={senderName} size={38} color={avatarColor(sender?.email ?? senderName)} />
+        <ContactAvatar email={sender?.email} name={senderName} size={38} />
         <View style={styles.headerText}>
           <View style={styles.line}>
             <Typography numberOfLines={1} style={[styles.sender, { color: colors.text, fontWeight: email.isSeen ? '600' : '700' }]}>

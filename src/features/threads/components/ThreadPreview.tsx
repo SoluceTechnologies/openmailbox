@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import type { ThreadSummary } from '@openmailbox/mail-core';
 
 import { useBody } from '@/core/hooks';
-import { avatarColor } from '@/theme';
-import { Avatar, Typography } from '@/ui/components';
+import { ContactAvatar } from '@/features/avatars/ContactAvatar';
+import { Typography } from '@/ui/components';
 import { displayName } from '@/utils/addresses';
 import { formatFullDate } from '@/utils/dates';
 
@@ -62,7 +62,7 @@ function PreviewContent({ thread, actions, onAction, onOpen, onClose }: ThreadPr
           style={[styles.card, { backgroundColor: colors.background }]}
         >
           <View style={styles.header}>
-            <Avatar name={senderName} size={40} color={avatarColor(sender?.email ?? senderName)} />
+            <ContactAvatar email={sender?.email} name={senderName} size={40} />
             <View style={styles.headerText}>
               <Typography weight="600" numberOfLines={1}>
                 {senderName}

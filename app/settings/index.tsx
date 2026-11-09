@@ -1,7 +1,7 @@
 import { useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Alert, Linking, StyleSheet, View } from 'react-native';
-import { Bell, ImageOff, Info, Palette, Plus, TriangleAlert } from 'lucide-react-native';
+import { Bell, CircleUserRound, ImageOff, Info, Palette, Plus, TriangleAlert } from 'lucide-react-native';
 
 import { useAccounts } from '@/core/hooks';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
@@ -20,6 +20,8 @@ export default function SettingsScreen() {
   const authRequired = useSyncStore((state) => state.authRequired);
   const loadRemoteImages = useSettingsStore((state) => state.loadRemoteImages);
   const setLoadRemoteImages = useSettingsStore((state) => state.setLoadRemoteImages);
+  const contactPictures = useSettingsStore((state) => state.contactPictures);
+  const setContactPictures = useSettingsStore((state) => state.setContactPictures);
   const language = useSettingsStore((state) => state.language);
   const notificationsEnabled = useSettingsStore((state) => state.notificationsEnabled);
   const silencedAccountIds = useSettingsStore((state) => state.silencedAccountIds);
@@ -88,6 +90,14 @@ export default function SettingsScreen() {
           title={t('settings.loadRemoteImages')}
           leading={<ImageOff size={22} color={colors.primary} />}
           trailing={<Toggle value={loadRemoteImages} onValueChange={setLoadRemoteImages} accessibilityLabel={t('settings.loadRemoteImages')} />}
+        />
+      </FormSection>
+
+      <FormSection footer={t('settings.contactPicturesHint')}>
+        <ListRow
+          title={t('settings.contactPictures')}
+          leading={<CircleUserRound size={22} color={colors.primary} />}
+          trailing={<Toggle value={contactPictures} onValueChange={setContactPictures} accessibilityLabel={t('settings.contactPictures')} />}
         />
       </FormSection>
 

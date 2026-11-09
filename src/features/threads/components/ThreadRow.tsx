@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { ChevronRight, Flag, Paperclip, Reply } from 'lucide-react-native';
 import type { ThreadSummary } from '@openmailbox/mail-core';
 
-import { avatarColor } from '@/theme';
-import { Avatar, Checkbox, Typography } from '@/ui/components';
+import { ContactAvatar } from '@/features/avatars/ContactAvatar';
+import { Checkbox, Typography } from '@/ui/components';
 import { displayName } from '@/utils/addresses';
 import { formatListDate } from '@/utils/dates';
 import { haptic, ImpactFeedbackStyle } from '@/utils/haptics';
@@ -52,7 +52,7 @@ function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress, selected }:
         {unread ? <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} /> : null}
         {thread.latest.isAnswered ? <Reply size={13} color={colors.textTertiary} style={styles.replied} /> : null}
       </View>
-      <Avatar name={senderName} size={40} color={avatarColor(sender?.email ?? senderName)} />
+      <ContactAvatar email={sender?.email} name={senderName} size={40} />
       <View style={[styles.content, { borderBottomColor: colors.border }]}>
         <View style={styles.line}>
           {accountAccent ? <View style={[styles.accountDot, { backgroundColor: accountAccent }]} /> : null}

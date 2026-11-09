@@ -3,6 +3,7 @@ import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { CirclePlus, X } from 'lucide-react-native';
 
+import { ContactAvatar } from '@/features/avatars/ContactAvatar';
 import { pickContactAddress } from '@/services/contacts';
 import { Typography } from '@/ui/components';
 import { parseAddressList, type MailAddress } from '@/utils/addresses';
@@ -107,14 +108,17 @@ export function RecipientField({ label, value, onChange, text, onTextChange, aut
           onPress={() => add([address])}
           style={({ pressed }) => [styles.suggestion, { borderBottomColor: colors.border }, pressed && { backgroundColor: colors.surface }]}
         >
-          {address.name ? (
-            <Typography weight="500" numberOfLines={1}>
-              {address.name}
+          <ContactAvatar email={address.email} name={address.name || address.email} size={32} />
+          <View style={styles.suggestionText}>
+            {address.name ? (
+              <Typography weight="500" numberOfLines={1}>
+                {address.name}
+              </Typography>
+            ) : null}
+            <Typography variant="caption" color="secondary" numberOfLines={1}>
+              {address.email}
             </Typography>
-          ) : null}
-          <Typography variant="caption" color="secondary" numberOfLines={1}>
-            {address.email}
-          </Typography>
+          </View>
         </Pressable>
       ))}
     </View>
@@ -127,5 +131,6 @@ const styles = StyleSheet.create({
   chips: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingVertical: 6 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4, maxWidth: '100%', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14 },
   input: { flexGrow: 1, minWidth: 90, fontSize: 16, paddingVertical: 6 },
-  suggestion: { paddingVertical: 10, paddingLeft: 12, gap: 2, borderBottomWidth: StyleSheet.hairlineWidth },
+  suggestion: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingLeft: 4, borderBottomWidth: StyleSheet.hairlineWidth },
+  suggestionText: { flex: 1, gap: 2 },
 });

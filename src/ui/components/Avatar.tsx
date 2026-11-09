@@ -1,5 +1,5 @@
-import React from 'react';
-import { Image, View } from 'react-native';
+import React, { useState } from 'react';
+import { Image, StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
 import Typography from './Typography';
 
@@ -22,10 +22,18 @@ function initials(name?: string): string {
 
 function Avatar({ uri, name, size = 40, color }: AvatarProps) {
   const { colors } = useTheme();
+  const [failedUri, setFailedUri] = useState<string | null>(null);
   const radius = size / 2;
 
-  if (uri) {
-    return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: radius }} />;
+  if (uri && uri !== failedUri) {
+    return (
+      <Image
+        testID="avatar-picture"
+        source={{ uri }}
+        onError={() => setFailedUri(uri)}
+        style={{ width: size, height: size, borderRadius: radius, backgroundColor: '#ffffff', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
+      />
+    );
   }
 
   return (

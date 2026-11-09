@@ -3,8 +3,8 @@ import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { ThreadSummary } from '@openmailbox/mail-core';
 
-import { avatarColor } from '@/theme';
-import { ActionList, Avatar, Sheet, Typography } from '@/ui/components';
+import { ContactAvatar } from '@/features/avatars/ContactAvatar';
+import { ActionList, Sheet, Typography } from '@/ui/components';
 import { displayName } from '@/utils/addresses';
 
 import { THREAD_ACTION_PRESENTATION, type ThreadActionId } from '../threadActions';
@@ -42,7 +42,7 @@ export function ThreadActionSheet({ thread, actions, onAction, onClose }: Thread
       {thread ? (
         <View style={styles.content}>
           <View style={styles.header}>
-            <Avatar name={senderName} size={40} color={avatarColor(sender?.email ?? senderName)} />
+            <ContactAvatar email={sender?.email} name={senderName} size={40} />
             <View style={styles.headerText}>
               <Typography weight="600" numberOfLines={1}>
                 {senderName}
