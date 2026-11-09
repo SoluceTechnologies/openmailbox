@@ -42,6 +42,12 @@ const config: ExpoConfig = {
     'expo-localization',
     'expo-font',
     [
+      'expo-contacts',
+      {
+        contactsPermission: 'OpenMailbox suggests addresses from your contacts while you write. They stay on this device.',
+      },
+    ],
+    [
       'expo-image-picker',
       {
         photosPermission: 'OpenMailbox attaches the photos and videos you choose to your messages.',

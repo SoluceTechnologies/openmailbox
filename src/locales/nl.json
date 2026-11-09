@@ -63,6 +63,7 @@
     "retry": "Probeer opnieuw"
   },
   "compose": {
+    "addFromContacts": "Toevoegen uit contacten",
     "attach": "Bijvoegen",
     "attachFiles": "Bestanden",
     "attachPhotos": "Foto's en video's",
@@ -84,6 +85,7 @@
     "newMessage": "Nieuw bericht",
     "noRecipient": "Voeg minstens één ontvanger toe.",
     "removeAttachment": "{{name}} verwijderen",
+    "removeRecipient": "{{name}} verwijderen",
     "reply": "Beantwoord",
     "replyAll": "Beantwoord allen",
     "send": "Verstuur",

@@ -52,6 +52,14 @@ jest.mock('expo-secure-store', () => {
   };
 });
 
+jest.mock('expo-contacts', () => ({
+  Fields: { Emails: 'emails', Name: 'name' },
+  getPermissionsAsync: jest.fn(async () => ({ granted: false })),
+  requestPermissionsAsync: jest.fn(async () => ({ granted: false })),
+  getContactsAsync: jest.fn(async () => ({ data: [] })),
+  presentContactPickerAsync: jest.fn(async () => null),
+}));
+
 jest.mock('react-native-worklets', () => ({
   scheduleOnRN: (fn, ...args) => fn(...args),
 }));

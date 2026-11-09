@@ -63,6 +63,7 @@
     "retry": "Erneut versuchen"
   },
   "compose": {
+    "addFromContacts": "Aus Kontakten hinzufügen",
     "attach": "Anhängen",
     "attachFiles": "Dateien",
     "attachPhotos": "Fotos und Videos",
@@ -84,6 +85,7 @@
     "newMessage": "Neue E-Mail",
     "noRecipient": "Füge mindestens einen Empfänger hinzu.",
     "removeAttachment": "{{name}} entfernen",
+    "removeRecipient": "{{name}} entfernen",
     "reply": "Antworten",
     "replyAll": "Allen antworten",
     "send": "Senden",

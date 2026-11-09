@@ -86,4 +86,27 @@ describe('composer', () => {
       ]);
     });
   });
+
+  describe('recipients', () => {
+    it('blocks sending while an address is invalid', async () => {
+      const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+      renderWithProviders(<ComposeScreen />);
+      fireEvent.changeText(screen.getByLabelText('To'), 'bob@');
+      await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Send' })));
+      expect(alert).toHaveBeenCalledWith(i18n.t('compose.invalidAddresses'), 'bob@');
+      expect(core.send).not.toHaveBeenCalled();
+    });
+
+    it('sends to the chips and to what is still typed', async () => {
+      renderWithProviders(<ComposeScreen />);
+      fireEvent.changeText(screen.getByLabelText('To'), 'claire@atlas.example,');
+      fireEvent.changeText(screen.getByLabelText('To'), 'nadia@x.org');
+      await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Send' })));
+      await waitFor(() => expect(core.send).toHaveBeenCalled());
+      expect(core.send.mock.calls[0][0].to.map((address: { email: string }) => address.email)).toEqual([
+        'claire@atlas.example',
+        'nadia@x.org',
+      ]);
+    });
+  });
 });

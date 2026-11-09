@@ -63,6 +63,7 @@
     "retry": "Повторить"
   },
   "compose": {
+    "addFromContacts": "Добавить из контактов",
     "attach": "Прикрепить",
     "attachFiles": "Файлы",
     "attachPhotos": "Фото и видео",
@@ -84,6 +85,7 @@
     "newMessage": "Новое письмо",
     "noRecipient": "Добавьте хотя бы одного получателя.",
     "removeAttachment": "Удалить {{name}}",
+    "removeRecipient": "Удалить {{name}}",
     "reply": "Ответить",
     "replyAll": "Ответить всем",
     "send": "Отправить",

@@ -63,6 +63,7 @@
     "retry": "Tornar ensajar"
   },
   "compose": {
+    "addFromContacts": "Apondre dempuèi los contactes",
     "attach": "Jónher",
     "attachFiles": "Fichièrs",
     "attachPhotos": "Fotos e vidèos",
@@ -84,6 +85,7 @@
     "newMessage": "Messatge novèl",
     "noRecipient": "Apondètz almens un destinatari.",
     "removeAttachment": "Levar {{name}}",
+    "removeRecipient": "Levar {{name}}",
     "reply": "Respondre",
     "replyAll": "Respondre a totes",
     "send": "Mandar",

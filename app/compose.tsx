@@ -9,6 +9,7 @@ import { sendDraft } from '@/core/actions';
 import { useAccounts, useBody, useThreadEmails } from '@/core/hooks';
 import { canAdd, forwardedAttachments, pickAttachments, type ComposerAttachment } from '@/features/composer/attachments';
 import { AttachmentList } from '@/features/composer/components/AttachmentList';
+import { RecipientField } from '@/features/composer/components/RecipientField';
 import { prefill, type ComposeMode } from '@/features/composer/prefill';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { ActionList, IconButton, Select, Sheet, Typography, ViewContainer } from '@/ui/components';
@@ -47,9 +48,12 @@ export default function ComposeScreen() {
   const [accountId, setAccountId] = useState(
     accounts.some((account) => account.id === initialAccountId) ? initialAccountId : accounts[0]?.id,
   );
-  const [to, setTo] = useState('');
-  const [cc, setCc] = useState('');
-  const [bcc, setBcc] = useState('');
+  const [to, setTo] = useState<MailAddress[]>([]);
+  const [cc, setCc] = useState<MailAddress[]>([]);
+  const [bcc, setBcc] = useState<MailAddress[]>([]);
+  const [toText, setToText] = useState('');
+  const [ccText, setCcText] = useState('');
+  const [bccText, setBccText] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [showCopies, setShowCopies] = useState(false);
@@ -72,8 +76,8 @@ export default function ComposeScreen() {
       to: t('compose.headerTo'),
     });
     setAccountId(original.accountId);
-    setTo(formatAddressList(content.to));
-    setCc(formatAddressList(content.cc));
+    setTo(content.to);
+    setCc(content.cc);
     setShowCopies(content.cc.length > 0);
     setSubject(content.subject);
     setBody(content.body);
@@ -101,7 +105,12 @@ export default function ComposeScreen() {
     [accounts],
   );
   const sender = accounts.find((account) => account.id === accountId);
-  const dirty = prefilled && (snapshot(to, cc, bcc, subject, body) !== initialContent || (mode !== 'forward' && attachments.length > 0));
+  const recipientsText = (addresses: MailAddress[], text: string) => [formatAddressList(addresses), text].filter(Boolean).join(', ');
+  const dirty =
+    prefilled &&
+    (snapshot(recipientsText(to, toText), recipientsText(cc, ccText), recipientsText(bcc, bccText), subject, body) !== initialContent ||
+      (mode !== 'forward' && attachments.length > 0));
+  const hasRecipient = to.length + cc.length + bcc.length > 0 || (toText + ccText + bccText).trim().length > 0;
 
   const attach = async (source: 'photos' | 'files') => {
     setAttachMenuVisible(false);
@@ -127,14 +136,14 @@ export default function ComposeScreen() {
 
   const send = async () => {
     if (!accountId) return;
-    const recipients = [to, cc, bcc].map(parseAddressList);
-    const invalid = recipients.flatMap((parsed) => parsed.invalid);
+    const typed = [toText, ccText, bccText].map(parseAddressList);
+    const invalid = typed.flatMap((parsed) => parsed.invalid);
     if (invalid.length > 0) {
       Alert.alert(t('compose.invalidAddresses'), invalid.join(', '));
       return;
     }
-    const [toAddresses, ccAddresses, bccAddresses] = recipients.map((parsed) =>
-      parsed.addresses.map((address: MailAddress) => ({ name: address.name, email: address.email })),
+    const [toAddresses, ccAddresses, bccAddresses] = [to, cc, bcc].map((addresses, index) =>
+      [...addresses, ...typed[index].addresses].map((address: MailAddress) => ({ name: address.name, email: address.email })),
     );
     if (toAddresses.length + ccAddresses.length + bccAddresses.length === 0) {
       Alert.alert(t('compose.noRecipient'));
@@ -179,7 +188,7 @@ export default function ComposeScreen() {
                 size={40}
                 variant="filled"
                 accessibilityLabel={t('compose.send')}
-                disabled={sending || !prefilled || to.trim().length + cc.trim().length + bcc.trim().length === 0}
+                disabled={sending || !prefilled || !hasRecipient}
                 onPress={send}
               >
                 <ArrowUp size={20} color={colors.primary} />
@@ -190,26 +199,18 @@ export default function ComposeScreen() {
             <Typography variant="h3" style={styles.title}>
               {title}
             </Typography>
-            <FieldRow label={t('compose.to')}>
-              <TextInput
-                value={to}
-                onChangeText={setTo}
-                accessibilityLabel={fieldName(t('compose.to'))}
-                autoFocus={mode === 'new' || mode === 'forward'}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                style={[styles.input, { color: colors.text }]}
-              />
-            </FieldRow>
+            <RecipientField
+              label={t('compose.to')}
+              value={to}
+              onChange={setTo}
+              text={toText}
+              onTextChange={setToText}
+              autoFocus={mode === 'new' || mode === 'forward'}
+            />
             {showCopies ? (
               <>
-                <FieldRow label={t('compose.cc')}>
-                  <TextInput value={cc} onChangeText={setCc} accessibilityLabel={fieldName(t('compose.cc'))} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" style={[styles.input, { color: colors.text }]} />
-                </FieldRow>
-                <FieldRow label={t('compose.bcc')}>
-                  <TextInput value={bcc} onChangeText={setBcc} accessibilityLabel={fieldName(t('compose.bcc'))} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" style={[styles.input, { color: colors.text }]} />
-                </FieldRow>
+                <RecipientField label={t('compose.cc')} value={cc} onChange={setCc} text={ccText} onTextChange={setCcText} />
+                <RecipientField label={t('compose.bcc')} value={bcc} onChange={setBcc} text={bccText} onTextChange={setBccText} />
                 <FieldRow label={t('compose.from')}>
                   <Select value={accountId} options={accountOptions} onChange={setAccountId} accessibilityLabel={t('compose.from')} />
                 </FieldRow>

@@ -4372,6 +4372,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-contacts@npm:~57.0.0":
+  version: 57.0.8
+  resolution: "expo-contacts@npm:57.0.8"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/ef8ba3a0ceebf147357696a86d641620de93b62d0b698c338ad7eff18cbcdb70e2346fe8a7ee9fe8fbba5ed1954260293878d47dfb018e296b91739f9671da9b
+  languageName: node
+  linkType: hard
+
 "expo-dev-client@npm:~57.0.9":
   version: 57.0.10
   resolution: "expo-dev-client@npm:57.0.10"
@@ -7119,6 +7130,7 @@ __metadata:
     dayjs: "npm:^1.11.20"
     expo: "npm:^57.0.0"
     expo-constants: "npm:~57.0.6"
+    expo-contacts: "npm:~57.0.0"
     expo-dev-client: "npm:~57.0.9"
     expo-document-picker: "npm:~57.0.0"
     expo-file-system: "npm:~57.0.0"
