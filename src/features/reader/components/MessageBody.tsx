@@ -2,13 +2,12 @@ import { memo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import * as Sharing from 'expo-sharing';
-import { ImageOff, Paperclip } from 'lucide-react-native';
+import { File, FileArchive, FileImage, FileSpreadsheet, FileText, ImageOff, type LucideIcon } from 'lucide-react-native';
 import type { Attachment } from '@openmailbox/mail-core';
 
 import { useBody } from '@/core/hooks';
 import { describeCoreError } from '@/features/accounts/coreErrors';
-import { attachmentsDirectory, mailCore } from '@/core/mailCore';
+import { openAttachment } from '@/features/attachments/openAttachment';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { Button, Spinner, Typography } from '@/ui/components';
 
@@ -24,17 +23,25 @@ function useFormatSize(): (bytes: number) => string {
   };
 }
 
+function attachmentIcon(mimeType: string): LucideIcon {
+  if (mimeType.startsWith('image/')) return FileImage;
+  if (mimeType === 'application/pdf' || mimeType.startsWith('text/') || mimeType.includes('word')) return FileText;
+  if (mimeType.includes('sheet') || mimeType.includes('excel') || mimeType === 'text/csv') return FileSpreadsheet;
+  if (mimeType.includes('zip') || mimeType.includes('compressed')) return FileArchive;
+  return File;
+}
+
 function AttachmentChip({ emailId, attachment }: { emailId: string; attachment: Attachment }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatSize = useFormatSize();
   const [opening, setOpening] = useState(false);
+  const Icon = attachmentIcon(attachment.mimeType);
 
   const open = async () => {
     setOpening(true);
     try {
-      const path = await mailCore().saveAttachment(emailId, attachment.index, attachmentsDirectory());
-      await Sharing.shareAsync(`file://${path}`, { mimeType: attachment.mimeType, dialogTitle: attachment.filename });
+      await openAttachment(emailId, attachment);
     } catch {
       Alert.alert(t('reader.attachmentFailed'));
     } finally {
@@ -45,11 +52,16 @@ function AttachmentChip({ emailId, attachment }: { emailId: string; attachment: 
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={t('reader.openAttachment', { name: attachment.filename })}
+      accessibilityState={{ busy: opening }}
       onPress={open}
       disabled={opening}
-      style={[styles.attachment, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      style={({ pressed }) => [
+        styles.attachment,
+        { backgroundColor: pressed ? colors.border : colors.surface, borderColor: colors.border },
+      ]}
     >
-      {opening ? <Spinner size="small" /> : <Paperclip size={16} color={colors.textSecondary} />}
+      {opening ? <Spinner size="small" /> : <Icon size={22} color={colors.primary} />}
       <View style={styles.attachmentText}>
         <Typography variant="body2" numberOfLines={1}>
           {attachment.filename}

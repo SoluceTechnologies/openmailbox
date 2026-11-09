@@ -23,6 +23,7 @@ function Navigator() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen name="compose" options={{ presentation: 'modal' }} />
       <Stack.Screen name="accounts/add" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="attachment" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

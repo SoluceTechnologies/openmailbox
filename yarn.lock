@@ -4422,6 +4422,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-document-picker@npm:~57.0.0":
+  version: 57.0.3
+  resolution: "expo-document-picker@npm:57.0.3"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/17ff2d1d7063fd25a3c20961ab1f384d147923cea42c27d4431f1648b0db70d595cde6d5ce614a94ee973a85bec7626572de90131cf05539b4d8978fb16c5ea5
+  languageName: node
+  linkType: hard
+
 "expo-file-system@npm:~57.0.0":
   version: 57.0.7
   resolution: "expo-file-system@npm:57.0.7"
@@ -4483,6 +4492,35 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 10c0/60f69e0b062a48dab9904cd910996049ef5b64c354f532fccc219bc07470ae2592df55b25f0a14d47b6daebd77b3e47d334e04d5fc6b23e53932c1fbed1fa59b
+  languageName: node
+  linkType: hard
+
+"expo-image-loader@npm:~57.0.1":
+  version: 57.0.1
+  resolution: "expo-image-loader@npm:57.0.1"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/c68a12901d789bfc395b045305a68a352e05d4b3e4fcbbe382591a5fff5fcd896e81c4cbb082dfaa520c5ac6ee2c3221c3887b0292b7b831e21779bd360936f0
+  languageName: node
+  linkType: hard
+
+"expo-image-picker@npm:~57.0.0":
+  version: 57.0.21
+  resolution: "expo-image-picker@npm:57.0.21"
+  dependencies:
+    expo-image-loader: "npm:~57.0.1"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/741aa4d76d1e2ea4c9c0993d7bb77e914156eedc7c7198c7484cd47aba83b0d2a8a21df1e1d91a33d3da1ae13a5b2491277e7a9e62b196dc2f435ea2245011d1
+  languageName: node
+  linkType: hard
+
+"expo-intent-launcher@npm:~57.0.0":
+  version: 57.0.1
+  resolution: "expo-intent-launcher@npm:57.0.1"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/c5eab2e0e075160de1404ea851249317bbba3df3bf137b8920af624d44dd08f143fe30f627bc7be6dafd0f8cf61dfb291151549a19c123a3b577cb82b7db6e1f
   languageName: node
   linkType: hard
 
@@ -7082,10 +7120,13 @@ __metadata:
     expo: "npm:^57.0.0"
     expo-constants: "npm:~57.0.6"
     expo-dev-client: "npm:~57.0.9"
+    expo-document-picker: "npm:~57.0.0"
     expo-file-system: "npm:~57.0.0"
     expo-font: "npm:~57.0.1"
     expo-glass-effect: "npm:~57.0.0"
     expo-haptics: "npm:~57.0.1"
+    expo-image-picker: "npm:~57.0.0"
+    expo-intent-launcher: "npm:~57.0.0"
     expo-linking: "npm:~57.0.3"
     expo-localization: "npm:~57.0.1"
     expo-network: "npm:~57.0.1"
