@@ -40,9 +40,10 @@ interface SwipeableThreadRowProps {
   onLongPress?: (thread: ThreadSummary) => void;
   onAction: (action: ThreadActionId, thread: ThreadSummary) => void;
   onMore: (thread: ThreadSummary) => void;
+  selected?: boolean;
 }
 
-function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onLongPress, onAction, onMore }: SwipeableThreadRowProps) {
+function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onLongPress, onAction, onMore, selected }: SwipeableThreadRowProps) {
   const { t } = useTranslation();
   const swipeable = useRef<SwipeableMethods>(null);
   const unread = thread.unreadCount > 0;
@@ -57,6 +58,10 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onL
   };
   const act = (action: ThreadActionId) => close(() => onAction(action, thread));
   const flag: ThreadActionId = thread.isFlagged ? 'unflag' : 'flag';
+
+  if (selected !== undefined) {
+    return <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} selected={selected} />;
+  }
 
   return (
     <ReanimatedSwipeable

@@ -17,7 +17,9 @@ import { useIsSyncing, useSyncLabel } from '@/features/sync/useSyncLabel';
 import { SwipeableThreadRow } from '@/features/threads/components/SwipeableThreadRow';
 import { ThreadActionSheet } from '@/features/threads/components/ThreadActionSheet';
 import { ThreadPreview } from '@/features/threads/components/ThreadPreview';
+import { SelectionToolbar } from '@/features/threads/components/SelectionToolbar';
 import { useThreadActions } from '@/features/threads/useThreadActions';
+import { useThreadSelection } from '@/features/threads/useThreadSelection';
 import { accountColor } from '@/theme';
 import { Button, EmptyState, ScreenHeader, SegmentedControl, Spinner, Typography, ViewContainer } from '@/ui/components';
 
@@ -85,6 +87,7 @@ export default function MailboxScreen() {
   const [previewed, setPreviewed] = useState<ThreadSummary | null>(null);
   const [sheetThread, setSheetThread] = useState<ThreadSummary | null>(null);
   const [moving, setMoving] = useState<ThreadSummary | null>(null);
+  const selection = useThreadSelection();
   const threadActions = useThreadActions(setMoving);
   const { run: runThreadAction, actionsFor } = threadActions;
 
@@ -100,17 +103,20 @@ export default function MailboxScreen() {
         thread={item}
         accountAccent={showAccountAccent ? accentByAccount.get(item.accountId) : undefined}
         canArchive={actionsFor(item).includes('archive')}
-        onOpen={openThread}
+        onOpen={selection.active ? selection.toggle : openThread}
         onLongPress={setPreviewed}
         onAction={runThreadAction}
         onMore={setSheetThread}
+        selected={selection.active ? selection.selected.has(item.key) : undefined}
       />
     ),
-    [showAccountAccent, accentByAccount, actionsFor, openThread, runThreadAction],
+    [showAccountAccent, accentByAccount, actionsFor, openThread, runThreadAction, selection.active, selection.selected, selection.toggle],
   );
 
   const title = unified ? t('mailboxes.allInboxes') : mailbox ? mailboxName(mailbox, t) : '';
-  const subtitle = [unified ? null : account?.displayName, unreadCount > 0 ? t('threads.unreadCount', { count: unreadCount }) : null, syncLabel]
+  const subtitle = selection.active
+    ? t('threads.selectedCount', { count: selection.selected.size })
+    : [unified ? null : account?.displayName, unreadCount > 0 ? t('threads.unreadCount', { count: unreadCount }) : null, syncLabel]
     .filter(Boolean)
     .join(' · ');
   const data = threads.data ?? [];
@@ -121,11 +127,23 @@ export default function MailboxScreen() {
   return (
     <ViewContainer>
       <SafeAreaView edges={['top']} style={styles.flex}>
-        <ScreenHeader onBack={() => router.back()} />
+        <ScreenHeader
+          onBack={() => router.back()}
+          right={
+            <Button
+              variant="link"
+              inline
+              title={selection.active ? t('threads.selectDone') : t('threads.select')}
+              onPress={selection.active ? selection.end : selection.start}
+              disabled={!selection.active && data.length === 0}
+            />
+          }
+        />
         <FlashList
           data={data}
           keyExtractor={(thread) => thread.key}
           renderItem={renderItem}
+          extraData={selection.selected}
           onEndReachedThreshold={0.5}
           onEndReached={() => {
             if (threads.hasNextPage && !threads.isFetchingNextPage) threads.fetchNextPage();
@@ -175,7 +193,11 @@ export default function MailboxScreen() {
           }
         />
       </SafeAreaView>
-      <BottomBar composeAccountId={account?.id} />
+      {selection.active ? (
+        <SelectionToolbar threads={[...selection.selected.values()]} onDone={selection.end} />
+      ) : (
+        <BottomBar composeAccountId={account?.id} />
+      )}
       <ThreadPreview
         thread={previewed}
         actions={previewed ? threadActions.actionsFor(previewed) : []}

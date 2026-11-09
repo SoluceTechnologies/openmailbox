@@ -6,7 +6,7 @@ import { ChevronRight, Flag, Paperclip, Reply } from 'lucide-react-native';
 import type { ThreadSummary } from '@openmailbox/mail-core';
 
 import { avatarColor } from '@/theme';
-import { Avatar, Typography } from '@/ui/components';
+import { Avatar, Checkbox, Typography } from '@/ui/components';
 import { displayName } from '@/utils/addresses';
 import { formatListDate } from '@/utils/dates';
 import { haptic, ImpactFeedbackStyle } from '@/utils/haptics';
@@ -16,9 +16,11 @@ interface ThreadRowProps {
   accountAccent?: string;
   onOpen: (thread: ThreadSummary) => void;
   onLongPress?: (thread: ThreadSummary) => void;
+  /** Set while selecting: the row shows a checkbox and pressing it toggles the selection. */
+  selected?: boolean;
 }
 
-function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress }: ThreadRowProps) {
+function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress, selected }: ThreadRowProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const sender = thread.latest.from[0];
@@ -41,6 +43,11 @@ function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress }: ThreadRow
       delayLongPress={350}
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.surface : colors.background }]}
     >
+      {selected !== undefined ? (
+        <View style={styles.checkbox}>
+          <Checkbox checked={selected} onPress={() => onOpen(thread)} accessibilityLabel={senderName} />
+        </View>
+      ) : null}
       <View style={styles.indicator}>
         {unread ? <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} /> : null}
         {thread.latest.isAnswered ? <Reply size={13} color={colors.textTertiary} style={styles.replied} /> : null}
@@ -79,6 +86,7 @@ export const ThreadRow = memo(ThreadRowImpl);
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', paddingTop: 12 },
+  checkbox: { paddingLeft: 14, paddingTop: 20 },
   indicator: { width: 22, alignItems: 'center', paddingTop: 16 },
   unreadDot: { width: 9, height: 9, borderRadius: 4.5 },
   replied: { marginTop: 4 },

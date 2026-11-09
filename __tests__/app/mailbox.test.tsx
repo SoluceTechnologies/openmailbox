@@ -3,6 +3,7 @@ import { Destination, MailboxRole } from '@openmailbox/mail-core';
 
 import MailboxScreen from '../../app/mailbox/[id]';
 import { queryClient, queryKeys } from '@/core/queryClient';
+import { useUndoStore } from '@/stores/undoStore';
 import i18n from '@/utils/i18n';
 
 import { core, makeAccount, makeEmail, makeMailbox, makeThread, NOW } from '../helpers/fixtures';
@@ -115,5 +116,58 @@ describe('thread list', () => {
 
     const [, , destination] = core.moveThread.mock.calls[0];
     expect(Destination.Mailbox.instanceOf(destination) && destination.inner.mailboxId).toBe('mailbox-clients');
+  });
+
+  describe('selection', () => {
+    const OTHER_ACCOUNT_THREAD = makeThread({
+      key: 'bob-inbox:thread-3',
+      mailboxId: 'bob-inbox',
+      accountId: 'account-2',
+      latest: makeEmail({ id: 'email-3', threadId: 'thread-3', accountId: 'account-2', subject: 'Devis signé' }),
+    });
+
+    beforeEach(() => {
+      queryClient.setQueryData(queryKeys.accounts, [makeAccount(), makeAccount({ id: 'account-2', email: 'bob@example.org' })]);
+      queryClient.setQueryData(queryKeys.mailboxes, [
+        makeMailbox({ unreadCount: 1 }),
+        makeMailbox({ id: 'mailbox-archive', name: 'Archive', role: MailboxRole.Archive }),
+        makeMailbox({ id: 'bob-inbox', accountId: 'account-2' }),
+        makeMailbox({ id: 'bob-archive', accountId: 'account-2', name: 'Archive', role: MailboxRole.Archive }),
+      ]);
+      core.listThreads.mockResolvedValue({ threads: [UNREAD, READ, OTHER_ACCOUNT_THREAD] });
+      core.moveThread.mockImplementation(async (mailboxId) => ({
+        emailIds: [`${mailboxId}-email`],
+        targetMailboxId: mailboxId === 'bob-inbox' ? 'bob-archive' : 'mailbox-archive',
+      }));
+    });
+
+    it('turns rows into checkboxes', async () => {
+      renderWithProviders(<MailboxScreen />);
+      await screen.findByText('Devis signé');
+      fireEvent.press(screen.getByRole('button', { name: 'Select' }));
+      expect(screen.getAllByRole('checkbox')).toHaveLength(3);
+      fireEvent.press(screen.getByText('Facture disponible'));
+      expect(screen.getByText('1 selected')).toBeOnTheScreen();
+      expect(mockRouter.push).not.toHaveBeenCalled();
+    });
+
+    it('archives threads of two accounts with one undo', async () => {
+      renderWithProviders(<MailboxScreen />);
+      await screen.findByText('Devis signé');
+      fireEvent.press(screen.getByRole('button', { name: 'Select' }));
+      fireEvent.press(screen.getByText('Facture disponible'));
+      fireEvent.press(screen.getByText('Devis signé'));
+      expect(screen.getByRole('button', { name: 'Move…' })).toBeDisabled();
+
+      await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Archive' })));
+
+      expect(core.moveThread.mock.calls.map(([mailboxId, threadId]) => [mailboxId, threadId])).toEqual([
+        ['mailbox-inbox', 'thread-2'],
+        ['bob-inbox', 'thread-3'],
+      ]);
+      await act(() => useUndoStore.getState().undo());
+      expect(core.moveEmails).toHaveBeenCalledTimes(2);
+      expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+    });
   });
 });
