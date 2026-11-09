@@ -103,8 +103,8 @@ jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
-    default: React.forwardRef(function Swipeable({ children }, _reference) {
-      return React.createElement(View, null, children);
+    default: React.forwardRef(function Swipeable({ children, renderLeftActions, renderRightActions }, _reference) {
+      return React.createElement(View, null, renderLeftActions?.(), children, renderRightActions?.());
     }),
   };
 });

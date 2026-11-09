@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Flag, Paperclip } from 'lucide-react-native';
+import { ChevronRight, Flag, Paperclip, Reply } from 'lucide-react-native';
 import type { ThreadSummary } from '@openmailbox/mail-core';
 
 import { avatarColor } from '@/theme';
@@ -28,7 +28,7 @@ function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress }: ThreadRow
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[unread ? t('threads.unread') : null, senderName, thread.latest.subject, formatListDate(thread.lastReceivedAt)].filter(Boolean).join(', ')}
+      accessibilityLabel={[unread ? t('threads.unread') : null, thread.latest.isAnswered ? t('threads.replied') : null, senderName, thread.latest.subject, formatListDate(thread.lastReceivedAt)].filter(Boolean).join(', ')}
       onPress={() => onOpen(thread)}
       onLongPress={
         onLongPress
@@ -43,6 +43,7 @@ function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress }: ThreadRow
     >
       <View style={styles.indicator}>
         {unread ? <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} /> : null}
+        {thread.latest.isAnswered ? <Reply size={13} color={colors.textTertiary} style={styles.replied} /> : null}
       </View>
       <Avatar name={senderName} size={40} color={avatarColor(sender?.email ?? senderName)} />
       <View style={[styles.content, { borderBottomColor: colors.border }]}>
@@ -80,6 +81,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', paddingTop: 12 },
   indicator: { width: 22, alignItems: 'center', paddingTop: 16 },
   unreadDot: { width: 9, height: 9, borderRadius: 4.5 },
+  replied: { marginTop: 4 },
   content: { flex: 1, marginLeft: 10, paddingRight: 16, paddingBottom: 12, gap: 1, borderBottomWidth: StyleSheet.hairlineWidth },
   line: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   accountDot: { width: 7, height: 7, borderRadius: 3.5 },

@@ -71,16 +71,6 @@ export default function MailboxScreen() {
   const syncLabel = useSyncLabel(accountIds);
   const { refreshing, refresh } = usePullToRefresh(accountIds);
 
-  const archiveAvailable = useMemo(() => {
-    const roles = new Map<string, Set<MailboxRole | undefined>>();
-    for (const candidate of mailboxes) {
-      roles.set(candidate.accountId, (roles.get(candidate.accountId) ?? new Set()).add(candidate.role));
-    }
-    return (accountId: string) => {
-      const accountRoles = roles.get(accountId);
-      return !!accountRoles && (accountRoles.has(MailboxRole.Archive) || accountRoles.has(MailboxRole.All));
-    };
-  }, [mailboxes]);
   const accentByAccount = useMemo(
     () => new Map(accounts.map((candidate) => [candidate.id, accountColor(candidate.color)])),
     [accounts],
@@ -94,6 +84,7 @@ export default function MailboxScreen() {
   const [previewed, setPreviewed] = useState<ThreadSummary | null>(null);
   const [sheetThread, setSheetThread] = useState<ThreadSummary | null>(null);
   const threadActions = useThreadActions();
+  const { run: runThreadAction, actionsFor } = threadActions;
 
   const openThread = useCallback(
     (thread: ThreadSummary) =>
@@ -106,12 +97,14 @@ export default function MailboxScreen() {
       <SwipeableThreadRow
         thread={item}
         accountAccent={showAccountAccent ? accentByAccount.get(item.accountId) : undefined}
-        canArchive={archiveAvailable(item.accountId) && mailbox?.role !== MailboxRole.Archive}
+        canArchive={actionsFor(item).includes('archive')}
         onOpen={openThread}
         onLongPress={setPreviewed}
+        onAction={runThreadAction}
+        onMore={setSheetThread}
       />
     ),
-    [showAccountAccent, accentByAccount, archiveAvailable, mailbox?.role, openThread],
+    [showAccountAccent, accentByAccount, actionsFor, openThread, runThreadAction],
   );
 
   const title = unified ? t('mailboxes.allInboxes') : mailbox ? mailboxName(mailbox, t) : '';

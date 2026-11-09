@@ -2,11 +2,13 @@ import { memo, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useTranslation } from 'react-i18next';
-import { Archive, Mail, MailOpen, Trash2, type LucideIcon } from 'lucide-react-native';
+import { Archive, Ellipsis, Flag, FlagOff, Mail, MailOpen, Trash2, type LucideIcon } from 'lucide-react-native';
 import type { ThreadSummary } from '@openmailbox/mail-core';
 
-import { archiveThread, setThreadRead, trashThread } from '@/core/actions';
 import { Typography } from '@/ui/components';
+import { haptic } from '@/utils/haptics';
+
+import type { ThreadActionId } from '../threadActions';
 
 import { ThreadRow } from './ThreadRow';
 
@@ -36,9 +38,11 @@ interface SwipeableThreadRowProps {
   canArchive: boolean;
   onOpen: (thread: ThreadSummary) => void;
   onLongPress?: (thread: ThreadSummary) => void;
+  onAction: (action: ThreadActionId, thread: ThreadSummary) => void;
+  onMore: (thread: ThreadSummary) => void;
 }
 
-function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onLongPress }: SwipeableThreadRowProps) {
+function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onLongPress, onAction, onMore }: SwipeableThreadRowProps) {
   const { t } = useTranslation();
   const swipeable = useRef<SwipeableMethods>(null);
   const unread = thread.unreadCount > 0;
@@ -47,10 +51,12 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onL
     swipeable.current?.reset();
   }, [thread.key]);
 
-  const run = (action: () => Promise<void>) => () => {
+  const close = (then: () => void) => () => {
     swipeable.current?.close();
-    action().catch(() => undefined);
+    then();
   };
+  const act = (action: ThreadActionId) => close(() => onAction(action, thread));
+  const flag: ThreadActionId = thread.isFlagged ? 'unflag' : 'flag';
 
   return (
     <ReanimatedSwipeable
@@ -59,18 +65,24 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onL
       overshootFriction={8}
       leftThreshold={ACTION_WIDTH / 2}
       rightThreshold={ACTION_WIDTH / 2}
+      onSwipeableWillOpen={() => haptic()}
       renderLeftActions={() => (
         <SwipeAction
           label={unread ? t('threads.markRead') : t('threads.markUnread')}
           Icon={unread ? MailOpen : Mail}
           color="#007aff"
-          onPress={run(() => setThreadRead(thread, unread))}
+          onPress={act(unread ? 'markRead' : 'markUnread')}
         />
       )}
       renderRightActions={() => (
         <View style={styles.actions}>
-          {canArchive ? <SwipeAction label={t('threads.archive')} Icon={Archive} color="#af52de" onPress={run(() => archiveThread(thread))} /> : null}
-          <SwipeAction label={t('threads.trash')} Icon={Trash2} color="#ff3b30" onPress={run(() => trashThread(thread))} />
+          <SwipeAction label={t('threads.more')} Icon={Ellipsis} color="#8e8e93" onPress={close(() => onMore(thread))} />
+          <SwipeAction label={t(`threads.${flag}`)} Icon={thread.isFlagged ? FlagOff : Flag} color="#ff9500" onPress={act(flag)} />
+          {canArchive ? (
+            <SwipeAction label={t('threads.archive')} Icon={Archive} color="#af52de" onPress={act('archive')} />
+          ) : (
+            <SwipeAction label={t('threads.delete')} Icon={Trash2} color="#ff3b30" onPress={act('delete')} />
+          )}
         </View>
       )}
     >
