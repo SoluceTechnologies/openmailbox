@@ -100,4 +100,20 @@ describe('thread list', () => {
     expect(Destination.Inbox.instanceOf(destination)).toBe(true);
     expect(hold).toBe(5000);
   });
+
+  it('moves a thread to the folder picked from Move…', async () => {
+    queryClient.setQueryData(queryKeys.mailboxes, [
+      makeMailbox({ unreadCount: 1 }),
+      makeMailbox({ id: 'mailbox-clients', name: 'Clients', role: undefined }),
+    ]);
+    core.moveThread.mockResolvedValue({ emailIds: ['email-1'], targetMailboxId: 'mailbox-clients' });
+    renderWithProviders(<MailboxScreen />);
+    fireEvent(await screen.findByText('Facture disponible'), 'longPress');
+    fireEvent.press(await screen.findByRole('button', { name: 'Move…' }));
+
+    await act(async () => fireEvent.press(await screen.findByRole('button', { name: 'Clients' })));
+
+    const [, , destination] = core.moveThread.mock.calls[0];
+    expect(Destination.Mailbox.instanceOf(destination) && destination.inner.mailboxId).toBe('mailbox-clients');
+  });
 });

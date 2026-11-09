@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Destination, type ThreadSummary } from '@openmailbox/mail-core';
+import { Destination, type Mailbox, type ThreadSummary } from '@openmailbox/mail-core';
 
 import { setThreadFlagged, setThreadRead } from '@/core/actions';
 import { useMailboxes } from '@/core/hooks';
 import type { ComposeMode } from '@/features/composer/prefill';
+import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 
 import { deleteThreadsForever, moveWithUndo } from './moves';
 import { availableThreadActions, deletesForGood, threadActionContext, type ThreadActionId } from './threadActions';
@@ -61,5 +62,15 @@ export function useThreadActions(onMove?: (thread: ThreadSummary) => void) {
     [router, t, mailboxes, onMove],
   );
 
-  return { actionsFor, run };
+  const moveTo = useCallback(
+    (thread: ThreadSummary, mailbox: Mailbox) =>
+      moveWithUndo(
+        [thread],
+        new Destination.Mailbox({ mailboxId: mailbox.id }),
+        t('undo.moved', { mailbox: mailboxName(mailbox, t) }),
+      ).catch(() => undefined),
+    [t],
+  );
+
+  return { actionsFor, run, moveTo };
 }

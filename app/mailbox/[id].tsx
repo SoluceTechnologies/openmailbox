@@ -11,6 +11,7 @@ import { BottomBar } from '@/components/BottomBar';
 import { useAccounts, useMailboxes, useThreads } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
+import { MailboxPicker } from '@/features/mailboxes/components/MailboxPicker';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { useIsSyncing, useSyncLabel } from '@/features/sync/useSyncLabel';
 import { SwipeableThreadRow } from '@/features/threads/components/SwipeableThreadRow';
@@ -83,7 +84,8 @@ export default function MailboxScreen() {
 
   const [previewed, setPreviewed] = useState<ThreadSummary | null>(null);
   const [sheetThread, setSheetThread] = useState<ThreadSummary | null>(null);
-  const threadActions = useThreadActions();
+  const [moving, setMoving] = useState<ThreadSummary | null>(null);
+  const threadActions = useThreadActions(setMoving);
   const { run: runThreadAction, actionsFor } = threadActions;
 
   const openThread = useCallback(
@@ -186,6 +188,13 @@ export default function MailboxScreen() {
         actions={sheetThread ? threadActions.actionsFor(sheetThread) : []}
         onAction={threadActions.run}
         onClose={() => setSheetThread(null)}
+      />
+      <MailboxPicker
+        accountId={moving?.accountId}
+        excludeMailboxId={moving?.mailboxId}
+        visible={moving !== null}
+        onSelect={(target) => moving && threadActions.moveTo(moving, target)}
+        onClose={() => setMoving(null)}
       />
     </ViewContainer>
   );
