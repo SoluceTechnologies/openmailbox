@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BackHandler, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { BackHandler, KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -69,7 +69,7 @@ export function AccountSetupFlow({ onDone, onClose }: AccountSetupFlowProps) {
           )}
           {!provider && !onClose ? <LanguageSelect variant="icon" /> : null}
         </View>
-        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={styles.flex} behavior="padding">
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
             <View style={styles.heading}>
               <Typography variant="h2">{title}</Typography>
