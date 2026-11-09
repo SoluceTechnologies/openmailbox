@@ -3,6 +3,22 @@
 Open source mail client for iOS and Android with a unified inbox across several accounts.
 It talks directly to the user's IMAP/SMTP servers: there is no OpenMailbox server.
 
+## Features
+
+- Unified inbox and per-account folders, with search across all mail
+- Swipes, long-press preview with haptics, an action sheet and multiple selection; moves to the
+  archive, the trash, junk or any folder can be undone for five seconds, and mail can be moved back
+  to the inbox from the trash, the archive or junk
+- Attachments opened in place when the phone can (an in-app viewer on iOS, the system's apps on
+  Android), sent from photos or files up to 25 MB, kept when forwarding
+- Recipients suggested from past mail and from the phone's contacts, and a signature per account
+- New mail notifications and an unread badge; unsubscribe from mailing lists
+- Sign-in for Google, iCloud, OVHcloud, Orange, Free, SFR, La Poste, Yahoo, or any IMAP/SMTP account
+
+Notifications rely on the system's background scheduling, since there is no push server: Android
+runs the check at best every 15 minutes and iOS less often, depending on how the app is used.
+Microsoft accounts need OAuth and are not supported yet.
+
 ## Layout
 
 | Path | Content |
