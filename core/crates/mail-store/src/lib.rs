@@ -72,14 +72,20 @@ fn open_connection(path: &Path) -> Result<Connection> {
 }
 
 fn migrate(connection: &Connection) -> Result<()> {
+    migrate_with(connection, MIGRATIONS)
+}
+
+fn migrate_with(connection: &Connection, migrations: &[&str]) -> Result<()> {
     let version: i64 = connection
         .query_row("PRAGMA user_version", [], |row| row.get(0))
         .storage()?;
-    for (index, migration) in MIGRATIONS.iter().enumerate().skip(version as usize) {
-        connection.execute_batch(migration).storage()?;
-        connection
+    for (index, migration) in migrations.iter().enumerate().skip(version as usize) {
+        let transaction = connection.unchecked_transaction().storage()?;
+        transaction.execute_batch(migration).storage()?;
+        transaction
             .pragma_update(None, "user_version", index as i64 + 1)
             .storage()?;
+        transaction.commit().storage()?;
     }
     Ok(())
 }
@@ -202,6 +208,35 @@ mod migration_tests {
         store.remove_uids(1, &[3]).unwrap();
         assert!(store.search("facture", 10).unwrap().is_empty());
         std::fs::remove_dir_all(&directory).ok();
+    }
+}
+
+#[cfg(test)]
+mod interrupted_migration_tests {
+    use super::*;
+
+    fn user_version(connection: &Connection) -> i64 {
+        connection
+            .query_row("PRAGMA user_version", [], |row| row.get(0))
+            .unwrap()
+    }
+
+    #[test]
+    fn a_migration_stopped_halfway_runs_again_from_its_start() {
+        let connection = Connection::open_in_memory().unwrap();
+        let stopped = [
+            "CREATE TABLE a (x INTEGER);",
+            "ALTER TABLE a ADD COLUMN y INTEGER; SELECT * FROM missing;",
+        ];
+        assert!(migrate_with(&connection, &stopped).is_err());
+        assert_eq!(user_version(&connection), 1);
+
+        let complete = [
+            "CREATE TABLE a (x INTEGER);",
+            "ALTER TABLE a ADD COLUMN y INTEGER;",
+        ];
+        migrate_with(&connection, &complete).unwrap();
+        assert_eq!(user_version(&connection), 2);
     }
 }
 
