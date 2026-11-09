@@ -548,11 +548,7 @@ impl ImapConnection {
     }
 
     pub async fn append(&mut self, remote_name: &str, raw: &[u8]) -> Result<()> {
-        timed(
-            self.session
-                .append(remote_name, Some("(\\Seen)"), None, raw),
-        )
-        .await
+        timed(append_seen(&mut self.session, remote_name, raw)).await
     }
 
     pub async fn wait_for_changes(
@@ -588,6 +584,61 @@ impl ImapConnection {
     }
 }
 
+/// APPEND as async-imap does it, except that untagged responses arriving before the continuation
+/// (an EXISTS for a message just delivered to the selected mailbox) are skipped instead of failing.
+async fn append_seen<T>(
+    session: &mut async_imap::Session<T>,
+    remote_name: &str,
+    raw: &[u8],
+) -> std::result::Result<(), async_imap::error::Error>
+where
+    T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + std::fmt::Debug + Send,
+{
+    use async_imap::error::Error as ImapError;
+    use async_imap::imap_proto::{Response, Status};
+
+    let mailbox = format!(
+        "\"{}\"",
+        remote_name.replace('\\', "\\\\").replace('"', "\\\"")
+    );
+    let tag = session
+        .run_command(format!("APPEND {mailbox} (\\Seen) {{{}}}", raw.len()))
+        .await?;
+    let mut literal_sent = false;
+    loop {
+        let response = session
+            .read_response()
+            .await?
+            .ok_or(ImapError::ConnectionLost)?;
+        match response.parsed() {
+            Response::Continue { .. } if !literal_sent => {
+                let stream = session.get_mut();
+                stream.write_all(raw).await?;
+                stream.write_all(b"\r\n").await?;
+                stream.flush().await?;
+                literal_sent = true;
+            }
+            Response::Done {
+                tag: done,
+                status,
+                outcome,
+            } if *done == tag => {
+                let information = outcome
+                    .information
+                    .as_deref()
+                    .unwrap_or_default()
+                    .to_owned();
+                return match status {
+                    Status::Ok => Ok(()),
+                    Status::No => Err(ImapError::No(information)),
+                    _ => Err(ImapError::Bad(information)),
+                };
+            }
+            _ => {}
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -606,5 +657,47 @@ mod tests {
             Some(MailboxRole::All)
         );
         assert_eq!(role_of("Projets", &[]), None);
+    }
+
+    #[tokio::test]
+    async fn append_waits_past_untagged_responses_for_the_continuation() {
+        use tokio::io::{AsyncBufReadExt, BufReader};
+
+        let (client, server) = tokio::io::duplex(4096);
+        let server = tokio::spawn(async move {
+            let (read, mut write) = tokio::io::split(server);
+            let mut read = BufReader::new(read);
+            let mut line = String::new();
+            read.read_line(&mut line).await.unwrap();
+            let tag = line.split(' ').next().unwrap().to_owned();
+            write
+                .write_all(format!("{tag} OK LOGIN completed\r\n").as_bytes())
+                .await
+                .unwrap();
+            line.clear();
+            read.read_line(&mut line).await.unwrap();
+            let tag = line.split(' ').next().unwrap().to_owned();
+            assert!(line.ends_with("APPEND \"Sent\" (\\Seen) {5}\r\n"), "{line}");
+            write
+                .write_all(b"* 146 EXISTS\r\n* 1 RECENT\r\n+ Ready\r\n")
+                .await
+                .unwrap();
+            let mut literal = [0u8; 7];
+            read.read_exact(&mut literal).await.unwrap();
+            write
+                .write_all(format!("{tag} OK APPEND completed\r\n").as_bytes())
+                .await
+                .unwrap();
+            literal
+        });
+        let mut session = async_imap::Client::new(client)
+            .login("alice", "secret")
+            .await
+            .map_err(|(error, _)| error)
+            .unwrap();
+
+        append_seen(&mut session, "Sent", b"hello").await.unwrap();
+
+        assert_eq!(&server.await.unwrap(), b"hello\r\n");
     }
 }
