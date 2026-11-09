@@ -36,6 +36,7 @@ class NativeMailFfi : public jsi::HostObject {
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_list_mailboxes(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_list_threads(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_load_older(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
+    jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_move_emails(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_move_thread(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_on_background(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_on_foreground(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
@@ -108,6 +109,7 @@ class NativeMailFfi : public jsi::HostObject {
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_list_mailboxes(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_list_threads(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_load_older(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
+    jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_move_emails(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_move_thread(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_on_background(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_on_foreground(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);

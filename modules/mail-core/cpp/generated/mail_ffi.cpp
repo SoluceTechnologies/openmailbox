@@ -198,11 +198,19 @@ extern "C" {
         /*handle*/ uint64_t ptr, 
         RustBuffer mailbox_id
     );
+    /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_move_emails(
+        /*handle*/ uint64_t ptr, 
+        RustBuffer email_ids, 
+        RustBuffer from_mailbox_id, 
+        RustBuffer destination, 
+        uint32_t hold_ms
+    );
     /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_move_thread(
         /*handle*/ uint64_t ptr, 
         RustBuffer mailbox_id, 
         RustBuffer thread_id, 
-        RustBuffer destination
+        RustBuffer destination, 
+        uint32_t hold_ms
     );
     void uniffi_mail_ffi_fn_method_mailcore_on_background(
         /*handle*/ uint64_t ptr, 
@@ -491,6 +499,8 @@ extern "C" {
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_list_threads(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_load_older(
+    );
+    uint16_t uniffi_mail_ffi_checksum_method_mailcore_move_emails(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_move_thread(
     );
@@ -2546,10 +2556,18 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_load_older(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_fn_method_mailcore_move_emails"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_move_emails"),
+        5,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_fn_method_mailcore_move_emails(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_fn_method_mailcore_move_thread"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_move_thread"),
-        4,
+        5,
         [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_move_thread(rt, thisVal, args, count);
         }
@@ -3122,6 +3140,14 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_load_older(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_move_emails"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_move_emails"),
+        0,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_move_emails(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_move_thread"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_move_thread"),
@@ -3584,8 +3610,15 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_load_older(jsi:
         
         return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
 }
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_move_emails(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_fn_method_mailcore_move_emails(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[2]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[3]), uniffi_jsi::Bridging<uint32_t>::fromJs(rt, callInvoker, args[4])
+        );
+
+        
+        return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
+}
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_move_thread(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-        auto value = uniffi_mail_ffi_fn_method_mailcore_move_thread(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[2]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[3])
+        auto value = uniffi_mail_ffi_fn_method_mailcore_move_thread(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[2]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[3]), uniffi_jsi::Bridging<uint32_t>::fromJs(rt, callInvoker, args[4])
         );
 
         
@@ -4134,6 +4167,13 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_list_thre
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_load_older(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_checksum_method_mailcore_load_older(
+        );
+
+        
+        return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_move_emails(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_checksum_method_mailcore_move_emails(
         );
 
         

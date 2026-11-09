@@ -24,6 +24,7 @@ impl Store {
         kind: &str,
         payload: &str,
         rewrites: &[OperationRewrite],
+        not_before: i64,
     ) -> Result<i64> {
         self.write(|transaction| {
             for rewrite in rewrites {
@@ -38,8 +39,8 @@ impl Store {
             }
             transaction
                 .query_row(
-                    "INSERT INTO pending_op (account_id, kind, payload, created_at) VALUES (?1, ?2, ?3, ?4) RETURNING id",
-                    params![account_id, kind, payload, now_millis()],
+                    "INSERT INTO pending_op (account_id, kind, payload, created_at, next_retry_at) VALUES (?1, ?2, ?3, ?4, ?5) RETURNING id",
+                    params![account_id, kind, payload, now_millis(), not_before],
                     |row| row.get(0),
                 )
                 .storage()

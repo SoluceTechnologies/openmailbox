@@ -621,6 +621,52 @@ const FfiConverterTypeMailbox = (() => {
     return new FFIConverter();
 })();
 
+/**
+ * Where a move left the messages; `target_mailbox_id` is absent when they were deleted for good.
+ */
+export type Relocation = {
+    emailIds: Array<string>,
+    targetMailboxId?: string
+}
+
+/**
+ * Generated factory for {@link Relocation} record objects.
+ */
+export const Relocation = (() => {
+    const defaults = () => ({
+    });
+    const create = (() => {
+        return uniffiCreateRecord<Relocation, ReturnType<typeof defaults>>(defaults);
+    })();
+    return Object.freeze({
+        create,
+        new: create,
+        defaults: () => Object.freeze(defaults()) as Partial<Relocation>,
+    });
+})();
+
+const FfiConverterTypeRelocation = (() => {
+    type TypeName = Relocation;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            return {
+                emailIds: FfiConverterSequenceString.readFromCursor(c), 
+                targetMailboxId: FfiConverterOptionalString.readFromCursor(c)
+            };
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            FfiConverterSequenceString.writeIntoCursor(value.emailIds, c);
+            FfiConverterOptionalString.writeIntoCursor(value.targetMailboxId, c);
+        }
+        allocationSize(value: TypeName): number {
+            return FfiConverterSequenceString.allocationSize(value.emailIds) +
+             FfiConverterOptionalString.allocationSize(value.targetMailboxId);
+            
+        }
+    };
+    return new FFIConverter();
+})();
+
 export type RenderedBody = {
     html?: string,
     text: string,
@@ -1678,7 +1724,9 @@ const FfiConverterTypeCoreEvent = (() => {
 // Enum: Destination
 export enum Destination_Tags {
     Mailbox = "Mailbox",
+    Inbox = "Inbox",
     Archive = "Archive",
+    Junk = "Junk",
     Trash = "Trash"
 }
 export const Destination = (() => {
@@ -1714,6 +1762,30 @@ inner: {mailboxId: string }): Mailbox_ {
 
     }
 
+    type Inbox__interface = {
+        tag: Destination_Tags.Inbox
+    };
+    class Inbox_ extends UniffiEnum implements Inbox__interface {
+        /**
+         * @private
+         * This field is private and should not be used, use `tag` instead.
+         */
+        readonly [uniffiTypeNameSymbol] = "Destination";
+        readonly tag = Destination_Tags.Inbox;
+        constructor() {
+            super("Destination", "Inbox");
+        }
+
+        static new(): Inbox_ {
+            return new Inbox_();
+        }
+
+        static instanceOf(obj: any): obj is Inbox_ {
+            return obj.tag === Destination_Tags.Inbox;
+        }
+
+    }
+
     type Archive__interface = {
         tag: Destination_Tags.Archive
     };
@@ -1734,6 +1806,30 @@ inner: {mailboxId: string }): Mailbox_ {
 
         static instanceOf(obj: any): obj is Archive_ {
             return obj.tag === Destination_Tags.Archive;
+        }
+
+    }
+
+    type Junk__interface = {
+        tag: Destination_Tags.Junk
+    };
+    class Junk_ extends UniffiEnum implements Junk__interface {
+        /**
+         * @private
+         * This field is private and should not be used, use `tag` instead.
+         */
+        readonly [uniffiTypeNameSymbol] = "Destination";
+        readonly tag = Destination_Tags.Junk;
+        constructor() {
+            super("Destination", "Junk");
+        }
+
+        static new(): Junk_ {
+            return new Junk_();
+        }
+
+        static instanceOf(obj: any): obj is Junk_ {
+            return obj.tag === Destination_Tags.Junk;
         }
 
     }
@@ -1769,13 +1865,15 @@ inner: {mailboxId: string }): Mailbox_ {
     return Object.freeze({
         instanceOf,
   Mailbox: Mailbox_, 
+  Inbox: Inbox_, 
   Archive: Archive_, 
+  Junk: Junk_, 
   Trash: Trash_
     });
 
 })();
 export type Destination = InstanceType<
-    typeof Destination['Mailbox' | 'Archive' | 'Trash']
+    typeof Destination['Mailbox' | 'Inbox' | 'Archive' | 'Junk' | 'Trash']
 >;
 
 // FfiConverter for enum Destination
@@ -1785,8 +1883,10 @@ const FfiConverterTypeDestination = (() => {
         readFromCursor(c: Cursor): TypeName {
             switch (c.readI32()) {
                 case 1: return new Destination.Mailbox({mailboxId: FfiConverterString.readFromCursor(c) });
-                case 2: return new Destination.Archive();
-                case 3: return new Destination.Trash();
+                case 2: return new Destination.Inbox();
+                case 3: return new Destination.Archive();
+                case 4: return new Destination.Junk();
+                case 5: return new Destination.Trash();
                 default: throw new UniffiInternalError.UnexpectedEnumCase();
             }
         }
@@ -1798,12 +1898,20 @@ const FfiConverterTypeDestination = (() => {
                     FfiConverterString.writeIntoCursor(inner.mailboxId, c);
                     return;
                 }
-                case Destination_Tags.Archive: {
+                case Destination_Tags.Inbox: {
                     c.writeI32(2);
                     return;
                 }
-                case Destination_Tags.Trash: {
+                case Destination_Tags.Archive: {
                     c.writeI32(3);
+                    return;
+                }
+                case Destination_Tags.Junk: {
+                    c.writeI32(4);
+                    return;
+                }
+                case Destination_Tags.Trash: {
+                    c.writeI32(5);
                     return;
                 }
                 default:
@@ -1819,7 +1927,13 @@ const FfiConverterTypeDestination = (() => {
                     size += FfiConverterString.allocationSize(inner.mailboxId);
                     return size;
                 }
+                case Destination_Tags.Inbox: {
+                    return 4;
+                }
                 case Destination_Tags.Archive: {
+                    return 4;
+                }
+                case Destination_Tags.Junk: {
                     return 4;
                 }
                 case Destination_Tags.Trash: {
@@ -2143,7 +2257,8 @@ export interface MailCoreLike {
     listMailboxes(accountId: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<Mailbox>>;
     listThreads(scope: ThreadScope, unreadOnly: boolean, cursor: string | undefined, limit: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<ThreadPage>;
     loadOlder(mailboxId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
-    moveThread(mailboxId: string, threadId: string, destination: Destination, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
+    moveEmails(emailIds: Array<string>, fromMailboxId: string, destination: Destination, holdMs: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Relocation>;
+    moveThread(mailboxId: string, threadId: string, destination: Destination, holdMs: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Relocation>;
     onBackground(): void;
     onForeground(): void;
     openMailbox(mailboxId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
@@ -2466,21 +2581,76 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
-    async moveThread(mailboxId: string, threadId: string, destination: Destination, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    async moveEmails(emailIds: Array<string>, fromMailboxId: string, destination: Destination, holdMs: number, asyncOpts_?: { signal: AbortSignal }): Promise<Relocation> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_move_emails(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterSequenceString.lower(emailIds, nativeModule().rustbuffer_alloc),FfiConverterString.lower(fromMailboxId, nativeModule().rustbuffer_alloc),FfiConverterTypeDestination.lower(destination, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(holdMs, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterTypeRelocation.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
+    async moveThread(mailboxId: string, threadId: string, destination: Destination, holdMs: number, asyncOpts_?: { signal: AbortSignal }): Promise<Relocation> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
         return await uniffiRustCallAsync(
             /*rustCaller:*/ uniffiCaller,
             /*rustFutureFunc:*/ () => {
                 return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_move_thread(
-                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(mailboxId, nativeModule().rustbuffer_alloc),FfiConverterString.lower(threadId, nativeModule().rustbuffer_alloc),FfiConverterTypeDestination.lower(destination, nativeModule().rustbuffer_alloc)
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(mailboxId, nativeModule().rustbuffer_alloc),FfiConverterString.lower(threadId, nativeModule().rustbuffer_alloc),FfiConverterTypeDestination.lower(destination, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(holdMs, nativeModule().rustbuffer_alloc)
                 );
             },
-            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_void,
-            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_void,
-            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_void,
-            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_void,
-            /*liftFunc:*/ (_v) => {},
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterTypeRelocation.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
             /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
             /*asyncOpts:*/ asyncOpts_,
             /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
@@ -2933,14 +3103,14 @@ const FfiConverterSequenceTypeAddress = new FfiConverterArray(FfiConverterTypeAd
 // FfiConverter for MailboxRole | undefined
 const FfiConverterOptionalTypeMailboxRole = new FfiConverterOptional(FfiConverterTypeMailboxRole);
 
+// FfiConverter for Array<string>
+const FfiConverterSequenceString = new FfiConverterArray(FfiConverterString);
+
 // FfiConverter for Array<Attachment>
 const FfiConverterSequenceTypeAttachment = new FfiConverterArray(FfiConverterTypeAttachment);
 
 // FfiConverter for Array<ThreadSummary>
 const FfiConverterSequenceTypeThreadSummary = new FfiConverterArray(FfiConverterTypeThreadSummary);
-
-// FfiConverter for Array<string>
-const FfiConverterSequenceString = new FfiConverterArray(FfiConverterString);
 
 // FfiConverter for number | undefined
 const FfiConverterOptionalFloat64 = new FfiConverterOptional(FfiConverterFloat64);
@@ -3003,7 +3173,10 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_load_older() !== 1859) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_load_older");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_move_thread() !== 61791) {
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_move_emails() !== 42480) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_move_emails");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_move_thread() !== 39353) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_move_thread");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_on_background() !== 34153) {
@@ -3072,6 +3245,7 @@ export default Object.freeze({
     FfiConverterTypeMailCore,
     FfiConverterTypeMailbox,
     FfiConverterTypeMailboxRole,
+    FfiConverterTypeRelocation,
     FfiConverterTypeRenderedBody,
     FfiConverterTypeSecurity,
     FfiConverterTypeServerConfig,

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, LazyLock, Mutex};
+use std::time::Duration;
 
 use mail_sync::Engine;
 
@@ -192,8 +193,40 @@ pub enum Keyword {
 #[derive(Debug, Clone, uniffi::Enum)]
 pub enum Destination {
     Mailbox { mailbox_id: String },
+    Inbox,
     Archive,
+    Junk,
     Trash,
+}
+
+impl Destination {
+    fn into_engine(self) -> CoreResult<mail_sync::Destination> {
+        Ok(match self {
+            Destination::Mailbox { mailbox_id } => {
+                mail_sync::Destination::Mailbox(parse_id(&mailbox_id)?)
+            }
+            Destination::Inbox => mail_sync::Destination::Inbox,
+            Destination::Archive => mail_sync::Destination::Archive,
+            Destination::Junk => mail_sync::Destination::Junk,
+            Destination::Trash => mail_sync::Destination::Trash,
+        })
+    }
+}
+
+/// Where a move left the messages; `target_mailbox_id` is absent when they were deleted for good.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct Relocation {
+    pub email_ids: Vec<String>,
+    pub target_mailbox_id: Option<String>,
+}
+
+impl From<mail_sync::Relocation> for Relocation {
+    fn from(relocation: mail_sync::Relocation) -> Self {
+        Self {
+            email_ids: relocation.email_ids.iter().map(i64::to_string).collect(),
+            target_mailbox_id: relocation.target_mailbox_id.map(|id| id.to_string()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, uniffi::Enum)]
@@ -695,17 +728,35 @@ impl MailCore {
         mailbox_id: String,
         thread_id: String,
         destination: Destination,
-    ) -> CoreResult<()> {
+        hold_ms: u32,
+    ) -> CoreResult<Relocation> {
         let (mailbox_id, thread_id) = (parse_id(&mailbox_id)?, parse_id(&thread_id)?);
-        let destination = match destination {
-            Destination::Mailbox { mailbox_id } => {
-                mail_sync::Destination::Mailbox(parse_id(&mailbox_id)?)
-            }
-            Destination::Archive => mail_sync::Destination::Archive,
-            Destination::Trash => mail_sync::Destination::Trash,
-        };
-        self.blocking(move |engine| engine.move_thread(mailbox_id, thread_id, destination))
-            .await
+        let destination = destination.into_engine()?;
+        let hold = Duration::from_millis(hold_ms.into());
+        self.blocking(move |engine| {
+            engine
+                .move_thread(mailbox_id, thread_id, destination, hold)
+                .map(Relocation::from)
+        })
+        .await
+    }
+
+    pub async fn move_emails(
+        &self,
+        email_ids: Vec<String>,
+        from_mailbox_id: String,
+        destination: Destination,
+        hold_ms: u32,
+    ) -> CoreResult<Relocation> {
+        let (email_ids, from_mailbox_id) = (parse_ids(&email_ids)?, parse_id(&from_mailbox_id)?);
+        let destination = destination.into_engine()?;
+        let hold = Duration::from_millis(hold_ms.into());
+        self.blocking(move |engine| {
+            engine
+                .move_emails(&email_ids, from_mailbox_id, destination, hold)
+                .map(Relocation::from)
+        })
+        .await
     }
 
     pub async fn send(&self, draft: Draft) -> CoreResult<()> {

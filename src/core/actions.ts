@@ -16,14 +16,14 @@ export function setThreadFlagged(thread: ThreadReference, flagged: boolean): Pro
   return mailCore().setThreadKeywords(thread.mailboxId, thread.threadId, flagged ? keywords : [], flagged ? [] : keywords);
 }
 
-export function archiveThread(thread: ThreadReference): Promise<void> {
+export async function archiveThread(thread: ThreadReference): Promise<void> {
   haptic();
-  return mailCore().moveThread(thread.mailboxId, thread.threadId, new Destination.Archive());
+  await mailCore().moveThread(thread.mailboxId, thread.threadId, new Destination.Archive(), 0);
 }
 
-export function trashThread(thread: ThreadReference): Promise<void> {
+export async function trashThread(thread: ThreadReference): Promise<void> {
   haptic();
-  return mailCore().moveThread(thread.mailboxId, thread.threadId, new Destination.Trash());
+  await mailCore().moveThread(thread.mailboxId, thread.threadId, new Destination.Trash(), 0);
 }
 
 export function sendDraft(draft: Draft): Promise<void> {

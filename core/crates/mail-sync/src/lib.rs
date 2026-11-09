@@ -30,8 +30,17 @@ const IDLE_RECONNECT_DELAY: Duration = Duration::from_secs(30);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Destination {
     Mailbox(i64),
+    Inbox,
     Archive,
+    Junk,
     Trash,
+}
+
+/// Where a move left the messages. `target_mailbox_id` is `None` when they were deleted for good.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Relocation {
+    pub email_ids: Vec<i64>,
+    pub target_mailbox_id: Option<i64>,
 }
 
 struct AccountHandle {
@@ -305,16 +314,19 @@ impl Engine {
         )
     }
 
+    /// `hold` keeps the move in the queue that long, so it can still be taken back for free.
     pub fn move_thread(
         &self,
         mailbox_id: i64,
         thread_id: i64,
         destination: Destination,
-    ) -> Result<()> {
+        hold: Duration,
+    ) -> Result<Relocation> {
         self.move_emails(
             &self.store.thread_email_ids(mailbox_id, thread_id)?,
             mailbox_id,
             destination,
+            hold,
         )
     }
 
@@ -323,27 +335,40 @@ impl Engine {
         email_ids: &[i64],
         from_mailbox_id: i64,
         destination: Destination,
-    ) -> Result<()> {
-        if email_ids.is_empty() {
-            return Ok(());
-        }
+        hold: Duration,
+    ) -> Result<Relocation> {
         let from = self.store.mailbox(from_mailbox_id)?;
         let target = self.resolve(&from, destination)?;
-        if target == Some(from.id) {
-            return Ok(());
+        let relocation = Relocation {
+            email_ids: email_ids.to_vec(),
+            target_mailbox_id: target,
+        };
+        if email_ids.is_empty() || target == Some(from.id) {
+            return Ok(relocation);
         }
         let sources = self.store.move_emails(email_ids, from.id, target)?;
-        operations::enqueue_relocation(&self.store, &from.account_id, sources, target)?;
+        let not_before = now_millis() + hold.as_millis() as i64;
+        operations::enqueue_relocation(&self.store, &from.account_id, sources, target, not_before)?;
         self.events
             .mailboxes_changed(std::iter::once(from.id).chain(target));
         self.dispatch(&from.account_id, Command::DrainOperations);
-        Ok(())
+        Ok(relocation)
     }
 
     fn resolve(&self, from: &Mailbox, destination: Destination) -> Result<Option<i64>> {
         let by_role = |role| self.store.mailbox_by_role(&from.account_id, role);
         Ok(match destination {
             Destination::Mailbox(mailbox_id) => Some(mailbox_id),
+            Destination::Inbox => Some(
+                by_role(MailboxRole::Inbox)?
+                    .ok_or_else(|| Error::InvalidInput("no inbox".into()))?
+                    .id,
+            ),
+            Destination::Junk => Some(
+                by_role(MailboxRole::Junk)?
+                    .ok_or_else(|| Error::InvalidInput("no junk mailbox".into()))?
+                    .id,
+            ),
             Destination::Archive => Some(
                 by_role(MailboxRole::Archive)?
                     .or(by_role(MailboxRole::All)?)
@@ -602,5 +627,224 @@ pub(crate) mod test_support {
             color: 0,
             created_at: 0,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use mail_model::{
+        Address, FetchedMessage, Flags, MailboxRole, ParsedHeaders, RemoteMailbox, ThreadScope,
+        now_millis,
+    };
+
+    use super::*;
+    use crate::test_support::account;
+
+    struct Fixture {
+        engine: Arc<Engine>,
+        _runtime: tokio::runtime::Runtime,
+    }
+
+    impl Fixture {
+        fn new(roles: &[(&str, MailboxRole)]) -> Fixture {
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            let directory =
+                std::env::temp_dir().join(format!("mail-sync-engine-{}", uuid::Uuid::new_v4()));
+            let engine = Engine::open(&directory, runtime.handle().clone()).unwrap();
+            engine.store.insert_account(&account("alice")).unwrap();
+            let mailboxes: Vec<RemoteMailbox> = roles
+                .iter()
+                .map(|(name, role)| RemoteMailbox {
+                    remote_name: (*name).into(),
+                    name: (*name).into(),
+                    depth: 0,
+                    role: Some(*role),
+                    selectable: true,
+                })
+                .collect();
+            engine.store.replace_mailboxes("alice", &mailboxes).unwrap();
+            Fixture {
+                engine,
+                _runtime: runtime,
+            }
+        }
+
+        fn id(&self, role: MailboxRole) -> i64 {
+            self.engine
+                .store
+                .mailbox_by_role("alice", role)
+                .unwrap()
+                .unwrap()
+                .id
+        }
+
+        fn deliver(&self, mailbox_id: i64, uid: u32) -> (i64, Vec<i64>) {
+            let headers = ParsedHeaders {
+                message_id: Some(format!("{uid}@example.org")),
+                from: vec![Address {
+                    name: None,
+                    email: "bob@example.org".into(),
+                }],
+                ..ParsedHeaders::default()
+            };
+            self.engine
+                .store
+                .insert_messages(
+                    "alice",
+                    mailbox_id,
+                    &[FetchedMessage {
+                        uid,
+                        flags: Flags::default(),
+                        internal_date: Some(1),
+                        size: 1,
+                        headers,
+                    }],
+                )
+                .unwrap();
+            let thread_id = self.threads(mailbox_id)[0];
+            (
+                thread_id,
+                self.engine
+                    .store
+                    .thread_email_ids(mailbox_id, thread_id)
+                    .unwrap(),
+            )
+        }
+
+        fn threads(&self, mailbox_id: i64) -> Vec<i64> {
+            self.engine
+                .store
+                .list_threads(ThreadScope::Mailbox(mailbox_id), false, None, 50)
+                .unwrap()
+                .threads
+                .into_iter()
+                .map(|thread| thread.thread_id)
+                .collect()
+        }
+    }
+
+    const STANDARD: &[(&str, MailboxRole)] = &[
+        ("INBOX", MailboxRole::Inbox),
+        ("Archive", MailboxRole::Archive),
+        ("Junk", MailboxRole::Junk),
+        ("Trash", MailboxRole::Trash),
+    ];
+
+    #[test]
+    fn resolves_inbox_and_junk_by_role() {
+        let fixture = Fixture::new(STANDARD);
+        let (inbox, junk) = (
+            fixture.id(MailboxRole::Inbox),
+            fixture.id(MailboxRole::Junk),
+        );
+        let (thread_id, _) = fixture.deliver(inbox, 7);
+
+        let to_junk = fixture
+            .engine
+            .move_thread(inbox, thread_id, Destination::Junk, Duration::ZERO)
+            .unwrap();
+        assert_eq!(to_junk.target_mailbox_id, Some(junk));
+
+        let back = fixture
+            .engine
+            .move_thread(junk, thread_id, Destination::Inbox, Duration::ZERO)
+            .unwrap();
+        assert_eq!(back.target_mailbox_id, Some(inbox));
+        assert_eq!(fixture.threads(inbox), vec![thread_id]);
+    }
+
+    #[test]
+    fn moving_to_junk_without_a_junk_folder_is_refused() {
+        let fixture = Fixture::new(&[("INBOX", MailboxRole::Inbox), ("Trash", MailboxRole::Trash)]);
+        let inbox = fixture.id(MailboxRole::Inbox);
+        let (thread_id, _) = fixture.deliver(inbox, 7);
+
+        let result =
+            fixture
+                .engine
+                .move_thread(inbox, thread_id, Destination::Junk, Duration::ZERO);
+        assert!(matches!(result, Err(Error::InvalidInput(_))));
+    }
+
+    #[test]
+    fn held_move_waits_until_the_hold_ends() {
+        let fixture = Fixture::new(STANDARD);
+        let inbox = fixture.id(MailboxRole::Inbox);
+        let (thread_id, _) = fixture.deliver(inbox, 7);
+        let now = now_millis();
+
+        fixture
+            .engine
+            .move_thread(inbox, thread_id, Destination::Trash, Duration::from_secs(5))
+            .unwrap();
+
+        let store = &fixture.engine.store;
+        assert!(store.due_operations("alice", now).unwrap().is_empty());
+        assert_eq!(store.due_operations("alice", now + 5_100).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn moving_back_before_the_hold_ends_cancels_the_move() {
+        let fixture = Fixture::new(STANDARD);
+        let (inbox, trash) = (
+            fixture.id(MailboxRole::Inbox),
+            fixture.id(MailboxRole::Trash),
+        );
+        let (thread_id, _) = fixture.deliver(inbox, 7);
+
+        let relocation = fixture
+            .engine
+            .move_thread(inbox, thread_id, Destination::Trash, Duration::from_secs(5))
+            .unwrap();
+        fixture
+            .engine
+            .move_emails(
+                &relocation.email_ids,
+                trash,
+                Destination::Mailbox(inbox),
+                Duration::ZERO,
+            )
+            .unwrap();
+
+        let pending_sources: usize = fixture
+            .engine
+            .store
+            .waiting_operations("alice", "move")
+            .unwrap()
+            .into_iter()
+            .map(
+                |operation| match serde_json::from_str(&operation.payload).unwrap() {
+                    Operation::Move { sources, .. } => sources.len(),
+                    _ => 0,
+                },
+            )
+            .sum();
+        assert_eq!(pending_sources, 0);
+        assert_eq!(fixture.threads(inbox), vec![thread_id]);
+        assert!(fixture.threads(trash).is_empty());
+    }
+
+    #[test]
+    fn move_returns_the_moved_emails_and_target() {
+        let fixture = Fixture::new(STANDARD);
+        let (inbox, trash) = (
+            fixture.id(MailboxRole::Inbox),
+            fixture.id(MailboxRole::Trash),
+        );
+        let (thread_id, email_ids) = fixture.deliver(inbox, 7);
+
+        let relocation = fixture
+            .engine
+            .move_thread(inbox, thread_id, Destination::Trash, Duration::ZERO)
+            .unwrap();
+        assert_eq!(relocation.email_ids, email_ids);
+        assert_eq!(relocation.target_mailbox_id, Some(trash));
+
+        let deletion = fixture
+            .engine
+            .move_thread(trash, thread_id, Destination::Trash, Duration::ZERO)
+            .unwrap();
+        assert_eq!(deletion.email_ids, email_ids);
+        assert_eq!(deletion.target_mailbox_id, None);
     }
 }

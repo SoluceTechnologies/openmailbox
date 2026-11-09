@@ -111,6 +111,7 @@ pub fn enqueue_keywords(
         operation.kind(),
         &serialize(&operation),
         &rewrites,
+        0,
     )?;
     Ok(())
 }
@@ -123,6 +124,7 @@ pub fn enqueue_relocation(
     account_id: &str,
     sources: Vec<MessageLocation>,
     target_mailbox_id: Option<i64>,
+    not_before: i64,
 ) -> Result<()> {
     let mut sources: Vec<Source> = sources.into_iter().map(Source::from).collect();
     let unresolved: HashMap<i64, i64> = sources
@@ -185,12 +187,13 @@ pub fn enqueue_relocation(
         operation.kind(),
         &serialize(&operation),
         &rewrites,
+        not_before,
     )?;
     Ok(())
 }
 
 pub fn enqueue(store: &Store, account_id: &str, operation: &Operation) -> Result<()> {
-    store.enqueue_operation(account_id, operation.kind(), &serialize(operation), &[])?;
+    store.enqueue_operation(account_id, operation.kind(), &serialize(operation), &[], 0)?;
     Ok(())
 }
 
@@ -276,11 +279,11 @@ mod tests {
         let first = store
             .move_emails(&[email_id], inbox, Some(archive))
             .unwrap();
-        enqueue_relocation(&store, "alice", first, Some(archive)).unwrap();
+        enqueue_relocation(&store, "alice", first, Some(archive), 0).unwrap();
         let second = store
             .move_emails(&[email_id], archive, Some(trash))
             .unwrap();
-        enqueue_relocation(&store, "alice", second, Some(trash)).unwrap();
+        enqueue_relocation(&store, "alice", second, Some(trash), 0).unwrap();
 
         assert_eq!(
             waiting(&store, "move"),
