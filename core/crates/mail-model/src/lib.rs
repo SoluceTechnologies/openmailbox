@@ -247,6 +247,16 @@ pub struct RenderedBody {
     pub attachments: Vec<Attachment>,
 }
 
+/// Largest total size of the files attached to one outgoing message.
+pub const MAX_ATTACHMENTS_BYTES: u64 = 26_214_400;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutgoingAttachment {
+    pub path: String,
+    pub filename: String,
+    pub mime_type: String,
+}
+
 #[derive(Debug, Clone)]
 pub struct Draft {
     pub account_id: String,
@@ -256,6 +266,7 @@ pub struct Draft {
     pub subject: String,
     pub body_text: String,
     pub in_reply_to_email_id: Option<i64>,
+    pub attachments: Vec<OutgoingAttachment>,
 }
 
 #[derive(Debug, Clone)]

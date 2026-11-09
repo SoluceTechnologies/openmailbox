@@ -181,6 +181,14 @@ pub struct Draft {
     pub subject: String,
     pub body_text: String,
     pub in_reply_to_email_id: Option<String>,
+    pub attachments: Vec<OutgoingAttachment>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct OutgoingAttachment {
+    pub path: String,
+    pub filename: String,
+    pub mime_type: String,
 }
 
 #[derive(Debug, Clone, Copy, uniffi::Enum)]
@@ -772,6 +780,15 @@ impl MailCore {
                 .as_deref()
                 .map(parse_id)
                 .transpose()?,
+            attachments: draft
+                .attachments
+                .into_iter()
+                .map(|attachment| mail_model::OutgoingAttachment {
+                    path: attachment.path,
+                    filename: attachment.filename,
+                    mime_type: attachment.mime_type,
+                })
+                .collect(),
         };
         self.blocking(move |engine| engine.send(draft)).await
     }

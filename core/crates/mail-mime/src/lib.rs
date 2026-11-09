@@ -3,7 +3,9 @@ use std::sync::LazyLock;
 
 use base64::Engine;
 use lettre::message::header::ContentType;
-use lettre::message::{Mailbox as LettreMailbox, MessageBuilder};
+use lettre::message::{
+    Attachment as LettreAttachment, Mailbox as LettreMailbox, MessageBuilder, MultiPart, SinglePart,
+};
 use mail_model::{Address, Attachment, Error, ParsedHeaders, RenderedBody, Result};
 use mail_parser::{AddressList, Message, MessageParser};
 
@@ -213,6 +215,13 @@ pub struct OutgoingMessage<'a> {
     pub body_text: &'a str,
     pub in_reply_to: Option<&'a str>,
     pub references: &'a [String],
+    pub attachments: &'a [AttachmentContent],
+}
+
+pub struct AttachmentContent {
+    pub filename: String,
+    pub mime_type: String,
+    pub bytes: Vec<u8>,
 }
 
 pub struct BuiltMessage {
@@ -247,10 +256,25 @@ pub fn build_message(outgoing: &OutgoingMessage) -> Result<BuiltMessage> {
             .join(" ");
         builder = builder.references(references);
     }
-    let message = builder
-        .header(ContentType::TEXT_PLAIN)
-        .body(outgoing.body_text.to_owned())
-        .map_err(|error| Error::InvalidInput(error.to_string()))?;
+    let message = if outgoing.attachments.is_empty() {
+        builder
+            .header(ContentType::TEXT_PLAIN)
+            .body(outgoing.body_text.to_owned())
+    } else {
+        let parts = outgoing.attachments.iter().fold(
+            MultiPart::mixed().singlepart(SinglePart::plain(outgoing.body_text.to_owned())),
+            |parts, attachment| {
+                let content_type = ContentType::parse(&attachment.mime_type)
+                    .unwrap_or_else(|_| ContentType::parse("application/octet-stream").unwrap());
+                parts.singlepart(
+                    LettreAttachment::new(attachment.filename.clone())
+                        .body(attachment.bytes.clone(), content_type),
+                )
+            },
+        );
+        builder.multipart(parts)
+    }
+    .map_err(|error| Error::InvalidInput(error.to_string()))?;
     let envelope = message.envelope();
     Ok(BuiltMessage {
         raw: message.formatted(),
@@ -326,6 +350,7 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
             body_text: "Merci !",
             in_reply_to: Some("reply@example.com"),
             references: &["root@example.com".into(), "reply@example.com".into()],
+            attachments: &[],
         })
         .unwrap();
         let raw = String::from_utf8(built.raw).unwrap();
@@ -334,6 +359,93 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
         assert_eq!(
             built.recipients,
             vec!["bob@example.com", "carol@example.com"]
+        );
+    }
+
+    fn with_attachments(attachments: &[AttachmentContent]) -> Vec<u8> {
+        let from = Address {
+            name: Some("Alice".into()),
+            email: "alice@example.com".into(),
+        };
+        let bob = Address {
+            name: None,
+            email: "bob@example.com".into(),
+        };
+        build_message(&OutgoingMessage {
+            message_id: "files@example.com",
+            from: &from,
+            to: &[bob],
+            cc: &[],
+            bcc: &[],
+            subject: "Documents",
+            body_text: "Voici les documents.",
+            in_reply_to: None,
+            references: &[],
+            attachments,
+        })
+        .unwrap()
+        .raw
+    }
+
+    #[test]
+    fn builds_multipart_mixed_with_attachments() {
+        let raw = with_attachments(&[
+            AttachmentContent {
+                filename: "devis.pdf".into(),
+                mime_type: "application/pdf".into(),
+                bytes: vec![7; 4_000],
+            },
+            AttachmentContent {
+                filename: "photo.jpg".into(),
+                mime_type: "image/jpeg".into(),
+                bytes: vec![1, 2, 3],
+            },
+        ]);
+        let rendered = render(&raw).unwrap();
+        assert!(rendered.text.contains("Voici les documents."));
+        let listed: Vec<(String, String, u64)> = rendered
+            .attachments
+            .iter()
+            .map(|attachment| {
+                (
+                    attachment.filename.clone(),
+                    attachment.mime_type.clone(),
+                    attachment.size,
+                )
+            })
+            .collect();
+        assert_eq!(
+            listed,
+            vec![
+                ("devis.pdf".into(), "application/pdf".into(), 4_000),
+                ("photo.jpg".into(), "image/jpeg".into(), 3),
+            ]
+        );
+    }
+
+    #[test]
+    fn keeps_non_ascii_and_slashed_filenames() {
+        let raw = with_attachments(&[AttachmentContent {
+            filename: "Facture n°12/2026.pdf".into(),
+            mime_type: "application/pdf".into(),
+            bytes: vec![0; 10],
+        }]);
+        assert_eq!(
+            render(&raw).unwrap().attachments[0].filename,
+            "Facture n°12/2026.pdf"
+        );
+    }
+
+    #[test]
+    fn an_unknown_mime_type_is_sent_as_octet_stream() {
+        let raw = with_attachments(&[AttachmentContent {
+            filename: "notes".into(),
+            mime_type: "not a type".into(),
+            bytes: vec![0; 10],
+        }]);
+        assert_eq!(
+            render(&raw).unwrap().attachments[0].mime_type,
+            "application/octet-stream"
         );
     }
 }

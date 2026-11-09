@@ -128,6 +128,7 @@ export default function ComposeScreen() {
         subject: subject.trim(),
         bodyText: body,
         inReplyToEmailId: mode === 'reply' || mode === 'replyAll' ? params.emailId : undefined,
+        attachments: [],
       });
       setDefaultAccountId(accountId);
       router.back();

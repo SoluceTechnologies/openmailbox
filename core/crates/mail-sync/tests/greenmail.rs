@@ -2,8 +2,8 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use mail_model::{
-    AccountConfig, Address, Draft, Keyword, MailboxRole, Security, ServerEndpoint, ThreadScope,
-    ThreadSummary,
+    AccountConfig, Address, Draft, Keyword, MailboxRole, OutgoingAttachment, Security,
+    ServerEndpoint, ThreadScope, ThreadSummary,
 };
 use mail_sync::{Destination, Engine};
 
@@ -36,6 +36,7 @@ fn draft(
         subject,
         body_text: body_text.into(),
         in_reply_to_email_id,
+        attachments: vec![],
     }
 }
 
@@ -325,4 +326,60 @@ async fn moves_a_thread_out_of_the_trash_and_back_to_the_inbox() {
         .unwrap();
     wait_on_server("INBOX", &token, true).await;
     wait_on_server("Trash", &token, false).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn sends_an_attachment_that_arrives_intact() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let account = engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    let file = directory.join("relevé.pdf");
+    let content: Vec<u8> = (0..300_000u32).map(|index| (index % 251) as u8).collect();
+    std::fs::write(&file, &content).unwrap();
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    let mut message = draft(
+        &account.id,
+        format!("Attachment {token}"),
+        "Ci-joint.",
+        None,
+    );
+    message.attachments = vec![OutgoingAttachment {
+        path: file.to_string_lossy().into_owned(),
+        filename: "relevé.pdf".into(),
+        mime_type: "application/pdf".into(),
+    }];
+    engine.send(message).unwrap();
+
+    let thread = eventually(&engine, || thread_with(&engine, &token)).await;
+    assert!(thread.has_attachment);
+    let body = engine.body(thread.latest.id).await.unwrap();
+    assert_eq!(body.attachments.len(), 1);
+    assert_eq!(body.attachments[0].filename, "relevé.pdf");
+    assert_eq!(body.attachments[0].size, content.len() as u64);
+    let saved = engine
+        .save_attachment(
+            thread.latest.id,
+            body.attachments[0].index,
+            directory.join("saved"),
+        )
+        .await
+        .unwrap();
+    assert_eq!(std::fs::read(saved).unwrap(), content);
 }

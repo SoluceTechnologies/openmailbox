@@ -8,10 +8,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 use std::time::Duration;
 
-use mail_mime::OutgoingMessage;
+use mail_mime::{AttachmentContent, OutgoingMessage};
 use mail_model::{
-    Account, AccountConfig, Address, CoreEvent, Draft, EmailSummary, Error, Keyword, Mailbox,
-    MailboxRole, RenderedBody, Result, ServerConfig, ThreadPage, ThreadScope, now_millis,
+    Account, AccountConfig, Address, CoreEvent, Draft, EmailSummary, Error, Keyword,
+    MAX_ATTACHMENTS_BYTES, Mailbox, MailboxRole, OutgoingAttachment, RenderedBody, Result,
+    ServerConfig, ThreadPage, ThreadScope, now_millis,
 };
 use mail_store::Store;
 use tokio::runtime::Handle;
@@ -384,6 +385,7 @@ impl Engine {
         if draft.to.is_empty() && draft.cc.is_empty() && draft.bcc.is_empty() {
             return Err(Error::InvalidInput("no recipient".into()));
         }
+        let attachments = read_attachments(&draft.attachments)?;
         let account = self.store.account(&draft.account_id)?;
         let reply = draft
             .in_reply_to_email_id
@@ -420,6 +422,7 @@ impl Engine {
                 .as_ref()
                 .and_then(|context| context.message_id.as_deref()),
             references: &references,
+            attachments: &attachments,
         })?;
         let raw = String::from_utf8(built.raw)
             .map_err(|_| Error::InvalidInput("message is not 7-bit safe".into()))?;
@@ -596,6 +599,33 @@ async fn watch_inbox(
     }
 }
 
+fn read_attachments(attachments: &[OutgoingAttachment]) -> Result<Vec<AttachmentContent>> {
+    let unreadable = |attachment: &OutgoingAttachment| {
+        Error::InvalidInput(format!("cannot read attachment {}", attachment.filename))
+    };
+    let mut total = 0;
+    for attachment in attachments {
+        total += std::fs::metadata(&attachment.path)
+            .map_err(|_| unreadable(attachment))?
+            .len();
+    }
+    if total > MAX_ATTACHMENTS_BYTES {
+        return Err(Error::InvalidInput(format!(
+            "attachments exceed {MAX_ATTACHMENTS_BYTES} bytes"
+        )));
+    }
+    attachments
+        .iter()
+        .map(|attachment| {
+            Ok(AttachmentContent {
+                filename: attachment.filename.clone(),
+                mime_type: attachment.mime_type.clone(),
+                bytes: std::fs::read(&attachment.path).map_err(|_| unreadable(attachment))?,
+            })
+        })
+        .collect()
+}
+
 #[cfg(test)]
 pub(crate) mod test_support {
     use mail_model::{Account, Security, ServerEndpoint};
@@ -633,8 +663,8 @@ pub(crate) mod test_support {
 #[cfg(test)]
 mod tests {
     use mail_model::{
-        Address, FetchedMessage, Flags, MailboxRole, ParsedHeaders, RemoteMailbox, ThreadScope,
-        now_millis,
+        Address, FetchedMessage, Flags, MAX_ATTACHMENTS_BYTES, MailboxRole, OutgoingAttachment,
+        ParsedHeaders, RemoteMailbox, ThreadScope, now_millis,
     };
 
     use super::*;
@@ -846,5 +876,87 @@ mod tests {
             .unwrap();
         assert_eq!(deletion.email_ids, email_ids);
         assert_eq!(deletion.target_mailbox_id, None);
+    }
+
+    fn draft_with(attachments: Vec<OutgoingAttachment>) -> Draft {
+        Draft {
+            account_id: "alice".into(),
+            to: vec![Address {
+                name: None,
+                email: "bob@example.org".into(),
+            }],
+            cc: vec![],
+            bcc: vec![],
+            subject: "Documents".into(),
+            body_text: "Voici.".into(),
+            in_reply_to_email_id: None,
+            attachments,
+        }
+    }
+
+    fn file_of_size(size: u64) -> String {
+        let path = std::env::temp_dir().join(format!("attachment-{}", uuid::Uuid::new_v4()));
+        std::fs::File::create(&path).unwrap().set_len(size).unwrap();
+        path.to_string_lossy().into_owned()
+    }
+
+    #[test]
+    fn send_rejects_attachments_over_25_megabytes() {
+        let fixture = Fixture::new(STANDARD);
+        let attachment = |size| OutgoingAttachment {
+            path: file_of_size(size),
+            filename: "scan.pdf".into(),
+            mime_type: "application/pdf".into(),
+        };
+        let result = fixture.engine.send(draft_with(vec![
+            attachment(MAX_ATTACHMENTS_BYTES - 10),
+            attachment(11),
+        ]));
+        assert!(matches!(result, Err(Error::InvalidInput(_))));
+        assert!(
+            fixture
+                .engine
+                .store
+                .waiting_operations("alice", "send")
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn send_reports_a_missing_attachment_file() {
+        let fixture = Fixture::new(STANDARD);
+        let result = fixture.engine.send(draft_with(vec![OutgoingAttachment {
+            path: "/nonexistent/contrat.pdf".into(),
+            filename: "contrat.pdf".into(),
+            mime_type: "application/pdf".into(),
+        }]));
+        assert!(
+            matches!(result, Err(Error::InvalidInput(message)) if message.contains("contrat.pdf"))
+        );
+    }
+
+    #[test]
+    fn send_queues_a_message_carrying_its_attachments() {
+        let fixture = Fixture::new(STANDARD);
+        fixture
+            .engine
+            .send(draft_with(vec![OutgoingAttachment {
+                path: file_of_size(2_048),
+                filename: "plan.pdf".into(),
+                mime_type: "application/pdf".into(),
+            }]))
+            .unwrap();
+        let queued = fixture
+            .engine
+            .store
+            .waiting_operations("alice", "send")
+            .unwrap();
+        let Operation::Send { raw, .. } = serde_json::from_str(&queued[0].payload).unwrap() else {
+            panic!("not a send");
+        };
+        let rendered = mail_mime::render(raw.as_bytes()).unwrap();
+        assert_eq!(rendered.attachments[0].filename, "plan.pdf");
+        assert_eq!(rendered.attachments[0].size, 2_048);
     }
 }

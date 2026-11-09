@@ -358,6 +358,53 @@ const FfiConverterTypeAttachment = (() => {
     return new FFIConverter();
 })();
 
+export type OutgoingAttachment = {
+    path: string,
+    filename: string,
+    mimeType: string
+}
+
+/**
+ * Generated factory for {@link OutgoingAttachment} record objects.
+ */
+export const OutgoingAttachment = (() => {
+    const defaults = () => ({
+    });
+    const create = (() => {
+        return uniffiCreateRecord<OutgoingAttachment, ReturnType<typeof defaults>>(defaults);
+    })();
+    return Object.freeze({
+        create,
+        new: create,
+        defaults: () => Object.freeze(defaults()) as Partial<OutgoingAttachment>,
+    });
+})();
+
+const FfiConverterTypeOutgoingAttachment = (() => {
+    type TypeName = OutgoingAttachment;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            return {
+                path: FfiConverterString.readFromCursor(c), 
+                filename: FfiConverterString.readFromCursor(c), 
+                mimeType: FfiConverterString.readFromCursor(c)
+            };
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            FfiConverterString.writeIntoCursor(value.path, c);
+            FfiConverterString.writeIntoCursor(value.filename, c);
+            FfiConverterString.writeIntoCursor(value.mimeType, c);
+        }
+        allocationSize(value: TypeName): number {
+            return FfiConverterString.allocationSize(value.path) +
+             FfiConverterString.allocationSize(value.filename) +
+             FfiConverterString.allocationSize(value.mimeType);
+            
+        }
+    };
+    return new FFIConverter();
+})();
+
 export type Draft = {
     accountId: string,
     to: Array<Address>,
@@ -365,7 +412,8 @@ export type Draft = {
     bcc: Array<Address>,
     subject: string,
     bodyText: string,
-    inReplyToEmailId?: string
+    inReplyToEmailId?: string,
+    attachments: Array<OutgoingAttachment>
 }
 
 /**
@@ -395,7 +443,8 @@ const FfiConverterTypeDraft = (() => {
                 bcc: FfiConverterSequenceTypeAddress.readFromCursor(c), 
                 subject: FfiConverterString.readFromCursor(c), 
                 bodyText: FfiConverterString.readFromCursor(c), 
-                inReplyToEmailId: FfiConverterOptionalString.readFromCursor(c)
+                inReplyToEmailId: FfiConverterOptionalString.readFromCursor(c), 
+                attachments: FfiConverterSequenceTypeOutgoingAttachment.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
@@ -406,6 +455,7 @@ const FfiConverterTypeDraft = (() => {
             FfiConverterString.writeIntoCursor(value.subject, c);
             FfiConverterString.writeIntoCursor(value.bodyText, c);
             FfiConverterOptionalString.writeIntoCursor(value.inReplyToEmailId, c);
+            FfiConverterSequenceTypeOutgoingAttachment.writeIntoCursor(value.attachments, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterString.allocationSize(value.accountId) +
@@ -414,7 +464,8 @@ const FfiConverterTypeDraft = (() => {
              FfiConverterSequenceTypeAddress.allocationSize(value.bcc) +
              FfiConverterString.allocationSize(value.subject) +
              FfiConverterString.allocationSize(value.bodyText) +
-             FfiConverterOptionalString.allocationSize(value.inReplyToEmailId);
+             FfiConverterOptionalString.allocationSize(value.inReplyToEmailId) +
+             FfiConverterSequenceTypeOutgoingAttachment.allocationSize(value.attachments);
             
         }
     };
@@ -3100,6 +3151,9 @@ const FfiConverterOptionalString = new FfiConverterOptional(FfiConverterString);
 // FfiConverter for Array<Address>
 const FfiConverterSequenceTypeAddress = new FfiConverterArray(FfiConverterTypeAddress);
 
+// FfiConverter for Array<OutgoingAttachment>
+const FfiConverterSequenceTypeOutgoingAttachment = new FfiConverterArray(FfiConverterTypeOutgoingAttachment);
+
 // FfiConverter for MailboxRole | undefined
 const FfiConverterOptionalTypeMailboxRole = new FfiConverterOptional(FfiConverterTypeMailboxRole);
 
@@ -3245,6 +3299,7 @@ export default Object.freeze({
     FfiConverterTypeMailCore,
     FfiConverterTypeMailbox,
     FfiConverterTypeMailboxRole,
+    FfiConverterTypeOutgoingAttachment,
     FfiConverterTypeRelocation,
     FfiConverterTypeRenderedBody,
     FfiConverterTypeSecurity,
