@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 
-import { useMailboxes } from '@/core/hooks';
+import { useAccounts, useMailboxes } from '@/core/hooks';
 import { registerBackgroundCheck } from '@/services/backgroundCheck';
-import { inboxUnreadCount, notificationRoute, updateBadge } from '@/services/notifications';
+import { askNotificationPermissionIfNeverAsked, inboxUnreadCount, notificationRoute, updateBadge } from '@/services/notifications';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: true }),
@@ -13,6 +14,12 @@ Notifications.setNotificationHandler({
 /** Keeps the badge current while the app is open, opens tapped notifications and schedules the background check. */
 export function NotificationBridge() {
   const unread = inboxUnreadCount(useMailboxes());
+  const hasAccount = useAccounts().length > 0;
+  const notificationsEnabled = useSettingsStore((state) => state.notificationsEnabled);
+
+  useEffect(() => {
+    if (hasAccount && notificationsEnabled) askNotificationPermissionIfNeverAsked().catch(() => undefined);
+  }, [hasAccount, notificationsEnabled]);
 
   useEffect(() => {
     updateBadge(unread).catch(() => undefined);

@@ -21,10 +21,24 @@ export function updateBadge(unread: number): Promise<boolean> {
   return Notifications.setBadgeCountAsync(unread);
 }
 
-export async function requestNotificationPermission(): Promise<boolean> {
+let pendingRequest: Promise<boolean> | null = null;
+
+/** One request at a time, so the onboarding and the app launch never show the prompt twice. */
+export function requestNotificationPermission(): Promise<boolean> {
+  pendingRequest ??= (async () => {
+    const current = await Notifications.getPermissionsAsync();
+    if (current.granted) return true;
+    return (await Notifications.requestPermissionsAsync()).granted;
+  })().finally(() => {
+    pendingRequest = null;
+  });
+  return pendingRequest;
+}
+
+/** Installs updated from a version without notifications have accounts but were never asked. */
+export async function askNotificationPermissionIfNeverAsked(): Promise<void> {
   const current = await Notifications.getPermissionsAsync();
-  if (current.granted) return true;
-  return (await Notifications.requestPermissionsAsync()).granted;
+  if (current.status === 'undetermined') await requestNotificationPermission();
 }
 
 export async function notifyNewMessages(messages: NewMessage[], { silencedAccountIds }: { silencedAccountIds: string[] }) {
