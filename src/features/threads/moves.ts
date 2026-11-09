@@ -12,14 +12,17 @@ export const UNDO_HOLD_MS = UNDO_VISIBLE_MS;
 
 export async function moveWithUndo(threads: ThreadReference[], destination: Destination, label: string): Promise<void> {
   haptic();
-  const moves = await Promise.all(
+  const results = await Promise.allSettled(
     threads.map(async (thread) => ({
       relocation: await mailCore().moveThread(thread.mailboxId, thread.threadId, destination, UNDO_HOLD_MS),
       sourceMailboxId: thread.mailboxId,
     })),
   );
+  const moves = results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
   const undoable = moves.filter(({ relocation }) => relocation.targetMailboxId && relocation.emailIds.length > 0);
   if (undoable.length > 0) useUndoStore.getState().show({ label, moves: undoable });
+  const failure = results.find((result) => result.status === 'rejected');
+  if (failure) throw failure.reason;
 }
 
 /** Deleting from the Trash, or from an account without one, cannot be undone, so it asks first. */

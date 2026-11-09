@@ -56,6 +56,17 @@ describe('moves with undo', () => {
     expect(useUndoStore.getState().entry).toBeNull();
   });
 
+  it('still offers to undo the threads that moved when another one fails', async () => {
+    core.moveThread.mockImplementation(async (_mailboxId, threadId) => {
+      if (threadId === 'thread-2') throw new Error('gone');
+      return { emailIds: [`${threadId}-email`], targetMailboxId: 'mailbox-archive' };
+    });
+
+    await expect(moveWithUndo([INBOX_THREAD, WORK_THREAD], new Destination.Archive(), 'Archived')).rejects.toThrow('gone');
+
+    expect(useUndoStore.getState().entry?.moves.map((move) => move.sourceMailboxId)).toEqual(['mailbox-inbox']);
+  });
+
   it('undoes only once when Undo is pressed twice', async () => {
     relocatedTo('mailbox-trash');
     await moveWithUndo([INBOX_THREAD], new Destination.Trash(), 'Moved to Trash');
