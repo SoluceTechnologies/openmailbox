@@ -12,9 +12,10 @@ export function withSignature(body: string, signature: string): string {
 
 /**
  * Swaps the signature when the sending account changes. Returns null when the user edited the
- * previous signature, which is then left alone.
+ * previous signature, which is then left alone. A new signature goes above `quote`, the quoted
+ * text of a reply or forward, or at the end of the message.
  */
-export function replaceSignature(body: string, previous: string, next: string): string | null {
+export function replaceSignature(body: string, previous: string, next: string, quote = ''): string | null {
   const previousBlock = block(previous);
   if (previousBlock) {
     const start = body.indexOf(previousBlock);
@@ -22,6 +23,6 @@ export function replaceSignature(body: string, previous: string, next: string): 
     if (after === null || (after !== '' && !after.startsWith('\n\n'))) return null;
     return body.slice(0, start) + block(next) + after;
   }
-  const quoteStart = body.indexOf('\n\n');
+  const quoteStart = quote ? body.lastIndexOf(quote) : -1;
   return quoteStart === -1 ? body + block(next) : body.slice(0, quoteStart) + block(next) + body.slice(quoteStart);
 }

@@ -28,8 +28,15 @@ describe('signatures', () => {
   });
 
   it('adds a signature where there was none', () => {
-    expect(replaceSignature(`Merci !${REPLY}`, '', 'Charles')).toBe(`Merci !${withSignature(REPLY, 'Charles')}`);
+    expect(replaceSignature(`Merci !${REPLY}`, '', 'Charles', REPLY)).toBe(`Merci !${withSignature(REPLY, 'Charles')}`);
     expect(replaceSignature('Merci !', '', 'Charles')).toBe('Merci !\n\n-- \nCharles');
+  });
+
+  it('adds a missing signature after every paragraph the user wrote', () => {
+    expect(replaceSignature('Bonjour,\n\nÀ demain.', '', 'Charles')).toBe('Bonjour,\n\nÀ demain.\n\n-- \nCharles');
+    expect(replaceSignature(`Bonjour,\n\nÀ demain.${REPLY}`, '', 'Charles', REPLY)).toBe(
+      `Bonjour,\n\nÀ demain.${withSignature(REPLY, 'Charles')}`,
+    );
   });
 
   it('leaves an edited signature alone', () => {

@@ -64,6 +64,7 @@ export default function ComposeScreen() {
   const [sending, setSending] = useState(false);
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
   const [forwarding, setForwarding] = useState(false);
+  const [quote, setQuote] = useState('');
   const [attachMenuVisible, setAttachMenuVisible] = useState(false);
   const bodyInput = useRef<TextInput>(null);
   const [initialContent, setInitialContent] = useState(() => snapshot('', '', '', '', body));
@@ -85,6 +86,7 @@ export default function ComposeScreen() {
     setShowCopies(content.cc.length > 0);
     setSubject(content.subject);
     const signed = withSignature(content.body, signatureOf(original.accountId));
+    setQuote(content.body);
     setBody(signed);
     setInitialContent(snapshot(formatAddressList(content.to), formatAddressList(content.cc), '', content.subject, signed));
     setPrefilled(true);
@@ -120,7 +122,7 @@ export default function ComposeScreen() {
   const hasRecipient = to.length + cc.length + bcc.length > 0 || (toText + ccText + bccText).trim().length > 0;
 
   const changeAccount = (next: string) => {
-    const replaced = replaceSignature(body, signatureOf(accountId), signatureOf(next));
+    const replaced = replaceSignature(body, signatureOf(accountId), signatureOf(next), quote);
     if (replaced !== null) setBody(replaced);
     setAccountId(next);
   };
