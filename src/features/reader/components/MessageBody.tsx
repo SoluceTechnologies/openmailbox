@@ -90,7 +90,7 @@ function MessageBodyImpl({ emailId }: { emailId: string }) {
   const { html, text, hasRemoteContent, attachments, unsubscribe } = body.data;
   return (
     <View style={styles.body}>
-      {unsubscribe ? <UnsubscribeBanner emailId={emailId} /> : null}
+      {unsubscribe ? <UnsubscribeBanner emailId={emailId} list={unsubscribe} /> : null}
       {html && hasRemoteContent && !remoteAllowed ? (
         <Pressable onPress={() => setRemoteAllowed(true)} style={[styles.remoteBanner, { backgroundColor: colors.surface }]}>
           <ImageOff size={16} color={colors.textSecondary} />

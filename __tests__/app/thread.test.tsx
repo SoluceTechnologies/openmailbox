@@ -131,6 +131,22 @@ describe('reader', () => {
 
       expect(await screen.findByText(i18n.t('reader.unsubscribed'))).toBeOnTheScreen();
     });
+
+    it('remembers the unsubscription when the message is opened again', async () => {
+      core.body.mockResolvedValue({ ...LIST_BODY, unsubscribe: { httpsUrl: undefined, mailto: 'mailto:leave@news.example', oneClick: false } });
+      core.unsubscribe.mockResolvedValue(new UnsubscribeOutcome.Done());
+      const alert = jest.spyOn(Alert, 'alert');
+      const first = renderWithProviders(<ThreadScreen />);
+      fireEvent.press(await screen.findByRole('button', { name: i18n.t('reader.unsubscribe') }));
+      await act(async () => alert.mock.calls[0][2]!.find((button) => button.style !== 'cancel')!.onPress!());
+      await screen.findByText(i18n.t('reader.unsubscribed'));
+      first.unmount();
+
+      renderWithProviders(<ThreadScreen />);
+
+      expect(await screen.findByText(i18n.t('reader.unsubscribed'))).toBeOnTheScreen();
+      expect(screen.queryByRole('button', { name: i18n.t('reader.unsubscribe') })).toBeNull();
+    });
   });
 
   it('offers reply, reply all and forward from the reply button', async () => {

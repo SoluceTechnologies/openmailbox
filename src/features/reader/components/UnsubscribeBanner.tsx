@@ -3,22 +3,27 @@ import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { MailMinus } from 'lucide-react-native';
-import { UnsubscribeOutcome } from '@openmailbox/mail-core';
+import { UnsubscribeOutcome, type Unsubscribe } from '@openmailbox/mail-core';
 
 import { mailCore } from '@/core/mailCore';
 import { describeCoreError } from '@/features/accounts/coreErrors';
+import { storage } from '@/storage';
 import { Typography } from '@/ui/components';
 
-export function UnsubscribeBanner({ emailId }: { emailId: string }) {
+export function UnsubscribeBanner({ emailId, list }: { emailId: string; list: Unsubscribe }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const [unsubscribed, setUnsubscribed] = useState(false);
+  const key = `unsubscribed:${list.mailto ?? list.httpsUrl}`;
+  const [unsubscribed, setUnsubscribed] = useState(() => storage.getBoolean(key) ?? false);
 
   const unsubscribe = async () => {
     try {
       const outcome = await mailCore().unsubscribe(emailId);
       if (UnsubscribeOutcome.OpenInBrowser.instanceOf(outcome)) await Linking.openURL(outcome.inner.url);
-      else setUnsubscribed(true);
+      else {
+        storage.set(key, true);
+        setUnsubscribed(true);
+      }
     } catch (error) {
       Alert.alert(t('reader.unsubscribe'), describeCoreError(error, t));
     }
