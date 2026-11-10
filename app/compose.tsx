@@ -13,6 +13,7 @@ import { RecipientField } from '@/features/composer/components/RecipientField';
 import { prefill, type ComposeMode } from '@/features/composer/prefill';
 import { replaceSignature, withSignature } from '@/features/composer/signature';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useUndoStore } from '@/stores/undoStore';
 import { ActionList, IconButton, Select, Sheet, Typography, ViewContainer } from '@/ui/components';
 import { formatAddressList, parseAddressList, type MailAddress } from '@/utils/addresses';
 import { formatFullDate } from '@/utils/dates';
@@ -41,6 +42,7 @@ export default function ComposeScreen() {
   const accounts = useAccounts();
   const defaultAccountId = useSettingsStore((state) => state.defaultAccountId);
   const setDefaultAccountId = useSettingsStore((state) => state.setDefaultAccountId);
+  const showToast = useUndoStore((state) => state.show);
   const threadEmails = useThreadEmails(params.threadId ?? '', params.mailboxId || undefined, !!params.threadId);
   const original = threadEmails.data?.find((email) => email.id === params.emailId);
   const originalBody = useBody(params.emailId ?? '', !!params.emailId);
@@ -178,6 +180,7 @@ export default function ComposeScreen() {
       });
       setDefaultAccountId(accountId);
       router.back();
+      showToast({ label: t('compose.messageSent'), moves: [] });
     } catch (error) {
       setSending(false);
       Alert.alert(t('compose.sendFailed'), String(error));

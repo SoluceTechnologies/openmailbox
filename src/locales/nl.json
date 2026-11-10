@@ -94,6 +94,7 @@
     "replyAll": "Beantwoord allen",
     "send": "Verstuur",
     "sendFailed": "Het bericht kon niet worden verstuurd",
+    "messageSent": "Bericht verstuurd",
     "subject": "Onderwerp:",
     "to": "Aan:",
     "wrote": "Op {{date}} schreef {{author}}:"

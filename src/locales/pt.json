@@ -94,6 +94,7 @@
     "replyAll": "Responder a todos",
     "send": "Enviar",
     "sendFailed": "Não foi possível enviar a mensagem",
+    "messageSent": "Mensagem enviada",
     "subject": "Assunto:",
     "to": "Para:",
     "wrote": "Em {{date}}, {{author}} escreveu:"

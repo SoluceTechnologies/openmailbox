@@ -94,6 +94,7 @@
     "replyAll": "Respondre a totes",
     "send": "Mandar",
     "sendFailed": "Lo messatge a pas pogut èsser mandat",
+    "messageSent": "Messatge mandat",
     "subject": "Objècte :",
     "to": "A :",
     "wrote": "Lo {{date}}, {{author}} a escrich :"

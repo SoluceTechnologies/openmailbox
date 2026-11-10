@@ -5,6 +5,7 @@ import ComposeScreen from '../../app/compose';
 import { queryClient, queryKeys } from '@/core/queryClient';
 import { forwardedAttachments, pickAttachments } from '@/features/composer/attachments';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useUndoStore } from '@/stores/undoStore';
 import i18n from '@/utils/i18n';
 
 import { core, makeAccount, makeEmail } from '../helpers/fixtures';
@@ -141,6 +142,7 @@ describe('composer', () => {
         'claire@atlas.example',
         'nadia@x.org',
       ]);
+      expect(useUndoStore.getState().entry).toEqual({ label: 'Message sent', moves: [] });
     });
   });
 

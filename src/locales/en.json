@@ -94,6 +94,7 @@
     "replyAll": "Reply All",
     "send": "Send",
     "sendFailed": "The message couldn't be sent",
+    "messageSent": "Message sent",
     "subject": "Subject:",
     "to": "To:",
     "wrote": "On {{date}}, {{author}} wrote:"

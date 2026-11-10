@@ -34,4 +34,11 @@ describe('UndoToast', () => {
     expect(core.moveEmails).toHaveBeenCalledWith(['e1'], 'archive', expect.anything(), 0);
     expect(screen.queryByText('Archived')).toBeNull();
   });
+
+  it('only tells what happened when there is nothing to undo', () => {
+    renderWithProviders(<UndoToast />);
+    act(() => useUndoStore.getState().show({ label: 'Message sent', moves: [] }));
+    expect(screen.getByText('Message sent')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+  });
 });
