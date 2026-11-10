@@ -105,11 +105,11 @@ function MessageBodyImpl({ emailId }: { emailId: string }) {
       ) : null}
       {html ? (
         <HtmlBody html={html} allowRemoteContent={remoteAllowed} />
-      ) : (
+      ) : text.trim() ? (
         <Typography variant="body1" weight="400" selectable style={styles.text}>
           {text}
         </Typography>
-      )}
+      ) : null}
       {attachments.length > 0 ? (
         <AttachmentStack count={attachments.length} background={colors.card}>
           {attachments.map((attachment) => (
