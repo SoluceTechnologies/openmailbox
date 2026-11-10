@@ -1,0 +1,97 @@
+name: Auto Release & Publish
+
+# Runs when a pull request whose title contains [release] is merged into main, or by hand.
+
+on:
+  workflow_dispatch:
+  pull_request_target:
+    types: [ closed ]
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged && contains(github.event.pull_request.title, '[release]'))
+    runs-on: ubuntu-latest
+    outputs:
+      draft_tag: ${{ steps.release_step.outputs.draft_tag }}
+      version: ${{ steps.release_step.outputs.version }}
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - run: corepack enable
+
+      - run: yarn install --immutable
+
+      - run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      # app.config.ts derives the Android versionCode from this version, so it must stay x.y.z.
+      - name: Run release-it
+        id: release_step
+        run: |
+          VERSION=$(yarn release-it --ci --release-version)
+          echo "$VERSION"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::unexpected release version '$VERSION'"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          OUTPUT=$(yarn release-it --ci)
+          echo "$OUTPUT"
+
+          DRAFT_TAG=$(echo "$OUTPUT" | grep -oE 'untagged-[a-z0-9]+')
+          echo "draft_tag=$DRAFT_TAG" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+  build-and-publish:
+    needs: create-release
+    uses: ./.github/workflows/expo.yml
+    with:
+      version: ${{ needs.create-release.outputs.version }}
+      ref: ${{ needs.create-release.outputs.version }}
+    secrets:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  finalize-release:
+    needs:
+      - create-release
+      - build-and-publish
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      DRAFT_TAG: ${{ needs.create-release.outputs.draft_tag }}
+      VERSION: ${{ needs.create-release.outputs.version }}
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: ./apk
+
+      - name: Attach APK to release
+        run: gh release upload "$DRAFT_TAG" "./apk/OpenMailbox-v$VERSION.apk" --clobber
+
+      - name: Publish GitHub Release
+        run: gh release edit "$DRAFT_TAG" --draft=false
