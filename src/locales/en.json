@@ -1,6 +1,6 @@
 {
   "about": {
-    "description": "OpenMailbox is an open source mail client without a server of its own: messages and passwords only travel between this device and your mail providers.",
+    "description": "Open Mailbox is an open source mail client without a server of its own: messages and passwords only travel between this device and your mail providers.",
     "license": "License",
     "version": "Version"
   },
@@ -50,7 +50,7 @@
       "showPassword": "Show password",
       "signIn": "Sign In",
       "username": "Username",
-      "welcome": "Welcome to OpenMailbox",
+      "welcome": "Welcome to Open Mailbox",
       "welcomeHint": "Add a mail account to get started. Your messages are stored on this device only."
     },
     "signature": "Signature",
@@ -169,8 +169,8 @@
     "loadRemoteImages": "Load Remote Images",
     "loadRemoteImagesHint": "Remote images can tell senders when you open their messages.",
     "notifications": "Notifications",
-    "notificationsDenied": "Notifications are turned off for OpenMailbox in the system settings.",
-    "notificationsHint": "The phone decides how often new mail is checked while OpenMailbox is closed: every 15 minutes at best, less often on iPhone.",
+    "notificationsDenied": "Notifications are turned off for Open Mailbox in the system settings.",
+    "notificationsHint": "The phone decides how often new mail is checked while Open Mailbox is closed: every 15 minutes at best, less often on iPhone.",
     "notifyNewMail": "New Mail",
     "openSystemSettings": "Open Settings",
     "reading": "Reading",

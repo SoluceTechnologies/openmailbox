@@ -1,6 +1,6 @@
 {
   "about": {
-    "description": "OpenMailbox è un client di posta open source senza server proprio: messaggi e password viaggiano solo tra questo dispositivo e i tuoi provider di posta.",
+    "description": "Open Mailbox è un client di posta open source senza server proprio: messaggi e password viaggiano solo tra questo dispositivo e i tuoi provider di posta.",
     "license": "Licenza",
     "version": "Versione"
   },
@@ -50,7 +50,7 @@
       "showPassword": "Mostra password",
       "signIn": "Accedi",
       "username": "Nome utente",
-      "welcome": "Benvenuto in OpenMailbox",
+      "welcome": "Benvenuto in Open Mailbox",
       "welcomeHint": "Aggiungi un account di posta per iniziare. I tuoi messaggi sono salvati solo su questo dispositivo."
     },
     "signature": "Firma",
@@ -169,8 +169,8 @@
     "loadRemoteImages": "Carica immagini remote",
     "loadRemoteImagesHint": "Le immagini remote possono indicare ai mittenti quando apri i loro messaggi.",
     "notifications": "Notifiche",
-    "notificationsDenied": "Le notifiche di OpenMailbox sono disattivate nelle impostazioni di sistema.",
-    "notificationsHint": "È il telefono a decidere ogni quanto controllare la posta quando OpenMailbox è chiuso: al massimo ogni 15 minuti, meno spesso su iPhone.",
+    "notificationsDenied": "Le notifiche di Open Mailbox sono disattivate nelle impostazioni di sistema.",
+    "notificationsHint": "È il telefono a decidere ogni quanto controllare la posta quando Open Mailbox è chiuso: al massimo ogni 15 minuti, meno spesso su iPhone.",
     "notifyNewMail": "Nuova posta",
     "openSystemSettings": "Apri Impostazioni",
     "reading": "Lettura",

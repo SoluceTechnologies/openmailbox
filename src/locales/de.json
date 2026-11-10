@@ -1,6 +1,6 @@
 {
   "about": {
-    "description": "OpenMailbox ist ein quelloffener E-Mail-Client ohne eigenen Server: Nachrichten und Passwörter gehen nur zwischen diesem Gerät und deinen E-Mail-Anbietern hin und her.",
+    "description": "Open Mailbox ist ein quelloffener E-Mail-Client ohne eigenen Server: Nachrichten und Passwörter gehen nur zwischen diesem Gerät und deinen E-Mail-Anbietern hin und her.",
     "license": "Lizenz",
     "version": "Version"
   },
@@ -50,7 +50,7 @@
       "showPassword": "Passwort anzeigen",
       "signIn": "Anmelden",
       "username": "Benutzername",
-      "welcome": "Willkommen bei OpenMailbox",
+      "welcome": "Willkommen bei Open Mailbox",
       "welcomeHint": "Füge ein E-Mail-Konto hinzu, um loszulegen. Deine Nachrichten werden nur auf diesem Gerät gespeichert."
     },
     "signature": "Signatur",
@@ -169,8 +169,8 @@
     "loadRemoteImages": "Externe Bilder laden",
     "loadRemoteImagesHint": "Externe Bilder können Absendern verraten, wann du ihre Nachricht öffnest.",
     "notifications": "Mitteilungen",
-    "notificationsDenied": "Mitteilungen für OpenMailbox sind in den Systemeinstellungen deaktiviert.",
-    "notificationsHint": "Das Telefon entscheidet, wie oft bei geschlossenem OpenMailbox nach neuen E-Mails gesucht wird: bestenfalls alle 15 Minuten, auf dem iPhone seltener.",
+    "notificationsDenied": "Mitteilungen für Open Mailbox sind in den Systemeinstellungen deaktiviert.",
+    "notificationsHint": "Das Telefon entscheidet, wie oft bei geschlossenem Open Mailbox nach neuen E-Mails gesucht wird: bestenfalls alle 15 Minuten, auf dem iPhone seltener.",
     "notifyNewMail": "Neue E-Mails",
     "openSystemSettings": "Einstellungen öffnen",
     "reading": "Lesen",

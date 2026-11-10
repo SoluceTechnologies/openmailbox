@@ -1,6 +1,6 @@
 {
   "about": {
-    "description": "OpenMailbox is een opensource-mailclient zonder eigen server: berichten en wachtwoorden gaan alleen tussen dit apparaat en je e-mailproviders.",
+    "description": "Open Mailbox is een opensource-mailclient zonder eigen server: berichten en wachtwoorden gaan alleen tussen dit apparaat en je e-mailproviders.",
     "license": "Licentie",
     "version": "Versie"
   },
@@ -50,7 +50,7 @@
       "showPassword": "Toon wachtwoord",
       "signIn": "Log in",
       "username": "Gebruikersnaam",
-      "welcome": "Welkom bij OpenMailbox",
+      "welcome": "Welkom bij Open Mailbox",
       "welcomeHint": "Voeg een e-mailaccount toe om te beginnen. Je berichten worden alleen op dit apparaat bewaard."
     },
     "signature": "Handtekening",
@@ -169,8 +169,8 @@
     "loadRemoteImages": "Laad externe afbeeldingen",
     "loadRemoteImagesHint": "Externe afbeeldingen kunnen afzenders laten weten wanneer je hun berichten opent.",
     "notifications": "Meldingen",
-    "notificationsDenied": "Meldingen voor OpenMailbox staan uit in de systeeminstellingen.",
-    "notificationsHint": "De telefoon bepaalt hoe vaak er op nieuwe e-mail wordt gecontroleerd als OpenMailbox gesloten is: hooguit elke 15 minuten, minder vaak op de iPhone.",
+    "notificationsDenied": "Meldingen voor Open Mailbox staan uit in de systeeminstellingen.",
+    "notificationsHint": "De telefoon bepaalt hoe vaak er op nieuwe e-mail wordt gecontroleerd als Open Mailbox gesloten is: hooguit elke 15 minuten, minder vaak op de iPhone.",
     "notifyNewMail": "Nieuwe e-mail",
     "openSystemSettings": "Instellingen openen",
     "reading": "Lezen",

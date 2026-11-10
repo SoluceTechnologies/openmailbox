@@ -18,7 +18,7 @@ describe('onboarding', () => {
 
   it('welcomes the user with the list of providers', () => {
     renderWithProviders(<OnboardingScreen />);
-    expect(screen.getByText('Welcome to OpenMailbox')).toBeOnTheScreen();
+    expect(screen.getByText('Welcome to Open Mailbox')).toBeOnTheScreen();
     for (const name of ['Google', 'iCloud', 'OVHcloud', 'Orange', 'Free', 'SFR', 'La Poste', 'Yahoo', 'Other']) {
       expect(screen.getByRole('button', { name })).toBeOnTheScreen();
     }
@@ -103,11 +103,11 @@ describe('onboarding', () => {
 
     fireEvent.press(screen.getByRole('button', { name: 'Yahoo' }));
     fireEvent.press(screen.getByRole('button', { name: 'Back' }));
-    expect(screen.getByText('Welcome to OpenMailbox')).toBeOnTheScreen();
+    expect(screen.getByText('Welcome to Open Mailbox')).toBeOnTheScreen();
 
     fireEvent.press(screen.getByRole('button', { name: 'Yahoo' }));
     const handler = addListener.mock.calls.at(-1)![1];
     act(() => void handler(undefined as never));
-    expect(screen.getByText('Welcome to OpenMailbox')).toBeOnTheScreen();
+    expect(screen.getByText('Welcome to Open Mailbox')).toBeOnTheScreen();
   });
 });

@@ -1,6 +1,6 @@
 {
   "about": {
-    "description": "OpenMailbox es un cliente de correo de código abierto sin servidor propio: los mensajes y las contraseñas solo viajan entre este dispositivo y tus proveedores de correo.",
+    "description": "Open Mailbox es un cliente de correo de código abierto sin servidor propio: los mensajes y las contraseñas solo viajan entre este dispositivo y tus proveedores de correo.",
     "license": "Licencia",
     "version": "Versión"
   },
@@ -50,7 +50,7 @@
       "showPassword": "Mostrar contraseña",
       "signIn": "Iniciar sesión",
       "username": "Usuario",
-      "welcome": "Te damos la bienvenida a OpenMailbox",
+      "welcome": "Te damos la bienvenida a Open Mailbox",
       "welcomeHint": "Añade una cuenta de correo para empezar. Tus mensajes se guardan solo en este dispositivo."
     },
     "signature": "Firma",
@@ -169,8 +169,8 @@
     "loadRemoteImages": "Cargar imágenes remotas",
     "loadRemoteImagesHint": "Las imágenes remotas pueden indicar a los remitentes cuándo abres sus mensajes.",
     "notifications": "Notificaciones",
-    "notificationsDenied": "Las notificaciones de OpenMailbox están desactivadas en los ajustes del sistema.",
-    "notificationsHint": "El teléfono decide con qué frecuencia se comprueba el correo con OpenMailbox cerrado: como mucho cada 15 minutos, menos a menudo en iPhone.",
+    "notificationsDenied": "Las notificaciones de Open Mailbox están desactivadas en los ajustes del sistema.",
+    "notificationsHint": "El teléfono decide con qué frecuencia se comprueba el correo con Open Mailbox cerrado: como mucho cada 15 minutos, menos a menudo en iPhone.",
     "notifyNewMail": "Correo nuevo",
     "openSystemSettings": "Abrir Ajustes",
     "reading": "Lectura",

@@ -1,6 +1,6 @@
 {
   "about": {
-    "description": "OpenMailbox es un client de messatjariá liure sens servidor pròpri : los messatges e los senhals circulan pas qu'entre aqueste aparelh e vòstres provesidors de messatjariá.",
+    "description": "Open Mailbox es un client de messatjariá liure sens servidor pròpri : los messatges e los senhals circulan pas qu'entre aqueste aparelh e vòstres provesidors de messatjariá.",
     "license": "Licéncia",
     "version": "Version"
   },
@@ -50,7 +50,7 @@
       "showPassword": "Afichar lo senhal",
       "signIn": "Se connectar",
       "username": "Identificant",
-      "welcome": "Benvenguda dins OpenMailbox",
+      "welcome": "Benvenguda dins Open Mailbox",
       "welcomeHint": "Apondètz un compte de messatjariá per començar. Vòstres messatges son gardats sonque sus aqueste aparelh."
     },
     "signature": "Signatura",
@@ -169,8 +169,8 @@
     "loadRemoteImages": "Cargar los imatges distants",
     "loadRemoteImagesHint": "Los imatges distants pòdon indicar als expeditors que avètz dobèrt lor messatge.",
     "notifications": "Notificacions",
-    "notificationsDenied": "Las notificacions d'OpenMailbox son desactivadas dins los paramètres del sistèma.",
-    "notificationsHint": "Lo telefòn decidís la frequéncia de verificacion quand OpenMailbox es tampat : al melhor cada 15 minutas, mens sovent sus iPhone.",
+    "notificationsDenied": "Las notificacions d'Open Mailbox son desactivadas dins los paramètres del sistèma.",
+    "notificationsHint": "Lo telefòn decidís la frequéncia de verificacion quand Open Mailbox es tampat : al melhor cada 15 minutas, mens sovent sus iPhone.",
     "notifyNewMail": "Messatges novèls",
     "openSystemSettings": "Dobrir los paramètres",
     "reading": "Lectura",

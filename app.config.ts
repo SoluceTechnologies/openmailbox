@@ -6,7 +6,7 @@ const [major, minor, patch] = version.split('.').map(Number);
 const versionCode = major * 10000 + minor * 100 + patch;
 
 const config: ExpoConfig = {
-  name: 'OpenMailbox',
+  name: 'Open Mailbox',
   slug: 'openmailbox',
   scheme: 'openmailbox',
   version,
@@ -21,7 +21,7 @@ const config: ExpoConfig = {
     bundleIdentifier: 'com.soluce.openmailbox',
     icon: './assets/icon-ios.icon',
     infoPlist: {
-      CFBundleDisplayName: 'OpenMailbox',
+      CFBundleDisplayName: 'Open Mailbox',
       ITSAppUsesNonExemptEncryption: false,
     },
   },
@@ -49,13 +49,13 @@ const config: ExpoConfig = {
     [
       'expo-contacts',
       {
-        contactsPermission: 'OpenMailbox suggests addresses from your contacts while you write. They stay on this device.',
+        contactsPermission: 'Open Mailbox suggests addresses from your contacts while you write. They stay on this device.',
       },
     ],
     [
       'expo-image-picker',
       {
-        photosPermission: 'OpenMailbox attaches the photos and videos you choose to your messages.',
+        photosPermission: 'Open Mailbox attaches the photos and videos you choose to your messages.',
         cameraPermission: false,
         microphonePermission: false,
       },
