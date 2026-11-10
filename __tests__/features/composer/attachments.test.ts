@@ -12,7 +12,10 @@ import {
 import { core } from '../../helpers/fixtures';
 
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
-jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
+jest.mock('expo-image-picker', () => ({
+  launchImageLibraryAsync: jest.fn(),
+  UIImagePickerPreferredAssetRepresentationMode: { Compatible: 'compatible' },
+}));
 
 describe('composer attachments', () => {
   beforeEach(() => jest.clearAllMocks());

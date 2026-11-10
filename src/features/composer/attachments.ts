@@ -35,6 +35,8 @@ export async function pickAttachments(source: 'photos' | 'files'): Promise<Compo
     mediaTypes: ['images', 'videos'],
     allowsMultipleSelection: true,
     quality: 1,
+    // iOS hands HEIC photos over as JPEG, which every recipient can open (as Apple Mail does).
+    preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
   });
   if (result.canceled) return [];
   return result.assets.map((asset) => ({
