@@ -10,7 +10,8 @@ import { useAccounts, useBody, useThreadEmails } from '@/core/hooks';
 import { canAdd, forwardedAttachments, pickAttachments, type ComposerAttachment } from '@/features/composer/attachments';
 import { AttachmentList } from '@/features/composer/components/AttachmentList';
 import { RecipientField } from '@/features/composer/components/RecipientField';
-import { prefill, type ComposeMode } from '@/features/composer/prefill';
+import { prefill, quoteHtml, textToHtml, type ComposeMode } from '@/features/composer/prefill';
+import { HtmlBody } from '@/features/reader/components/HtmlBody';
 import { replaceSignature, withSignature } from '@/features/composer/signature';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUndoStore } from '@/stores/undoStore';
@@ -46,6 +47,7 @@ export default function ComposeScreen() {
   const threadEmails = useThreadEmails(params.threadId ?? '', params.mailboxId || undefined, !!params.threadId);
   const original = threadEmails.data?.find((email) => email.id === params.emailId);
   const originalBody = useBody(params.emailId ?? '', !!params.emailId);
+  const originalHtml = mode === 'new' ? undefined : originalBody.data?.html;
 
   const initialAccountId = params.accountId ?? defaultAccountId ?? accounts[0]?.id;
   const [accountId, setAccountId] = useState(
@@ -59,6 +61,7 @@ export default function ComposeScreen() {
   const [bccText, setBccText] = useState('');
   const [subject, setSubject] = useState('');
   const signatures = useSettingsStore((state) => state.signatures);
+  const loadRemoteImages = useSettingsStore((state) => state.loadRemoteImages);
   const signatureOf = (id: string | undefined) => (id ? (signatures[id] ?? '') : '');
   const [body, setBody] = useState(() => (mode === 'new' ? withSignature('', signatureOf(accountId)) : ''));
   const [showCopies, setShowCopies] = useState(false);
@@ -87,7 +90,7 @@ export default function ComposeScreen() {
     setCc(content.cc);
     setShowCopies(content.cc.length > 0);
     setSubject(content.subject);
-    const signed = withSignature(content.body, signatureOf(original.accountId));
+    const signed = withSignature('', signatureOf(original.accountId));
     setQuote(content.body);
     setBody(signed);
     setInitialContent(snapshot(formatAddressList(content.to), formatAddressList(content.cc), '', content.subject, signed));
@@ -124,7 +127,7 @@ export default function ComposeScreen() {
   const hasRecipient = to.length + cc.length + bcc.length > 0 || (toText + ccText + bccText).trim().length > 0;
 
   const changeAccount = (next: string) => {
-    const replaced = replaceSignature(body, signatureOf(accountId), signatureOf(next), quote);
+    const replaced = replaceSignature(body, signatureOf(accountId), signatureOf(next));
     if (replaced !== null) setBody(replaced);
     setAccountId(next);
   };
@@ -174,7 +177,8 @@ export default function ComposeScreen() {
         cc: ccAddresses,
         bcc: bccAddresses,
         subject: subject.trim(),
-        bodyText: body,
+        bodyText: body + quote,
+        bodyHtml: originalHtml ? textToHtml(body) + quoteHtml(mode, quote, originalHtml) : undefined,
         inReplyToEmailId: mode === 'reply' || mode === 'replyAll' ? params.emailId : undefined,
         attachments: attachments.map(({ path, filename, mimeType }) => ({ path, filename, mimeType })),
       });
@@ -262,6 +266,22 @@ export default function ComposeScreen() {
               placeholderTextColor={colors.textTertiary}
               style={[styles.body, { color: colors.text }]}
             />
+            {quote ? (
+              originalHtml ? (
+                <View style={styles.quote}>
+                  <Typography variant="caption" color="secondary">
+                    {quote.trim().split(mode === 'forward' ? '\n\n' : '\n')[0]}
+                  </Typography>
+                  <View style={[styles.quoted, { borderLeftColor: colors.border }]}>
+                    <HtmlBody html={originalHtml} allowRemoteContent={loadRemoteImages} />
+                  </View>
+                </View>
+              ) : (
+                <Typography color="secondary" selectable style={styles.quote}>
+                  {quote.trim()}
+                </Typography>
+              )
+            ) : null}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -285,5 +305,7 @@ const styles = StyleSheet.create({
   title: { marginVertical: 12 },
   field: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, borderBottomWidth: StyleSheet.hairlineWidth },
   input: { fontSize: 16, paddingVertical: 12 },
-  body: { fontSize: 16, lineHeight: 22, minHeight: 280, paddingTop: 16 },
+  body: { fontSize: 16, lineHeight: 22, minHeight: 160, paddingTop: 16 },
+  quote: { gap: 8, paddingBottom: 16 },
+  quoted: { borderLeftWidth: 2, paddingLeft: 8 },
 });

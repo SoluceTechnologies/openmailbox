@@ -36,6 +36,21 @@ function quote(text: string): string {
     .join('\n');
 }
 
+export function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+export function textToHtml(text: string): string {
+  return escapeHtml(text).replace(/\n/g, '<br>');
+}
+
+export function quoteHtml(mode: ComposeMode, quoteText: string, originalHtml: string): string {
+  const quote = quoteText.trim();
+  if (mode === 'forward') return `<br><br><div>${textToHtml(quote.split('\n\n')[0])}</div><br>${originalHtml}`;
+  const attribution = textToHtml(quote.split('\n')[0]);
+  return `<br><br><div>${attribution}</div><blockquote type="cite" style="margin:0 0 0 .8ex;border-left:2px solid #c4c4c4;padding-left:1ex">${originalHtml}</blockquote>`;
+}
+
 export function prefill(
   mode: ComposeMode,
   email: EmailSummary,

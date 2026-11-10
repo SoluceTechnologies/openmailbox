@@ -1,6 +1,6 @@
 import type { EmailSummary } from '@openmailbox/mail-core';
 
-import { prefill } from '@/features/composer/prefill';
+import { prefill, quoteHtml } from '@/features/composer/prefill';
 
 const labels = {
   wrote: (date: string, author: string) => `On ${date}, ${author} wrote:`,
@@ -34,6 +34,20 @@ describe('prefill', () => {
     expect(result.cc.map((address) => address.email)).toEqual(['dave@example.com']);
     expect(result.subject).toBe('Re: Planning');
     expect(result.body).toBe('\n\nOn today, Bob wrote:\n> Hello\n>> earlier');
+  });
+
+  it('quotes the HTML original under the attribution, escaped', () => {
+    const { body } = prefill('reply', { ...email, from: [{ name: 'Bob <&>', email: 'bob@example.com' }] }, 'Hi', [], 'today', labels);
+    const html = quoteHtml('reply', body, '<b>Hi</b>');
+    expect(html).toContain('<div>On today, Bob &lt;&amp;&gt; wrote:</div><blockquote type="cite"');
+    expect(html).toContain('<b>Hi</b></blockquote>');
+  });
+
+  it('puts the forwarded header above the HTML original', () => {
+    const { body } = prefill('forward', email, 'Hi', [], 'today', labels);
+    expect(quoteHtml('forward', body, '<b>Hi</b>')).toBe(
+      '<br><br><div>-- Forwarded --<br>From: Bob<br>Date: today<br>Subject: Re: Planning<br>To: me@example.com, Carol</div><br><b>Hi</b>',
+    );
   });
 
   it('forwards with an empty recipient list and a header block', () => {
