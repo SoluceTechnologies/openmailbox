@@ -476,6 +476,7 @@ impl Engine {
             bcc: &draft.bcc,
             subject: &draft.subject,
             body_text: &draft.body_text,
+            body_html: draft.body_html.as_deref(),
             in_reply_to: reply
                 .as_ref()
                 .and_then(|context| context.message_id.as_deref()),
@@ -552,6 +553,7 @@ impl Engine {
             bcc: vec![],
             subject: parameter("subject").unwrap_or_else(|| "unsubscribe".into()),
             body_text: parameter("body").unwrap_or_else(|| "unsubscribe".into()),
+            body_html: None,
             in_reply_to_email_id: None,
             attachments: vec![],
         })
@@ -1113,6 +1115,7 @@ mod tests {
             bcc: vec![],
             subject: "Documents".into(),
             body_text: "Voici.".into(),
+            body_html: None,
             in_reply_to_email_id: None,
             attachments,
         }

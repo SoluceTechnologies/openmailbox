@@ -287,6 +287,7 @@ pub struct Draft {
     pub bcc: Vec<Address>,
     pub subject: String,
     pub body_text: String,
+    pub body_html: Option<String>,
     pub in_reply_to_email_id: Option<i64>,
     pub attachments: Vec<OutgoingAttachment>,
 }

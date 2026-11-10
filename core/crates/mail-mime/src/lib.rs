@@ -245,6 +245,8 @@ pub struct OutgoingMessage<'a> {
     pub bcc: &'a [Address],
     pub subject: &'a str,
     pub body_text: &'a str,
+    /// Sent along the text as multipart/alternative, so a reply keeps the formatting it quotes.
+    pub body_html: Option<&'a str>,
     pub in_reply_to: Option<&'a str>,
     pub references: &'a [String],
     pub attachments: Vec<AttachmentContent>,
@@ -288,21 +290,30 @@ pub fn build_message(outgoing: OutgoingMessage) -> Result<BuiltMessage> {
             .join(" ");
         builder = builder.references(references);
     }
+    let text = outgoing.body_text.to_owned();
     let message = if outgoing.attachments.is_empty() {
-        builder
-            .header(ContentType::TEXT_PLAIN)
-            .body(outgoing.body_text.to_owned())
+        match outgoing.body_html {
+            Some(html) => {
+                builder.multipart(MultiPart::alternative_plain_html(text, html.to_owned()))
+            }
+            None => builder.header(ContentType::TEXT_PLAIN).body(text),
+        }
     } else {
-        let parts = outgoing.attachments.into_iter().fold(
-            MultiPart::mixed().singlepart(SinglePart::plain(outgoing.body_text.to_owned())),
-            |parts, attachment| {
+        let body = match outgoing.body_html {
+            Some(html) => MultiPart::mixed()
+                .multipart(MultiPart::alternative_plain_html(text, html.to_owned())),
+            None => MultiPart::mixed().singlepart(SinglePart::plain(text)),
+        };
+        let parts = outgoing
+            .attachments
+            .into_iter()
+            .fold(body, |parts, attachment| {
                 let content_type = ContentType::parse(&attachment.mime_type)
                     .unwrap_or_else(|_| ContentType::parse("application/octet-stream").unwrap());
                 parts.singlepart(
                     LettreAttachment::new(attachment.filename).body(attachment.bytes, content_type),
                 )
-            },
-        );
+            });
         builder.multipart(parts)
     }
     .map_err(|error| Error::InvalidInput(error.to_string()))?;
@@ -379,6 +390,7 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
             bcc: &[carol],
             subject: "Re: Hello",
             body_text: "Merci !",
+            body_html: None,
             in_reply_to: Some("reply@example.com"),
             references: &["root@example.com".into(), "reply@example.com".into()],
             attachments: vec![],
@@ -410,12 +422,38 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
             bcc: &[],
             subject: "Documents",
             body_text: "Voici les documents.",
+            body_html: None,
             in_reply_to: None,
             references: &[],
             attachments,
         })
         .unwrap()
         .raw
+    }
+
+    #[test]
+    fn a_reply_with_html_keeps_the_quoted_formatting() {
+        let alice = Address {
+            name: None,
+            email: "alice@example.com".into(),
+        };
+        let built = build_message(OutgoingMessage {
+            message_id: "html@example.com",
+            from: &alice,
+            to: std::slice::from_ref(&alice),
+            cc: &[],
+            bcc: &[],
+            subject: "Re: Menu",
+            body_text: "Oui\n\n> <b>Pizza</b>",
+            body_html: Some("<p>Oui</p><blockquote type=\"cite\"><b>Pizza</b></blockquote>"),
+            in_reply_to: None,
+            references: &[],
+            attachments: vec![],
+        })
+        .unwrap();
+        let rendered = render(&built.raw).unwrap();
+        assert!(rendered.html.unwrap().contains("<b>Pizza</b>"));
+        assert!(rendered.text.contains("Oui"));
     }
 
     #[test]

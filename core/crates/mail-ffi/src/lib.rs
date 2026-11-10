@@ -200,6 +200,7 @@ pub struct Draft {
     pub bcc: Vec<Address>,
     pub subject: String,
     pub body_text: String,
+    pub body_html: Option<String>,
     pub in_reply_to_email_id: Option<String>,
     pub attachments: Vec<OutgoingAttachment>,
 }
@@ -833,6 +834,7 @@ impl MailCore {
             bcc: convert_all(draft.bcc),
             subject: draft.subject,
             body_text: draft.body_text,
+            body_html: draft.body_html,
             in_reply_to_email_id: draft
                 .in_reply_to_email_id
                 .as_deref()

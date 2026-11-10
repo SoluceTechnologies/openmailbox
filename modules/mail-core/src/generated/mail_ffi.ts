@@ -412,6 +412,7 @@ export type Draft = {
     bcc: Array<Address>,
     subject: string,
     bodyText: string,
+    bodyHtml?: string,
     inReplyToEmailId?: string,
     attachments: Array<OutgoingAttachment>
 }
@@ -443,6 +444,7 @@ const FfiConverterTypeDraft = (() => {
                 bcc: FfiConverterSequenceTypeAddress.readFromCursor(c), 
                 subject: FfiConverterString.readFromCursor(c), 
                 bodyText: FfiConverterString.readFromCursor(c), 
+                bodyHtml: FfiConverterOptionalString.readFromCursor(c), 
                 inReplyToEmailId: FfiConverterOptionalString.readFromCursor(c), 
                 attachments: FfiConverterSequenceTypeOutgoingAttachment.readFromCursor(c)
             };
@@ -454,6 +456,7 @@ const FfiConverterTypeDraft = (() => {
             FfiConverterSequenceTypeAddress.writeIntoCursor(value.bcc, c);
             FfiConverterString.writeIntoCursor(value.subject, c);
             FfiConverterString.writeIntoCursor(value.bodyText, c);
+            FfiConverterOptionalString.writeIntoCursor(value.bodyHtml, c);
             FfiConverterOptionalString.writeIntoCursor(value.inReplyToEmailId, c);
             FfiConverterSequenceTypeOutgoingAttachment.writeIntoCursor(value.attachments, c);
         }
@@ -464,6 +467,7 @@ const FfiConverterTypeDraft = (() => {
              FfiConverterSequenceTypeAddress.allocationSize(value.bcc) +
              FfiConverterString.allocationSize(value.subject) +
              FfiConverterString.allocationSize(value.bodyText) +
+             FfiConverterOptionalString.allocationSize(value.bodyHtml) +
              FfiConverterOptionalString.allocationSize(value.inReplyToEmailId) +
              FfiConverterSequenceTypeOutgoingAttachment.allocationSize(value.attachments);
             

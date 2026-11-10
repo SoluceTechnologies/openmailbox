@@ -35,6 +35,7 @@ fn draft(
         bcc: vec![],
         subject,
         body_text: body_text.into(),
+        body_html: None,
         in_reply_to_email_id,
         attachments: vec![],
     }
