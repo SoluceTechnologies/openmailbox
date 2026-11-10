@@ -63,10 +63,16 @@ const config: ExpoConfig = {
     [
       'expo-splash-screen',
       {
-        image: './assets/splash-icon.png',
-        imageWidth: 200,
-        resizeMode: 'contain',
-        backgroundColor: '#0082c9',
+        // iOS shows the app's background only, like Apple's apps. Android 12+ always draws an icon.
+        backgroundColor: '#ffffff',
+        dark: { backgroundColor: '#000000' },
+        android: {
+          image: './assets/splash-icon.png',
+          imageWidth: 200,
+          resizeMode: 'contain',
+          backgroundColor: '#ffffff',
+          dark: { image: './assets/splash-icon-dark.png', backgroundColor: '#000000' },
+        },
       },
     ],
   ],
