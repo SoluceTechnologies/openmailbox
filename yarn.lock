@@ -1543,7 +1543,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/ui@npm:^57.0.9":
+"@expo/ui@npm:57.0.9, @expo/ui@npm:^57.0.9":
   version: 57.0.9
   resolution: "@expo/ui@npm:57.0.9"
   dependencies:
@@ -7343,6 +7343,7 @@ __metadata:
   resolution: "openmailbox@workspace:."
   dependencies:
     "@expo/metro-runtime": "npm:~57.0.6"
+    "@expo/ui": "npm:57.0.9"
     "@openmailbox/mail-core": "link:./modules/mail-core"
     "@react-native/jest-preset": "npm:0.86.0"
     "@shopify/flash-list": "npm:2.3.3"

@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.6",
+    "@expo/ui": "57.0.9",
     "@openmailbox/mail-core": "link:./modules/mail-core",
     "@shopify/flash-list": "2.3.3",
     "@tanstack/react-query": "^5.107.1",
