@@ -7,6 +7,7 @@ import type { Attachment } from '@openmailbox/mail-core';
 
 import { useBody } from '@/core/hooks';
 import { describeCoreError } from '@/features/accounts/coreErrors';
+import { AttachmentStack } from '@/features/attachments/AttachmentStack';
 import { openAttachment } from '@/features/attachments/openAttachment';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { formatSize } from '@/utils/sizes';
@@ -110,11 +111,11 @@ function MessageBodyImpl({ emailId }: { emailId: string }) {
         </Typography>
       )}
       {attachments.length > 0 ? (
-        <View style={styles.attachments}>
+        <AttachmentStack count={attachments.length} background={colors.card}>
           {attachments.map((attachment) => (
             <AttachmentChip key={attachment.index} emailId={emailId} attachment={attachment} />
           ))}
-        </View>
+        </AttachmentStack>
       ) : null}
     </View>
   );
@@ -129,7 +130,6 @@ const styles = StyleSheet.create({
   error: { alignItems: 'center', paddingVertical: 16, paddingHorizontal: 16, gap: 4 },
   text: { fontSize: 16, lineHeight: 23 },
   remoteBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 10 },
-  attachments: { gap: 8 },
   attachment: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth },
   attachmentText: { flex: 1 },
 });
