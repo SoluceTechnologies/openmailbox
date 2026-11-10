@@ -4,7 +4,7 @@ mod worker;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 use std::time::Duration;
 
@@ -22,12 +22,14 @@ use tokio::task::JoinHandle;
 pub use events::EventSink;
 use events::Events;
 use operations::Operation;
-use worker::{Command, Secret, Worker};
+use worker::{Command, Heartbeat, Secret, Worker};
 
 const PERIODIC_SYNC_INTERVAL: Duration = Duration::from_secs(3 * 60);
 const IDLE_RENEWAL: Duration = Duration::from_secs(25 * 60);
 const IDLE_RECONNECT_DELAY: Duration = Duration::from_secs(30);
 const UNSUBSCRIBE_TIMEOUT: Duration = Duration::from_secs(15);
+/// Longer than any single network step, the upload of 25 MB on a slow uplink included.
+const STALLED_WORKER_TIMEOUT_MS: i64 = 20 * 60 * 1000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Destination {
@@ -50,7 +52,16 @@ struct AccountHandle {
     secret: Secret,
     commands: mpsc::UnboundedSender<Command>,
     worker: JoinHandle<()>,
+    heartbeat: Heartbeat,
     idle: Option<JoinHandle<()>>,
+}
+
+impl AccountHandle {
+    /// Dead, or stuck on a command that made no progress since `before`.
+    fn stalled(&self, before: i64) -> bool {
+        let busy_since = self.heartbeat.load(Ordering::SeqCst);
+        self.worker.is_finished() || (busy_since != 0 && busy_since <= before)
+    }
 }
 
 pub struct Engine {
@@ -59,6 +70,7 @@ pub struct Engine {
     events: Events,
     accounts: Mutex<HashMap<String, AccountHandle>>,
     foreground: AtomicBool,
+    backgrounded_at: AtomicI64,
     ticker: Mutex<Option<JoinHandle<()>>>,
 }
 
@@ -67,13 +79,14 @@ impl Engine {
         std::fs::create_dir_all(data_directory)
             .map_err(|error| Error::Storage(error.to_string()))?;
         let store = Arc::new(Store::open(&data_directory.join("mail.db"))?);
-        store.reset_in_flight_operations()?;
+        store.reset_in_flight_operations(None)?;
         let engine = Arc::new(Engine {
             store,
             runtime,
             events: Events::start(),
             accounts: Mutex::default(),
             foreground: AtomicBool::new(false),
+            backgrounded_at: AtomicI64::new(0),
             ticker: Mutex::default(),
         });
         for account in engine.store.list_accounts()? {
@@ -93,24 +106,57 @@ impl Engine {
     }
 
     fn start_worker(&self, account: Account, secret: Option<String>) {
-        let secret: Secret = Arc::new(RwLock::new(secret));
+        let handle = self.spawn_worker(account, Arc::new(RwLock::new(secret)), None);
+        self.accounts().insert(handle.account.id.clone(), handle);
+    }
+
+    fn spawn_worker(
+        &self,
+        account: Account,
+        secret: Secret,
+        idle: Option<JoinHandle<()>>,
+    ) -> AccountHandle {
         let (commands, receiver) = mpsc::unbounded_channel();
+        let heartbeat = Heartbeat::default();
         let worker = Worker::new(
             account.clone(),
             secret.clone(),
             self.store.clone(),
             self.events.clone(),
             receiver,
+            heartbeat.clone(),
         );
-        let worker = self.runtime.spawn(worker.run());
-        let handle = AccountHandle {
+        AccountHandle {
+            worker: self.runtime.spawn(worker.run()),
             account,
             secret,
             commands,
-            worker,
-            idle: None,
-        };
-        self.accounts().insert(handle.account.id.clone(), handle);
+            heartbeat,
+            idle,
+        }
+    }
+
+    /// Replaces stalled workers, as restarting the app would: the new one starts on a fresh
+    /// connection, and the commands queued on the old one are dropped.
+    fn restart_stalled_workers(&self, before: i64) {
+        for handle in self.accounts().values_mut() {
+            if !handle.stalled(before) {
+                continue;
+            }
+            handle.worker.abort();
+            let _ = self
+                .store
+                .reset_in_flight_operations(Some(&handle.account.id));
+            *handle = self.spawn_worker(
+                handle.account.clone(),
+                handle.secret.clone(),
+                handle.idle.take(),
+            );
+            let _ = handle.commands.send(Command::Sync {
+                mailbox_ids: None,
+                force: false,
+            });
+        }
     }
 
     fn dispatch(&self, account_id: &str, command: Command) {
@@ -546,6 +592,9 @@ impl Engine {
     }
 
     pub fn on_foreground(self: &Arc<Self>) {
+        // A command still on the network from before the app was suspended waits on a dead
+        // socket; a worker that died would never sync again.
+        self.restart_stalled_workers(self.backgrounded_at.load(Ordering::SeqCst));
         if self.foreground.swap(true, Ordering::SeqCst) {
             return;
         }
@@ -567,6 +616,7 @@ impl Engine {
                 let Some(engine) = engine.upgrade() else {
                     return;
                 };
+                engine.restart_stalled_workers(now_millis() - STALLED_WORKER_TIMEOUT_MS);
                 let account_ids: Vec<String> = engine.accounts().keys().cloned().collect();
                 for account_id in account_ids {
                     engine.dispatch(
@@ -624,6 +674,7 @@ impl Engine {
         for account in self.store.list_accounts().unwrap_or_default() {
             let _ = self.store.advance_notified_until(&account.id);
         }
+        self.backgrounded_at.store(now_millis(), Ordering::SeqCst);
         if !self.foreground.swap(false, Ordering::SeqCst) {
             return;
         }
@@ -917,6 +968,21 @@ mod tests {
         ("Junk", MailboxRole::Junk),
         ("Trash", MailboxRole::Trash),
     ];
+
+    #[test]
+    fn a_worker_busy_since_before_the_app_was_suspended_is_replaced() {
+        let fixture = Fixture::new(STANDARD);
+        fixture.engine.start_worker(account("alice"), None);
+        let heartbeat = |engine: &Engine| engine.accounts()["alice"].heartbeat.clone();
+        let stuck = heartbeat(&fixture.engine);
+        stuck.store(1_000, Ordering::SeqCst);
+
+        fixture.engine.restart_stalled_workers(500);
+        assert!(Arc::ptr_eq(&stuck, &heartbeat(&fixture.engine)));
+
+        fixture.engine.restart_stalled_workers(2_000);
+        assert!(!Arc::ptr_eq(&stuck, &heartbeat(&fixture.engine)));
+    }
 
     #[test]
     fn resolves_inbox_and_junk_by_role() {

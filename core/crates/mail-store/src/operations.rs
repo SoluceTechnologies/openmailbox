@@ -155,12 +155,13 @@ impl Store {
         })
     }
 
-    pub fn reset_in_flight_operations(&self) -> Result<()> {
+    /// Every account's when `account_id` is `None`.
+    pub fn reset_in_flight_operations(&self, account_id: Option<&str>) -> Result<()> {
         self.write(|transaction| {
             transaction
                 .execute(
-                    "UPDATE pending_op SET in_flight = 0 WHERE in_flight = 1",
-                    [],
+                    "UPDATE pending_op SET in_flight = 0 WHERE in_flight = 1 AND (?1 IS NULL OR account_id = ?1)",
+                    [account_id],
                 )
                 .storage()?;
             Ok(())

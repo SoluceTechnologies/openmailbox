@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, HashSet, VecDeque};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 
@@ -49,12 +50,16 @@ pub enum Command {
 
 pub type Secret = Arc<RwLock<Option<String>>>;
 
+/// When the running command last made progress, in milliseconds; 0 while the worker waits.
+pub type Heartbeat = Arc<AtomicI64>;
+
 pub struct Worker {
     pub account: Account,
     pub secret: Secret,
     pub store: Arc<Store>,
     pub events: Events,
     pub receiver: mpsc::UnboundedReceiver<Command>,
+    heartbeat: Heartbeat,
     deferred: VecDeque<Command>,
     connection: Option<ImapConnection>,
     /// When the kept connection was last used, in milliseconds of wall time, which goes on while
@@ -71,6 +76,7 @@ impl Worker {
         store: Arc<Store>,
         events: Events,
         receiver: mpsc::UnboundedReceiver<Command>,
+        heartbeat: Heartbeat,
     ) -> Worker {
         Worker {
             account,
@@ -78,6 +84,7 @@ impl Worker {
             store,
             events,
             receiver,
+            heartbeat,
             deferred: VecDeque::new(),
             connection: None,
             connection_used_at: 0,
@@ -102,9 +109,15 @@ impl Worker {
                     }
                 }
             };
+            self.beat();
             self.handle(command).await;
+            self.heartbeat.store(0, Ordering::SeqCst);
         }
         self.disconnect().await;
+    }
+
+    fn beat(&self) {
+        self.heartbeat.store(now_millis(), Ordering::SeqCst);
     }
 
     async fn handle(&mut self, command: Command) {
@@ -374,6 +387,7 @@ impl Worker {
             action(&mut connection).await
         }
         .await;
+        self.beat();
         if !matches!(result, Err(Error::Network(_) | Error::Auth)) {
             self.keep_connection(connection);
         }
