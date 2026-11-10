@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
-import * as Contacts from 'expo-contacts';
+import * as Contacts from 'expo-contacts/legacy';
 
 import { queryClient } from '@/core/queryClient';
 import { useRecipientSuggestions } from '@/features/composer/useRecipientSuggestions';
 
 import { core } from '../../helpers/fixtures';
 
-jest.mock('expo-contacts', () => ({
+jest.mock('expo-contacts/legacy', () => ({
   Fields: { Emails: 'emails', Name: 'name' },
   getPermissionsAsync: jest.fn(),
   getContactsAsync: jest.fn(),

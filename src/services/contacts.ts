@@ -1,4 +1,4 @@
-import * as Contacts from 'expo-contacts';
+import * as Contacts from 'expo-contacts/legacy';
 
 import type { MailAddress } from '@/utils/addresses';
 
@@ -16,5 +16,7 @@ export async function pickContactAddress(): Promise<MailAddress | null> {
   if (!permission.granted) return null;
   const contact = await Contacts.presentContactPickerAsync();
   const email = contact?.emails?.find((entry) => entry.email)?.email;
-  return email ? { name: contact?.name || undefined, email } : null;
+  // On iOS the picker's contact carries firstName/lastName but never `name`.
+  const name = contact?.name || [contact?.firstName, contact?.lastName].filter(Boolean).join(' ');
+  return email ? { name: name || undefined, email } : null;
 }

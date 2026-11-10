@@ -73,7 +73,7 @@ jest.mock('expo-task-manager', () => ({
   isTaskRegisteredAsync: jest.fn(async () => false),
 }));
 
-jest.mock('expo-contacts', () => ({
+jest.mock('expo-contacts/legacy', () => ({
   Fields: { Emails: 'emails', Name: 'name' },
   getPermissionsAsync: jest.fn(async () => ({ granted: false })),
   requestPermissionsAsync: jest.fn(async () => ({ granted: false })),
