@@ -867,6 +867,49 @@ const FfiConverterTypeRenderedBody = (() => {
     return new FFIConverter();
 })();
 
+export type SearchHit = {
+    email: EmailSummary,
+    mailboxId: string
+}
+
+/**
+ * Generated factory for {@link SearchHit} record objects.
+ */
+export const SearchHit = (() => {
+    const defaults = () => ({
+    });
+    const create = (() => {
+        return uniffiCreateRecord<SearchHit, ReturnType<typeof defaults>>(defaults);
+    })();
+    return Object.freeze({
+        create,
+        new: create,
+        defaults: () => Object.freeze(defaults()) as Partial<SearchHit>,
+    });
+})();
+
+const FfiConverterTypeSearchHit = (() => {
+    type TypeName = SearchHit;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            return {
+                email: FfiConverterTypeEmailSummary.readFromCursor(c), 
+                mailboxId: FfiConverterString.readFromCursor(c)
+            };
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            FfiConverterTypeEmailSummary.writeIntoCursor(value.email, c);
+            FfiConverterString.writeIntoCursor(value.mailboxId, c);
+        }
+        allocationSize(value: TypeName): number {
+            return FfiConverterTypeEmailSummary.allocationSize(value.email) +
+             FfiConverterString.allocationSize(value.mailboxId);
+            
+        }
+    };
+    return new FFIConverter();
+})();
+
 export type ServerConfig = {
     imap: ServerEndpoint,
     smtp: ServerEndpoint,
@@ -2542,7 +2585,10 @@ export interface MailCoreLike {
     removeAccount(accountId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     renameAccount(accountId: string, displayName: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     saveAttachment(emailId: string, index: number, directory: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<string>;
-    search(query: string, limit: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<EmailSummary>>;
+/**
+ * Every mailbox when `mailbox_ids` is empty.
+ */
+    search(query: string, limit: number, mailboxIds: Array<string>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<SearchHit>>;
     send(draft: Draft, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     setKeywords(emailIds: Array<string>, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     setThreadKeywords(mailboxId: string, threadId: string, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
@@ -3126,14 +3172,17 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
-    async search(query: string, limit: number, asyncOpts_?: { signal: AbortSignal }): Promise<Array<EmailSummary>> /*throws*/ {
+/**
+ * Every mailbox when `mailbox_ids` is empty.
+ */
+    async search(query: string, limit: number, mailboxIds: Array<string>, asyncOpts_?: { signal: AbortSignal }): Promise<Array<SearchHit>> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
         return await uniffiRustCallAsync(
             /*rustCaller:*/ uniffiCaller,
             /*rustFutureFunc:*/ () => {
                 return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_search(
-                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(query, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(limit, nativeModule().rustbuffer_alloc)
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(query, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(limit, nativeModule().rustbuffer_alloc),FfiConverterSequenceString.lower(mailboxIds, nativeModule().rustbuffer_alloc)
                 );
             },
             /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
@@ -3150,7 +3199,7 @@ private constructor(pointer: UniffiHandle) {
             // already JS-owned.
             /*liftFunc:*/ (__rb) => {
                 try {
-                    return FfiConverterSequenceTypeEmailSummary.lift(__rb);
+                    return FfiConverterSequenceTypeSearchHit.lift(__rb);
                 } finally {
                     nativeModule().rustbuffer_free(__rb);
                 }
@@ -3535,11 +3584,14 @@ const FfiConverterSequenceTypeAccount = new FfiConverterArray(FfiConverterTypeAc
 // FfiConverter for Array<Mailbox>
 const FfiConverterSequenceTypeMailbox = new FfiConverterArray(FfiConverterTypeMailbox);
 
-// FfiConverter for Array<EmailSummary>
-const FfiConverterSequenceTypeEmailSummary = new FfiConverterArray(FfiConverterTypeEmailSummary);
+// FfiConverter for Array<SearchHit>
+const FfiConverterSequenceTypeSearchHit = new FfiConverterArray(FfiConverterTypeSearchHit);
 
 // FfiConverter for Array<Keyword>
 const FfiConverterSequenceTypeKeyword = new FfiConverterArray(FfiConverterTypeKeyword);
+
+// FfiConverter for Array<EmailSummary>
+const FfiConverterSequenceTypeEmailSummary = new FfiConverterArray(FfiConverterTypeEmailSummary);
 
 
 /**
@@ -3614,7 +3666,7 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_attachment() !== 54661) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_save_attachment");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_search() !== 57419) {
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_search() !== 53102) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_search");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_send() !== 1994) {
@@ -3672,6 +3724,7 @@ export default Object.freeze({
     FfiConverterTypeOutgoingAttachment,
     FfiConverterTypeRelocation,
     FfiConverterTypeRenderedBody,
+    FfiConverterTypeSearchHit,
     FfiConverterTypeSecurity,
     FfiConverterTypeServerConfig,
     FfiConverterTypeServerEndpoint,

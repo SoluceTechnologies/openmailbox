@@ -152,10 +152,13 @@
     "unsubscribed": "Te has dado de baja de esta lista."
   },
   "search": {
+    "allMailboxes": "Todos los buzones",
+    "currentMailbox": "Buzón actual",
     "localOnly": "La búsqueda abarca los mensajes descargados en este dispositivo.",
     "noResults": "Sin resultados",
     "placeholder": "Buscar",
-    "title": "Buscar"
+    "title": "Buscar",
+    "topResults": "Mejores resultados"
   },
   "settings": {
     "about": "Acerca de",

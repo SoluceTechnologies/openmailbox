@@ -152,10 +152,13 @@
     "unsubscribed": "Afgemeld voor deze lijst."
   },
   "search": {
+    "allMailboxes": "Alle postbussen",
+    "currentMailbox": "Huidige postbus",
     "localOnly": "De zoekopdracht omvat de berichten die op dit apparaat zijn gedownload.",
     "noResults": "Geen resultaten",
     "placeholder": "Zoek",
-    "title": "Zoek"
+    "title": "Zoek",
+    "topResults": "Beste resultaten"
   },
   "settings": {
     "about": "Over",

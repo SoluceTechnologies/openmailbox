@@ -13,7 +13,7 @@ function seedQueries() {
   queryClient.setQueryData(queryKeys.threads('unified', false), { pages: [], pageParams: [] });
   queryClient.setQueryData(queryKeys.threads('mailbox-inbox', false), { pages: [], pageParams: [] });
   queryClient.setQueryData(queryKeys.threads('mailbox-archive', false), { pages: [], pageParams: [] });
-  queryClient.setQueryData(queryKeys.search('atlas'), []);
+  queryClient.setQueryData(queryKeys.search('atlas', []), []);
 }
 
 const invalidated = (queryKey: readonly unknown[]) => queryClient.getQueryState(queryKey)?.isInvalidated;
@@ -31,7 +31,7 @@ describe('core events', () => {
     expect(invalidated(queryKeys.threads('unified', false))).toBe(true);
     expect(invalidated(queryKeys.threads('mailbox-inbox', false))).toBe(true);
     expect(invalidated(queryKeys.threads('mailbox-archive', false))).toBe(false);
-    expect(invalidated(queryKeys.search('atlas'))).toBe(true);
+    expect(invalidated(queryKeys.search('atlas', []))).toBe(true);
     expect(invalidated(queryKeys.accounts)).toBe(false);
   });
 

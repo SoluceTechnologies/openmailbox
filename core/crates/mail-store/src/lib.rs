@@ -223,10 +223,10 @@ mod migration_tests {
                 .unwrap();
         }
         let store = Store::open(&path).unwrap();
-        assert_eq!(store.search("facture", 10).unwrap()[0].id, 7);
-        assert_eq!(store.search("ines", 10).unwrap().len(), 1);
+        assert_eq!(store.search("facture", 10, &[]).unwrap()[0].email.id, 7);
+        assert_eq!(store.search("ines", 10, &[]).unwrap().len(), 1);
         store.remove_uids(1, &[3]).unwrap();
-        assert!(store.search("facture", 10).unwrap().is_empty());
+        assert!(store.search("facture", 10, &[]).unwrap().is_empty());
         std::fs::remove_dir_all(&directory).ok();
     }
 }

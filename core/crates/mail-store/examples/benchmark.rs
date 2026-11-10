@@ -273,11 +273,11 @@ fn main() {
     );
     report(
         "Search, frequent word",
-        measure(SAMPLES, |_| store.search("facture", 100).unwrap()),
+        measure(SAMPLES, |_| store.search("facture", 100, &[]).unwrap()),
     );
     report(
         "Search, two prefixes",
-        measure(SAMPLES, |_| store.search("recru lanc", 100).unwrap()),
+        measure(SAMPLES, |_| store.search("recru lanc", 100, &[]).unwrap()),
     );
     report(
         "Address suggestions",
@@ -285,7 +285,7 @@ fn main() {
     );
     report(
         "Search, no match",
-        measure(SAMPLES, |_| store.search("introuvable", 100).unwrap()),
+        measure(SAMPLES, |_| store.search("introuvable", 100, &[]).unwrap()),
     );
     report(
         "Mark a thread as read and unread",

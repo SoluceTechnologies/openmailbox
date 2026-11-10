@@ -38,6 +38,8 @@ export interface ThemeColors {
   card: string;
   notification: string;
   item: string;
+  pressed: string;
+  highlight: string;
 }
 
 export interface ThemeSpacing {
@@ -114,6 +116,8 @@ const lightColors: ThemeColors = {
   card: '#ffffff',
   notification: '#d32f2f',
   item: '#ffffff',
+  pressed: '#d1d1d6',
+  highlight: '#fff0a8',
 };
 
 const darkColors: ThemeColors = {
@@ -139,6 +143,8 @@ const darkColors: ThemeColors = {
   card: '#1c1c1e',
   notification: '#ef5350',
   item: '#1c1c1e',
+  pressed: '#3a3a3c',
+  highlight: '#5c4d00',
 };
 
 export const ACCOUNT_COLORS = ['#109be6', '#34c759', '#ff9500', '#af52de', '#ff2d55', '#5ac8fa', '#ffcc00', '#8e8e93'];

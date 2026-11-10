@@ -20,5 +20,5 @@ export const queryKeys = {
   threads: (scope: string, unreadOnly: boolean) => ['threads', scope, unreadOnly] as const,
   thread: (threadId: string, mailboxId: string | undefined) => ['thread', threadId, mailboxId ?? null] as const,
   body: (emailId: string) => ['body', emailId] as const,
-  search: (query: string) => ['search', query] as const,
+  search: (query: string, mailboxIds: string[]) => ['search', query, mailboxIds.join(',')] as const,
 };

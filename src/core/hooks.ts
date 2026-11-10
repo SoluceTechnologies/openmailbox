@@ -10,6 +10,7 @@ const THREAD_PAGE_SIZE = 50;
 const SEARCH_LIMIT = 100;
 const EMPTY_ACCOUNTS: Account[] = [];
 const EMPTY_MAILBOXES: Mailbox[] = [];
+const EMPTY_IDS: string[] = [];
 
 export function useAccounts(): Account[] {
   return useQuery({ queryKey: queryKeys.accounts, queryFn: () => mailCore().listAccounts() }).data ?? EMPTY_ACCOUNTS;
@@ -54,11 +55,11 @@ export function useBody(emailId: string, enabled = true) {
   });
 }
 
-export function useSearch(query: string) {
+export function useSearch(query: string, mailboxIds: string[] = EMPTY_IDS) {
   const trimmed = query.trim();
   return useQuery({
-    queryKey: queryKeys.search(trimmed),
-    queryFn: () => mailCore().search(trimmed, SEARCH_LIMIT),
+    queryKey: queryKeys.search(trimmed, mailboxIds),
+    queryFn: () => mailCore().search(trimmed, SEARCH_LIMIT, mailboxIds),
     enabled: trimmed.length > 1,
     placeholderData: (previous) => previous,
   });

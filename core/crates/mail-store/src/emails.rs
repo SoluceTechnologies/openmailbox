@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use mail_model::{
-    Address, EmailSummary, Error, FetchedMessage, Flags, Keyword, NewMessage, RenderedBody, Result,
+    Address, Error, FetchedMessage, Flags, Keyword, NewMessage, RenderedBody, Result, SearchHit,
     now_millis,
 };
 use rusqlite::{OptionalExtension, Transaction, params, params_from_iter};
@@ -434,23 +434,38 @@ impl Store {
         })
     }
 
-    pub fn search(&self, query: &str, limit: u32) -> Result<Vec<EmailSummary>> {
+    /// Messages matching `query`, newest first, in `mailbox_ids` or in every mailbox when it is
+    /// empty. Each comes with the mailbox to open it in: its inbox copy when it has one.
+    pub fn search(&self, query: &str, limit: u32, mailbox_ids: &[i64]) -> Result<Vec<SearchHit>> {
         let match_expression = fts_query(query);
         if match_expression.is_empty() {
             return Ok(Vec::new());
         }
+        // ponytail: a scoped search looks at the newest 5,000 matches only; widen if users miss older ones.
+        let candidates = if mailbox_ids.is_empty() { limit } else { 5_000 };
+        let scope = serde_json::to_string(mailbox_ids).unwrap_or_else(|_| "[]".to_owned());
         let connection = self.read();
         let mut statement = connection
             .prepare_cached(&format!(
-                "SELECT {EMAIL_COLUMNS} FROM email e
-                 WHERE e.search_key IN (
-                   SELECT rowid FROM email_fts WHERE email_fts MATCH ?1 ORDER BY rowid DESC LIMIT ?2)
-                 ORDER BY e.search_key DESC"
+                "SELECT * FROM (
+                   SELECT {EMAIL_COLUMNS}, e.search_key,
+                     (SELECT em.mailbox_id FROM email_mailbox em JOIN mailbox m ON m.id = em.mailbox_id
+                      WHERE em.email_id = e.id
+                        AND (?3 = '[]' OR em.mailbox_id IN (SELECT value FROM json_each(?3)))
+                      ORDER BY m.role = 'inbox' DESC LIMIT 1) AS hit_mailbox_id
+                   FROM email e
+                   WHERE e.search_key IN (
+                     SELECT rowid FROM email_fts WHERE email_fts MATCH ?1 ORDER BY rowid DESC LIMIT ?4))
+                 WHERE hit_mailbox_id IS NOT NULL
+                 ORDER BY search_key DESC LIMIT ?2"
             ))
             .storage()?;
         statement
-            .query_map(params![match_expression, limit], |row| {
-                email_from_row(row, 0)
+            .query_map(params![match_expression, limit, scope, candidates], |row| {
+                Ok(SearchHit {
+                    email: email_from_row(row, 0)?,
+                    mailbox_id: row.get(14)?,
+                })
             })
             .storage()?
             .collect::<rusqlite::Result<_>>()

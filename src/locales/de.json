@@ -152,10 +152,13 @@
     "unsubscribed": "Von dieser Liste abgemeldet."
   },
   "search": {
+    "allMailboxes": "Alle Postfächer",
+    "currentMailbox": "Aktuelles Postfach",
     "localOnly": "Die Suche umfasst die auf dieses Gerät geladenen Nachrichten.",
     "noResults": "Keine Ergebnisse",
     "placeholder": "Suchen",
-    "title": "Suche"
+    "title": "Suche",
+    "topResults": "Top-Treffer"
   },
   "settings": {
     "about": "Über",

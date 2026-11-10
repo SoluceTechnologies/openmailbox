@@ -189,6 +189,13 @@ pub struct Flags {
     pub deleted: bool,
 }
 
+/// A message found by search, with the mailbox to open it in.
+#[derive(Debug, Clone)]
+pub struct SearchHit {
+    pub email: EmailSummary,
+    pub mailbox_id: i64,
+}
+
 #[derive(Debug, Clone)]
 pub struct EmailSummary {
     pub id: i64,

@@ -152,10 +152,13 @@
     "unsubscribed": "Unsubscribed from this list."
   },
   "search": {
+    "allMailboxes": "All Mailboxes",
+    "currentMailbox": "Current Mailbox",
     "localOnly": "Search covers the messages downloaded to this device.",
     "noResults": "No Results",
     "placeholder": "Search",
-    "title": "Search"
+    "title": "Search",
+    "topResults": "Top Results"
   },
   "settings": {
     "about": "About",

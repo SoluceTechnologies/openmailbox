@@ -152,10 +152,13 @@
     "unsubscribed": "Désabonné de cette liste."
   },
   "search": {
+    "allMailboxes": "Toutes les boîtes",
+    "currentMailbox": "Boîte actuelle",
     "localOnly": "La recherche porte sur les messages téléchargés sur cet appareil.",
     "noResults": "Aucun résultat",
     "placeholder": "Rechercher",
-    "title": "Recherche"
+    "title": "Recherche",
+    "topResults": "Meilleurs résultats"
   },
   "settings": {
     "about": "À propos",

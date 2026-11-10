@@ -152,10 +152,13 @@
     "unsubscribed": "Subscrição desta lista cancelada."
   },
   "search": {
+    "allMailboxes": "Todas as caixas",
+    "currentMailbox": "Caixa atual",
     "localOnly": "A pesquisa abrange as mensagens transferidas para este dispositivo.",
     "noResults": "Sem resultados",
     "placeholder": "Pesquisar",
-    "title": "Pesquisar"
+    "title": "Pesquisar",
+    "topResults": "Melhores resultados"
   },
   "settings": {
     "about": "Acerca",

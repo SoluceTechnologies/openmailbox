@@ -1,50 +1,35 @@
-import { useCallback, useDeferredValue, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useTheme } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { FlashList } from '@shopify/flash-list';
-import { Search } from 'lucide-react-native';
-import type { EmailSummary } from '@openmailbox/mail-core';
 
-import { useSearch } from '@/core/hooks';
-import { EmptyState, ScreenHeader, TextField, Typography, ViewContainer } from '@/ui/components';
-import { displayName } from '@/utils/addresses';
-import { formatListDate } from '@/utils/dates';
-
-function SearchResult({ email, onOpen }: { email: EmailSummary; onOpen: (email: EmailSummary) => void }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable onPress={() => onOpen(email)} style={[styles.result, { borderBottomColor: colors.border }]}>
-      <View style={styles.line}>
-        <Typography variant="body2" weight={email.isSeen ? '500' : '700'} numberOfLines={1} style={styles.flex}>
-          {displayName(email.from[0]) || '—'}
-        </Typography>
-        <Typography variant="caption" color="secondary">
-          {formatListDate(email.receivedAt)}
-        </Typography>
-      </View>
-      <Typography variant="body2" weight="400" numberOfLines={1}>
-        {email.subject || '—'}
-      </Typography>
-      <Typography variant="caption" color="secondary" numberOfLines={2}>
-        {email.preview ?? ''}
-      </Typography>
-    </Pressable>
-  );
-}
+import { SearchResults } from '@/features/search/SearchResults';
+import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { ScreenHeader, TextField, ViewContainer } from '@/ui/components';
 
 export default function SearchScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const deferredQuery = useDeferredValue(query);
-  const results = useSearch(deferredQuery);
 
-  const open = useCallback(
-    (email: EmailSummary) => router.push({ pathname: '/thread/[threadId]', params: { threadId: email.threadId } }),
-    [router],
-  );
+  if (NATIVE_CHROME) {
+    return (
+      <ViewContainer>
+        <SearchResults query={query} />
+        <Stack.Screen
+          options={{ headerShown: true, title: t('search.title'), headerTransparent: true, headerBackButtonDisplayMode: 'minimal' }}
+        />
+        <Stack.SearchBar
+          placeholder={t('search.placeholder')}
+          autoFocus
+          hideWhenScrolling={false}
+          onChangeText={(event) => setQuery(event.nativeEvent.text)}
+          onCancelButtonPress={() => router.back()}
+        />
+      </ViewContainer>
+    );
+  }
 
   return (
     <ViewContainer>
@@ -61,17 +46,7 @@ export default function SearchScreen() {
             accessibilityLabel={t('search.placeholder')}
           />
         </View>
-        <FlashList
-          data={results.data ?? []}
-          keyExtractor={(email) => email.id}
-          renderItem={({ item }) => <SearchResult email={item} onOpen={open} />}
-          keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={
-            deferredQuery.trim().length > 1 && !results.isFetching ? (
-              <EmptyState icon={<Search />} title={t('search.noResults')} description={t('search.localOnly')} />
-            ) : null
-          }
-        />
+        <SearchResults query={query} />
       </SafeAreaView>
     </ViewContainer>
   );
@@ -80,6 +55,4 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   field: { paddingHorizontal: 16, paddingBottom: 8 },
-  result: { paddingHorizontal: 16, paddingVertical: 12, gap: 2, borderBottomWidth: StyleSheet.hairlineWidth },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });

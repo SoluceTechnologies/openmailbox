@@ -152,10 +152,13 @@
     "unsubscribed": "Iscrizione a questa lista annullata."
   },
   "search": {
+    "allMailboxes": "Tutte le caselle",
+    "currentMailbox": "Casella attuale",
     "localOnly": "La ricerca riguarda i messaggi scaricati su questo dispositivo.",
     "noResults": "Nessun risultato",
     "placeholder": "Cerca",
-    "title": "Cerca"
+    "title": "Cerca",
+    "topResults": "Risultati principali"
   },
   "settings": {
     "about": "Informazioni",

@@ -152,10 +152,13 @@
     "unsubscribed": "Desabonat d'aquesta lista."
   },
   "search": {
+    "allMailboxes": "Totas las bóstias",
+    "currentMailbox": "Bóstia actuala",
     "localOnly": "La recèrca pòrta sus los messatges telecargats sus aqueste aparelh.",
     "noResults": "Cap de resultat",
     "placeholder": "Recercar",
-    "title": "Recèrca"
+    "title": "Recèrca",
+    "topResults": "Melhors resultats"
   },
   "settings": {
     "about": "A prepaus",

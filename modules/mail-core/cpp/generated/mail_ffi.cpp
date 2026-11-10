@@ -246,7 +246,8 @@ extern "C" {
     /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_search(
         /*handle*/ uint64_t ptr, 
         RustBuffer query, 
-        uint32_t limit
+        uint32_t limit, 
+        RustBuffer mailbox_ids
     );
     /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_send(
         /*handle*/ uint64_t ptr, 
@@ -2650,7 +2651,7 @@ NativeMailFfi::NativeMailFfi(
     props["ubrn_uniffi_mail_ffi_fn_method_mailcore_search"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_search"),
-        3,
+        4,
         [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_search(rt, thisVal, args, count);
         }
@@ -3747,7 +3748,7 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_save_attachment
         return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_search(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-        auto value = uniffi_mail_ffi_fn_method_mailcore_search(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi_jsi::Bridging<uint32_t>::fromJs(rt, callInvoker, args[2])
+        auto value = uniffi_mail_ffi_fn_method_mailcore_search(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi_jsi::Bridging<uint32_t>::fromJs(rt, callInvoker, args[2]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[3])
         );
 
         

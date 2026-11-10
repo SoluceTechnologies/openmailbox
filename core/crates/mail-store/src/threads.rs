@@ -366,7 +366,26 @@ mod tests {
             .unwrap();
         store.remove_uids(inbox, &[1]).unwrap();
         assert_eq!(store.local_uids(inbox).unwrap(), vec![2]);
-        assert_eq!(store.search("subj", 10).unwrap().len(), 1);
-        assert_eq!(store.search("b@x", 10).unwrap().len(), 1);
+        assert_eq!(store.search("subj", 10, &[]).unwrap().len(), 1);
+        assert_eq!(store.search("b@x", 10, &[]).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn search_keeps_to_the_mailboxes_asked_and_says_where_each_hit_is() {
+        let (store, _directory, inbox, trash) = setup();
+        store
+            .insert_messages("alice", inbox, &[message(1, "a@x", &[], 1_000, false)])
+            .unwrap();
+        store
+            .insert_messages("alice", trash, &[message(2, "b@x", &[], 2_000, false)])
+            .unwrap();
+
+        let everywhere = store.search("subj", 10, &[]).unwrap();
+        assert_eq!(everywhere.len(), 2);
+        assert_eq!(everywhere[0].mailbox_id, trash);
+
+        let in_inbox = store.search("subj", 10, &[inbox]).unwrap();
+        assert_eq!(in_inbox.len(), 1);
+        assert_eq!(in_inbox[0].mailbox_id, inbox);
     }
 }

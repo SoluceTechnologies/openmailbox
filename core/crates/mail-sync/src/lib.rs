@@ -12,7 +12,7 @@ use mail_mime::{AttachmentContent, OutgoingMessage};
 use mail_model::{
     Account, AccountConfig, Address, CoreEvent, Draft, EmailSummary, Error, Keyword,
     MAX_ATTACHMENTS_BYTES, Mailbox, MailboxRole, NewMessage, OutgoingAttachment, RenderedBody,
-    Result, ServerConfig, ThreadPage, ThreadScope, UnsubscribeOutcome, now_millis,
+    Result, SearchHit, ServerConfig, ThreadPage, ThreadScope, UnsubscribeOutcome, now_millis,
 };
 use mail_store::Store;
 use tokio::runtime::Handle;
@@ -296,8 +296,8 @@ impl Engine {
         self.store.suggest_addresses(query, limit)
     }
 
-    pub fn search(&self, query: &str, limit: u32) -> Result<Vec<EmailSummary>> {
-        self.store.search(query, limit)
+    pub fn search(&self, query: &str, limit: u32, mailbox_ids: &[i64]) -> Result<Vec<SearchHit>> {
+        self.store.search(query, limit, mailbox_ids)
     }
 
     pub async fn body(&self, email_id: i64) -> Result<RenderedBody> {

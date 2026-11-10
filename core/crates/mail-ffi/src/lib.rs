@@ -137,6 +137,12 @@ pub struct EmailSummary {
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
+pub struct SearchHit {
+    pub email: EmailSummary,
+    pub mailbox_id: String,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct ThreadSummary {
     pub key: String,
     pub thread_id: String,
@@ -756,11 +762,24 @@ impl MailCore {
             .await
     }
 
-    pub async fn search(&self, query: String, limit: u32) -> CoreResult<Vec<EmailSummary>> {
-        Ok(convert_all(
-            self.blocking(move |engine| engine.search(&query, limit))
-                .await?,
-        ))
+    /// Every mailbox when `mailbox_ids` is empty.
+    pub async fn search(
+        &self,
+        query: String,
+        limit: u32,
+        mailbox_ids: Vec<String>,
+    ) -> CoreResult<Vec<SearchHit>> {
+        let mailbox_ids = parse_ids(&mailbox_ids)?;
+        let hits = self
+            .blocking(move |engine| engine.search(&query, limit, &mailbox_ids))
+            .await?;
+        Ok(hits
+            .into_iter()
+            .map(|hit| SearchHit {
+                email: hit.email.into(),
+                mailbox_id: hit.mailbox_id.to_string(),
+            })
+            .collect())
     }
 
     pub async fn set_keywords(

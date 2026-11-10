@@ -51,6 +51,12 @@ describe('core hooks', () => {
     expect(core.search).not.toHaveBeenCalled();
     rerender({ query: ' atlas ' });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(core.search).toHaveBeenCalledWith('atlas', 100);
+    expect(core.search).toHaveBeenCalledWith('atlas', 100, []);
+  });
+
+  it('searches only the mailboxes asked for', async () => {
+    const { result } = renderHook(() => useSearch('atlas', ['mailbox-inbox']), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(core.search).toHaveBeenLastCalledWith('atlas', 100, ['mailbox-inbox']);
   });
 });
