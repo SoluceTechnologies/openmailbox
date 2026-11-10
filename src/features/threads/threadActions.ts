@@ -57,7 +57,6 @@ export interface MailboxIndex {
   rolesOfAccount: Map<string, Set<MailboxRole>>;
 }
 
-/** Built once per mailbox list, so each row of a long list only reads two maps. */
 export function indexMailboxes(mailboxes: Mailbox[]): MailboxIndex {
   const index: MailboxIndex = { roleOf: new Map(), rolesOfAccount: new Map() };
   for (const mailbox of mailboxes) {
@@ -78,7 +77,6 @@ export function threadActionContext(thread: ThreadSummary, index: MailboxIndex):
   };
 }
 
-/** Deleting cannot be undone from the Trash, or when the account has no Trash to move to. */
 export function deletesForGood(context: ThreadActionContext): boolean {
   return context.role === MailboxRole.Trash || !context.accountRoles.has(MailboxRole.Trash);
 }

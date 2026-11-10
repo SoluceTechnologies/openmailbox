@@ -28,9 +28,7 @@ interface SelectProps<T> {
   busy?: boolean;
   accessibilityLabel?: string;
   disabled?: boolean;
-  /** Custom trigger; overrides the built-in row/icon trigger. */
   trigger?: ReactNode;
-  /** Rendered pinned below the option list; receives a close callback. */
   footer?: (close: () => void) => ReactNode;
 }
 

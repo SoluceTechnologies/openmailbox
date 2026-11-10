@@ -23,7 +23,6 @@ interface ThreadPreviewProps {
   onClose: () => void;
 }
 
-/** The latest message of a thread over the dimmed list, with its actions; loading it marks nothing as read. */
 export function ThreadPreview({ thread, actions, onAction, onOpen, onClose }: ThreadPreviewProps) {
   return (
     <Modal visible={thread !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>

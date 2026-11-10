@@ -22,10 +22,6 @@ const pending = new Map<string, Promise<string | null>>();
 const normalize = (email: string) => email.trim().toLowerCase();
 const storageKey = (address: string) => `avatar:${address}`;
 
-/**
- * The saved picture of an address, null when it has none, undefined when it has not been looked up
- * for a month or its picture was removed from the cache directory.
- */
 export function cachedAvatar(email: string): string | null | undefined {
   const address = normalize(email);
   let entry = resolved.get(address);
@@ -39,7 +35,6 @@ export function cachedAvatar(email: string): string | null | undefined {
   return Date.now() > entry.expiresAt ? undefined : entry.uri;
 }
 
-/** Looks the address up once, however many rows ask for it at the same time. */
 export function loadAvatar(email: string): Promise<string | null> {
   const address = normalize(email);
   const cached = cachedAvatar(address);
@@ -77,7 +72,6 @@ function remember(address: string, uri: string | null): string | null {
   return uri;
 }
 
-/** The picture at `url`, or null when the server has none. Throws when the server cannot be reached. */
 async function download(url: string): Promise<Uint8Array | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);

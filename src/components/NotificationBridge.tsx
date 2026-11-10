@@ -11,7 +11,6 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: true }),
 });
 
-/** Keeps the badge current while the app is open, opens tapped notifications and schedules the background check. */
 export function NotificationBridge() {
   const unread = inboxUnreadCount(useMailboxes());
   const hasAccount = useAccounts().length > 0;

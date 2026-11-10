@@ -11,7 +11,6 @@ import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { deleteThreadsForever, moveWithUndo } from './moves';
 import { availableThreadActions, deletesForGood, indexMailboxes, threadActionContext, type ThreadActionId } from './threadActions';
 
-/** Runs the actions offered on a thread; `onMove` opens the folder picker for Move…. */
 export function useThreadActions(onMove?: (thread: ThreadSummary) => void) {
   const router = useRouter();
   const { t } = useTranslation();

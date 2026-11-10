@@ -16,7 +16,6 @@ interface IconButtonProps extends AccessibilityProps {
   glass?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
-  /** Text shown instead of an icon: the button grows into a pill. */
   label?: string;
   hapticFeedback?: Haptics.ImpactFeedbackStyle | null;
   testID?: string;

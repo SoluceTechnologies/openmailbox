@@ -7,7 +7,6 @@ import { UNDO_VISIBLE_MS, useUndoStore } from '@/stores/undoStore';
 import { haptic } from '@/utils/haptics';
 import i18n from '@/utils/i18n';
 
-/** Moves stay in the core's queue while they can be undone, so undoing never reaches the server. */
 export const UNDO_HOLD_MS = UNDO_VISIBLE_MS;
 
 export async function moveWithUndo(threads: ThreadReference[], destination: Destination, label: string): Promise<void> {
@@ -25,7 +24,6 @@ export async function moveWithUndo(threads: ThreadReference[], destination: Dest
   if (failure) throw failure.reason;
 }
 
-/** Deleting from the Trash, or from an account without one, cannot be undone, so it asks first. */
 export function deleteThreadsForever(threads: ThreadReference[]): Promise<boolean> {
   return new Promise((resolve) => {
     Alert.alert(i18n.t('threads.deleteForeverTitle'), i18n.t('threads.deleteForeverMessage'), [

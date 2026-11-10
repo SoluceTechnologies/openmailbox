@@ -16,7 +16,6 @@ interface ThreadRowProps {
   accountAccent?: string;
   onOpen: (thread: ThreadSummary) => void;
   onLongPress?: (thread: ThreadSummary) => void;
-  /** Set while selecting: the row shows a checkbox and pressing it toggles the selection. */
   selected?: boolean;
 }
 

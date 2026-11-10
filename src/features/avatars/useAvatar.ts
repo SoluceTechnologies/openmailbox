@@ -4,7 +4,6 @@ import { useSettingsStore } from '@/stores/settingsStore';
 
 import { cachedAvatar, loadAvatar } from './avatarCache';
 
-/** The picture of an address, or null while it is looked up and when it has none. */
 export function useAvatar(email: string | undefined): string | null {
   const enabled = useSettingsStore((state) => state.contactPictures);
   const address = enabled && email ? email : undefined;

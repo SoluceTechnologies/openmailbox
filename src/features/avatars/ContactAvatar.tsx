@@ -11,7 +11,6 @@ interface ContactAvatarProps {
   size?: number;
 }
 
-/** A correspondent's Gravatar or company logo, or their initials. */
 export const ContactAvatar = memo(function ContactAvatar({ email, name, size }: ContactAvatarProps) {
   const uri = useAvatar(email);
   return <Avatar uri={uri} name={name} size={size} color={avatarColor(email ?? name)} />;

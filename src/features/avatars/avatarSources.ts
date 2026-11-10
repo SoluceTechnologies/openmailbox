@@ -24,12 +24,10 @@ const PERSONAL_DOMAINS = new Set([
   'zohomail.com',
 ]);
 
-/** Providers whose personal addresses exist under many country domains, such as hotmail.fr or yahoo.co.uk. */
 const PERSONAL_BRANDS = new Set(['aol', 'gmail', 'gmx', 'hotmail', 'icloud', 'live', 'msn', 'outlook', 'yahoo']);
 
 const SECOND_LEVELS = new Set(['ac', 'co', 'com', 'edu', 'gouv', 'gov', 'ne', 'net', 'or', 'org']);
 
-/** The domain of the website behind a mail domain: news.bbc.co.uk → bbc.co.uk. */
 export function organizationDomain(domain: string): string {
   const labels = domain.split('.');
   const keep = labels.length > 2 && labels.at(-1)!.length === 2 && SECOND_LEVELS.has(labels.at(-2)!) ? 3 : 2;
@@ -41,7 +39,6 @@ export function isPersonalMailDomain(domain: string): boolean {
   return PERSONAL_DOMAINS.has(organization) || PERSONAL_BRANDS.has(organization.split('.')[0]);
 }
 
-/** Pictures to try for an address, best first: its Gravatar, then the logo of a company's website. */
 export function avatarSources(email: string): string[] {
   const address = email.trim().toLowerCase();
   const domain = address.split('@')[1];

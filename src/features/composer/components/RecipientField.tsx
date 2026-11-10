@@ -17,7 +17,6 @@ interface RecipientFieldProps {
   label: string;
   value: MailAddress[];
   onChange: (addresses: MailAddress[]) => void;
-  /** What is typed and not yet turned into a chip. */
   text: string;
   onTextChange: (text: string) => void;
   autoFocus?: boolean;

@@ -2,7 +2,6 @@ import * as Contacts from 'expo-contacts';
 
 import type { MailAddress } from '@/utils/addresses';
 
-/** Addresses from the phone's contacts matching `query`, read only when the user already allowed it. */
 export async function contactAddresses(query: string): Promise<MailAddress[]> {
   const permission = await Contacts.getPermissionsAsync();
   if (!permission.granted) return [];
@@ -12,7 +11,6 @@ export async function contactAddresses(query: string): Promise<MailAddress[]> {
   );
 }
 
-/** Opens the phone's contact picker, asking for access the first time. */
 export async function pickContactAddress(): Promise<MailAddress | null> {
   const permission = await Contacts.requestPermissionsAsync();
   if (!permission.granted) return null;

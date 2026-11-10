@@ -23,7 +23,6 @@ interface SettingsState {
   setLoadRemoteImages: (enabled: boolean) => void;
   setContactPictures: (enabled: boolean) => void;
   setDefaultAccountId: (accountId: string | null) => void;
-  /** An empty signature removes the account's entry. */
   setSignature: (accountId: string, signature: string) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setAccountNotified: (accountId: string, notified: boolean) => void;

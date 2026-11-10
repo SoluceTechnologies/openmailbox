@@ -8,7 +8,6 @@ import WebView from 'react-native-webview';
 
 import { IconButton, Typography, ViewContainer } from '@/ui/components';
 
-/** In-app viewer for attachments WebKit can render, used on iOS. */
 export default function AttachmentScreen() {
   const { uri, name, mimeType } = useLocalSearchParams<{ uri: string; name: string; mimeType: string }>();
   const { t } = useTranslation();

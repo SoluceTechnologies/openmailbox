@@ -10,7 +10,6 @@ const K = new Uint32Array([
 
 const rotate = (value: number, bits: number) => (value >>> bits) | (value << (32 - bits));
 
-/** SHA-256 of the UTF-8 bytes of `text`, in lowercase hex. Used for Gravatar lookups, not for security. */
 export function sha256Hex(text: string): string {
   const bytes = new TextEncoder().encode(text);
   const length = Math.ceil((bytes.length + 9) / 64) * 64;

@@ -19,7 +19,6 @@ interface ThreadActionSheetProps {
   onClose: () => void;
 }
 
-/** The More sheet: compose and delete as large buttons, then flag and read state, then moves. */
 export function ThreadActionSheet({ thread, actions, onAction, onClose }: ThreadActionSheetProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();

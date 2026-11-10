@@ -6,7 +6,6 @@ import { UNIFIED_SCOPE } from '@/core/queryClient';
 import { displayName } from '@/utils/addresses';
 import i18n from '@/utils/i18n';
 
-/** Beyond this many new messages, a single summary replaces one notification per message. */
 const SUMMARY_THRESHOLD = 3;
 
 type NotificationData = { threadId?: string; mailboxId?: string };
@@ -23,7 +22,6 @@ export function updateBadge(unread: number): Promise<boolean> {
 
 let pendingRequest: Promise<boolean> | null = null;
 
-/** One request at a time, so the onboarding and the app launch never show the prompt twice. */
 export function requestNotificationPermission(): Promise<boolean> {
   pendingRequest ??= (async () => {
     const current = await Notifications.getPermissionsAsync();
@@ -35,7 +33,6 @@ export function requestNotificationPermission(): Promise<boolean> {
   return pendingRequest;
 }
 
-/** Installs updated from a version without notifications have accounts but were never asked. */
 export async function askNotificationPermissionIfNeverAsked(): Promise<void> {
   const current = await Notifications.getPermissionsAsync();
   if (current.status === 'undetermined') await requestNotificationPermission();

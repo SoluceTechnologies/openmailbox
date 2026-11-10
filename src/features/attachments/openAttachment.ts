@@ -7,7 +7,6 @@ import type { Attachment } from '@openmailbox/mail-core';
 
 import { attachmentsDirectory, mailCore } from '@/core/mailCore';
 
-/** Types WebKit renders in place on iOS; anything else goes to the share sheet. */
 export const VIEWABLE_ON_IOS = [
   'application/pdf',
   'image/',
@@ -25,7 +24,6 @@ function share(uri: string, attachment: Attachment): Promise<void> {
   return Sharing.shareAsync(uri, { mimeType: attachment.mimeType, dialogTitle: attachment.filename });
 }
 
-/** Downloads the attachment if needed and opens it with what the phone has for its type. */
 export async function openAttachment(emailId: string, attachment: Attachment): Promise<void> {
   const path = await mailCore().saveAttachment(emailId, attachment.index, attachmentsDirectory());
   const uri = `file://${path.split('/').map(encodeURIComponent).join('/')}`;

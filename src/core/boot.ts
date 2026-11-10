@@ -24,7 +24,6 @@ async function start(): Promise<void> {
   if (AppState.currentState === 'active') core.onForeground();
 }
 
-/** Starts the core once, whether the app opens normally or is woken for a background check. */
 export function boot(): Promise<void> {
   booted ??= start().catch((error) => {
     booted = null;

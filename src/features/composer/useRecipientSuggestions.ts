@@ -6,7 +6,6 @@ import type { MailAddress } from '@/utils/addresses';
 
 const SUGGESTION_LIMIT = 8;
 
-/** People already written to or heard from, then the phone's contacts, each address once. */
 export function useRecipientSuggestions(query: string): MailAddress[] {
   const trimmed = query.trim();
   const suggestions = useQuery({

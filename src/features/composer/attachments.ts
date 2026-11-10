@@ -4,7 +4,6 @@ import type { Attachment, OutgoingAttachment } from '@openmailbox/mail-core';
 
 import { attachmentsDirectory, mailCore } from '@/core/mailCore';
 
-/** Same limit as the core enforces when sending. */
 export const MAX_ATTACHMENTS_BYTES = 26_214_400;
 
 export type ComposerAttachment = OutgoingAttachment & { size: number };
@@ -46,7 +45,6 @@ export async function pickAttachments(source: 'photos' | 'files'): Promise<Compo
   }));
 }
 
-/** Forwarding keeps the original attachments: they are saved locally and attached like picked files. */
 export function forwardedAttachments(emailId: string, attachments: Attachment[]): Promise<ComposerAttachment[]> {
   return Promise.all(
     attachments.map(async (attachment) => ({

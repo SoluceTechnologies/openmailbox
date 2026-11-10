@@ -3,7 +3,6 @@ import { Security, type ServerConfig } from '@openmailbox/mail-core';
 
 export type ProviderIdentifier = 'gmail' | 'icloud' | 'ovhcloud' | 'orange' | 'free' | 'sfr' | 'laposte' | 'yahoo' | 'other' | 'local';
 
-/** A brand mark from Simple Icons (CC0) drawn on a 24×24 grid, or a monogram when Simple Icons has none. */
 export interface BrandMark {
   color: string;
   path?: string;
@@ -102,7 +101,6 @@ export interface OvhOffer {
   identifier: 'mxplan' | 'emailpro' | 'exchange' | 'zimbra';
   name: string;
   servers: ServerConfig;
-  /** The server name differs from one customer to another and must be checked against the control panel. */
   editableHost: boolean;
 }
 
