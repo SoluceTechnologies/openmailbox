@@ -1,18 +1,24 @@
 import { memo, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { Link } from 'expo-router';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useTranslation } from 'react-i18next';
 import { Archive, Ellipsis, Flag, FlagOff, Mail, MailOpen, Trash2, type LucideIcon } from 'lucide-react-native';
 import type { ThreadSummary } from '@openmailbox/mail-core';
 
 import { Typography } from '@/ui/components';
+import { NATIVE_CHROME } from '@/ui/nativeChrome';
 import { haptic } from '@/utils/haptics';
 
-import type { ThreadActionId } from '../threadActions';
+import { THREAD_ACTION_PRESENTATION, type ThreadActionId } from '../threadActions';
 
 import { ThreadRow } from './ThreadRow';
 
 const ACTION_WIDTH = 80;
+const MENU_ORDER: ThreadActionId[] = [
+  'reply', 'replyAll', 'forward', 'markRead', 'markUnread', 'flag', 'unflag',
+  'move', 'archive', 'moveToInbox', 'junk', 'notJunk', 'delete',
+];
 
 interface SwipeActionProps {
   label: string;
@@ -36,6 +42,7 @@ interface SwipeableThreadRowProps {
   thread: ThreadSummary;
   accountAccent?: string;
   canArchive: boolean;
+  menuActions?: ThreadActionId[];
   onOpen: (thread: ThreadSummary) => void;
   onLongPress?: (thread: ThreadSummary) => void;
   onAction: (action: ThreadActionId, thread: ThreadSummary) => void;
@@ -43,7 +50,7 @@ interface SwipeableThreadRowProps {
   selected?: boolean;
 }
 
-function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onLongPress, onAction, onMore, selected }: SwipeableThreadRowProps) {
+function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, menuActions, onOpen, onLongPress, onAction, onMore, selected }: SwipeableThreadRowProps) {
   const { t } = useTranslation();
   const swipeable = useRef<SwipeableMethods>(null);
   const unread = thread.unreadCount > 0;
@@ -91,7 +98,30 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, onOpen, onL
         </View>
       )}
     >
-      <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} onLongPress={onLongPress} />
+      {NATIVE_CHROME && menuActions ? (
+        <Link href={{ pathname: '/thread/[threadId]', params: { threadId: thread.threadId, mailboxId: thread.mailboxId } }} asChild>
+          <Link.Trigger>
+            <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} />
+          </Link.Trigger>
+          <Link.Preview />
+          <Link.Menu>
+            {MENU_ORDER.filter((action) => menuActions.includes(action)).map((action) => {
+              const { label, symbol, destructive } = THREAD_ACTION_PRESENTATION[action];
+              return (
+                <Link.MenuAction
+                  key={action}
+                  title={t(label)}
+                  icon={symbol}
+                  destructive={destructive}
+                  onPress={() => onAction(action, thread)}
+                />
+              );
+            })}
+          </Link.Menu>
+        </Link>
+      ) : (
+        <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} onLongPress={onLongPress} />
+      )}
     </ReanimatedSwipeable>
   );
 }

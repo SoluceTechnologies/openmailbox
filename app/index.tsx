@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, useRouter, useTheme } from 'expo-router';
+import { Redirect, Stack, useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Inbox, Settings, TriangleAlert } from 'lucide-react-native';
 import { MailboxRole, type Account, type Mailbox } from '@openmailbox/mail-core';
@@ -10,10 +10,12 @@ import { BottomBar } from '@/components/BottomBar';
 import { useAccounts, useMailboxes } from '@/core/hooks';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
 import { mailboxBadge, mailboxIcon, mailboxName } from '@/features/mailboxes/mailboxPresentation';
+import { SearchResults } from '@/features/search/SearchResults';
 import { useSyncLabel } from '@/features/sync/useSyncLabel';
 import { useSyncStore } from '@/stores/syncStore';
 import { accountColor } from '@/theme';
 import { FormSection, IconButton, ListRow, Typography, ViewContainer } from '@/ui/components';
+import { NATIVE_CHROME } from '@/ui/nativeChrome';
 
 let unifiedInboxOpened = false;
 
@@ -92,6 +94,8 @@ export default function MailboxesScreen() {
   const accounts = useAccounts();
   const mailboxes = useMailboxes();
   const syncLabel = useSyncLabel(accounts.map((account) => account.id));
+  const [query, setQuery] = useState('');
+  const [searchActive, setSearchActive] = useState(false);
 
   const mailboxesByAccount = useMemo(() => {
     const grouped = new Map<string, Mailbox[]>();
@@ -110,6 +114,73 @@ export default function MailboxesScreen() {
 
   if (accounts.length === 0) return <Redirect href="/onboarding" />;
 
+  const list =
+    searchActive || query.trim().length > 1 ? (
+      <SearchResults query={query} />
+    ) : (
+      <ScrollView
+        style={{ backgroundColor: colors.groupedBackground }}
+        contentContainerStyle={styles.content}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <View style={styles.header}>
+          {NATIVE_CHROME ? null : <Typography variant="h1">{t('mailboxes.title')}</Typography>}
+          {syncLabel ? (
+            <Typography variant="caption" color={colors.textSecondary} style={styles.subtitle}>
+              {syncLabel}
+            </Typography>
+          ) : null}
+        </View>
+        <FormSection>
+          <ListRow
+            title={t('mailboxes.allInboxes')}
+            detail={unifiedUnread}
+            leading={<Inbox size={22} color={colors.primary} />}
+            onPress={() => router.push(`/mailbox/${UNIFIED_SCOPE}`)}
+          />
+          {accounts.map((account) => {
+            const inbox = inboxes.find((mailbox) => mailbox.accountId === account.id);
+            return inbox ? (
+              <MailboxRow key={inbox.id} mailbox={inbox} title={account.displayName} accent={accountColor(account.color)} />
+            ) : null;
+          })}
+        </FormSection>
+        {accounts.map((account) => (
+          <AccountSection key={account.id} account={account} mailboxes={mailboxesByAccount.get(account.id) ?? []} />
+        ))}
+      </ScrollView>
+    );
+
+  // iOS collapses the large title as the list scrolls only when the list is the screen's first view.
+  if (NATIVE_CHROME) {
+    return (
+      <>
+        {list}
+        <Stack.Screen
+          options={{ headerShown: true, title: t('mailboxes.title'), headerLargeTitle: true, headerTransparent: true, headerShadowVisible: false }}
+        />
+        <Stack.SearchBar
+          placeholder={t('search.placeholder')}
+          hideWhenScrolling={false}
+          onChangeText={(event) => setQuery(event.nativeEvent.text)}
+          onFocus={() => setSearchActive(true)}
+          onCancelButtonPress={() => {
+            setQuery('');
+            setSearchActive(false);
+          }}
+        />
+        <Stack.Toolbar placement="right">
+          <Stack.Toolbar.Button icon="gearshape" accessibilityLabel={t('settings.title')} onPress={() => router.push('/settings')} />
+        </Stack.Toolbar>
+        <Stack.Toolbar placement="bottom">
+          <Stack.Toolbar.SearchBarSlot />
+          <Stack.Toolbar.Spacer />
+          <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={() => router.push('/compose')} />
+        </Stack.Toolbar>
+      </>
+    );
+  }
+
   return (
     <ViewContainer grouped>
       <SafeAreaView edges={['top']} style={styles.flex}>
@@ -118,33 +189,7 @@ export default function MailboxesScreen() {
             <Settings size={20} color={colors.text} />
           </IconButton>
         </View>
-        <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
-          <View style={styles.header}>
-            <Typography variant="h1">{t('mailboxes.title')}</Typography>
-            {syncLabel ? (
-              <Typography variant="caption" color={colors.textSecondary} style={styles.subtitle}>
-                {syncLabel}
-              </Typography>
-            ) : null}
-          </View>
-          <FormSection>
-            <ListRow
-              title={t('mailboxes.allInboxes')}
-              detail={unifiedUnread}
-              leading={<Inbox size={22} color={colors.primary} />}
-              onPress={() => router.push(`/mailbox/${UNIFIED_SCOPE}`)}
-            />
-            {accounts.map((account) => {
-              const inbox = inboxes.find((mailbox) => mailbox.accountId === account.id);
-              return inbox ? (
-                <MailboxRow key={inbox.id} mailbox={inbox} title={account.displayName} accent={accountColor(account.color)} />
-              ) : null;
-            })}
-          </FormSection>
-          {accounts.map((account) => (
-            <AccountSection key={account.id} account={account} mailboxes={mailboxesByAccount.get(account.id) ?? []} />
-          ))}
-        </ScrollView>
+        {list}
       </SafeAreaView>
       <BottomBar />
     </ViewContainer>

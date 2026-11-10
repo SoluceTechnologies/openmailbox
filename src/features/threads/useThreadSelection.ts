@@ -24,5 +24,11 @@ export function useThreadSelection() {
     setSelected(new Map());
   }, []);
 
-  return { active, selected, toggle, start, end };
+  const toggleAll = useCallback((threads: ThreadSummary[]) => {
+    setSelected((current) =>
+      current.size === threads.length ? new Map() : new Map(threads.map((thread) => [thread.key, thread])),
+    );
+  }, []);
+
+  return { active, selected, toggle, toggleAll, start, end };
 }

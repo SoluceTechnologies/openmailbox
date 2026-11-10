@@ -14,7 +14,11 @@ import {
   Trash2,
   type LucideIcon,
 } from 'lucide-react-native';
+import type { ComponentProps } from 'react';
+import type { Link } from 'expo-router';
 import { MailboxRole, type Mailbox, type ThreadSummary } from '@openmailbox/mail-core';
+
+type SFSymbol = NonNullable<ComponentProps<typeof Link.MenuAction>['icon']>;
 
 export type ThreadActionId =
   | 'reply'
@@ -81,18 +85,21 @@ export function deletesForGood(context: ThreadActionContext): boolean {
   return context.role === MailboxRole.Trash || !context.accountRoles.has(MailboxRole.Trash);
 }
 
-export const THREAD_ACTION_PRESENTATION: Record<ThreadActionId, { label: string; Icon: LucideIcon; destructive?: boolean }> = {
-  reply: { label: 'compose.reply', Icon: Reply },
-  replyAll: { label: 'compose.replyAll', Icon: ReplyAll },
-  forward: { label: 'compose.forward', Icon: Forward },
-  delete: { label: 'threads.delete', Icon: Trash2, destructive: true },
-  flag: { label: 'threads.flag', Icon: Flag },
-  unflag: { label: 'threads.unflag', Icon: FlagOff },
-  markRead: { label: 'threads.markRead', Icon: MailOpen },
-  markUnread: { label: 'threads.markUnread', Icon: Mail },
-  move: { label: 'threads.move', Icon: FolderInput },
-  archive: { label: 'threads.archive', Icon: Archive },
-  moveToInbox: { label: 'threads.moveToInbox', Icon: Inbox },
-  junk: { label: 'threads.junk', Icon: ShieldAlert },
-  notJunk: { label: 'threads.notJunk', Icon: ShieldCheck },
+export const THREAD_ACTION_PRESENTATION: Record<
+  ThreadActionId,
+  { label: string; Icon: LucideIcon; symbol: SFSymbol; destructive?: boolean }
+> = {
+  reply: { label: 'compose.reply', Icon: Reply, symbol: 'arrowshape.turn.up.left' },
+  replyAll: { label: 'compose.replyAll', Icon: ReplyAll, symbol: 'arrowshape.turn.up.left.2' },
+  forward: { label: 'compose.forward', Icon: Forward, symbol: 'arrowshape.turn.up.right' },
+  delete: { label: 'threads.delete', Icon: Trash2, symbol: 'trash', destructive: true },
+  flag: { label: 'threads.flag', Icon: Flag, symbol: 'flag' },
+  unflag: { label: 'threads.unflag', Icon: FlagOff, symbol: 'flag.slash' },
+  markRead: { label: 'threads.markRead', Icon: MailOpen, symbol: 'envelope.open' },
+  markUnread: { label: 'threads.markUnread', Icon: Mail, symbol: 'envelope.badge' },
+  move: { label: 'threads.move', Icon: FolderInput, symbol: 'folder' },
+  archive: { label: 'threads.archive', Icon: Archive, symbol: 'archivebox' },
+  moveToInbox: { label: 'threads.moveToInbox', Icon: Inbox, symbol: 'tray.and.arrow.down' },
+  junk: { label: 'threads.junk', Icon: ShieldAlert, symbol: 'xmark.bin' },
+  notJunk: { label: 'threads.notJunk', Icon: ShieldCheck, symbol: 'checkmark.shield' },
 };

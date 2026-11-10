@@ -72,5 +72,10 @@ export function useThreadActions(onMove?: (thread: ThreadSummary) => void) {
     [t],
   );
 
-  return { actionsFor, run, moveTo };
+  const confirms = useCallback(
+    (action: ThreadActionId, thread: ThreadSummary) => action === 'delete' && deletesForGood(threadActionContext(thread, index)),
+    [index],
+  );
+
+  return { actionsFor, run, moveTo, confirms };
 }

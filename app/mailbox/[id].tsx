@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { FlashList } from '@shopify/flash-list';
 import { Inbox } from 'lucide-react-native';
@@ -13,17 +13,22 @@ import { mailCore } from '@/core/mailCore';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
 import { MailboxPicker } from '@/features/mailboxes/components/MailboxPicker';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
+import { SearchResults } from '@/features/search/SearchResults';
 import { useIsSyncing, useSyncLabel } from '@/features/sync/useSyncLabel';
 import { SwipeableThreadRow } from '@/features/threads/components/SwipeableThreadRow';
 import { ThreadActionSheet } from '@/features/threads/components/ThreadActionSheet';
 import { ThreadPreview } from '@/features/threads/components/ThreadPreview';
-import { SelectionToolbar } from '@/features/threads/components/SelectionToolbar';
+import { SelectionToolbar, useSelectionActions, type MarkAction } from '@/features/threads/components/SelectionToolbar';
+import { THREAD_ACTION_PRESENTATION } from '@/features/threads/threadActions';
 import { useThreadActions } from '@/features/threads/useThreadActions';
 import { useThreadSelection } from '@/features/threads/useThreadSelection';
 import { accountColor } from '@/theme';
-import { EmptyState, IconButton, ScreenHeader, SegmentedControl, Spinner, Typography, ViewContainer } from '@/ui/components';
+import { EmptyState, IconButton, ScreenHeader, Spinner, Typography, ViewContainer } from '@/ui/components';
+import { SegmentedPicker } from '@/ui/SegmentedPicker';
+import { NATIVE_CHROME } from '@/ui/nativeChrome';
 
 const MINIMUM_REFRESH_MS = 700;
+const MARK_ACTIONS: MarkAction[] = ['markRead', 'markUnread', 'flag', 'unflag'];
 
 function usePullToRefresh(accountIds: string[]) {
   const syncing = useIsSyncing(accountIds);
@@ -58,6 +63,9 @@ export default function MailboxScreen() {
   const accounts = useAccounts();
   const mailboxes = useMailboxes();
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [query, setQuery] = useState('');
+  const [searchActive, setSearchActive] = useState(false);
+  const searching = searchActive || query.trim().length > 1;
   const threads = useThreads(scope, unreadOnly);
 
   const mailbox = mailboxes.find((candidate) => candidate.id === scope);
@@ -88,6 +96,7 @@ export default function MailboxScreen() {
   const [sheetThread, setSheetThread] = useState<ThreadSummary | null>(null);
   const [moving, setMoving] = useState<ThreadSummary | null>(null);
   const selection = useThreadSelection();
+  const selectionActions = useSelectionActions([...selection.selected.values()], selection.end);
   const threadActions = useThreadActions(setMoving);
   const { run: runThreadAction, actionsFor } = threadActions;
 
@@ -103,6 +112,7 @@ export default function MailboxScreen() {
         thread={item}
         accountAccent={showAccountAccent ? accentByAccount.get(item.accountId) : undefined}
         canArchive={actionsFor(item).includes('archive')}
+        menuActions={selection.active ? undefined : actionsFor(item)}
         onOpen={selection.active ? selection.toggle : openThread}
         onLongPress={setPreviewed}
         onAction={runThreadAction}
@@ -120,87 +130,77 @@ export default function MailboxScreen() {
     .filter(Boolean)
     .join(' · ');
   const data = threads.data ?? [];
+  const compose = () => router.push({ pathname: '/compose', params: account ? { accountId: account.id } : {} });
   const loadOlder = () => {
     for (const candidate of scopedMailboxes) mailCore().loadOlder(candidate.id).catch(() => undefined);
   };
 
-  return (
-    <ViewContainer>
-      <SafeAreaView edges={['top']} style={styles.flex}>
-        <ScreenHeader
-          onBack={() => router.back()}
-          right={
-            <IconButton
-              glass
-              round
-              size={40}
-              label={selection.active ? t('threads.selectDone') : t('threads.select')}
-              onPress={selection.active ? selection.end : selection.start}
-              disabled={!selection.active && data.length === 0}
+  const list = searching ? (
+    <SearchResults query={query} currentMailboxIds={scopedMailboxes.map((candidate) => candidate.id)} />
+  ) : (
+    <FlashList
+      contentInsetAdjustmentBehavior="automatic"
+      // New mail lands at the top: keep the list there, under the large title, as Mail does.
+      maintainVisibleContentPosition={{ disabled: true }}
+      data={data}
+      keyExtractor={(thread) => thread.key}
+      renderItem={renderItem}
+      extraData={selection.selected}
+      onEndReachedThreshold={0.5}
+      onEndReached={() => {
+        if (threads.hasNextPage && !threads.isFetchingNextPage) threads.fetchNextPage();
+      }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.textSecondary} />}
+      contentContainerStyle={styles.listContent}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          {NATIVE_CHROME ? null : (
+            <Typography variant="h1" numberOfLines={1}>
+              {title}
+            </Typography>
+          )}
+          {subtitle ? (
+            <Typography variant="caption" color={colors.textSecondary} numberOfLines={1} style={styles.subtitle}>
+              {subtitle}
+            </Typography>
+          ) : null}
+          <View style={styles.filters}>
+            <SegmentedPicker
+              accessibilityLabel={t('threads.filter')}
+              value={unreadOnly ? 'unread' : 'all'}
+              onChange={(filter) => setUnreadOnly(filter === 'unread')}
+              options={[
+                { value: 'all', label: t('threads.filterAll') },
+                { value: 'unread', label: t('threads.filterUnread') },
+              ]}
             />
-          }
-        />
-        <FlashList
-          data={data}
-          keyExtractor={(thread) => thread.key}
-          renderItem={renderItem}
-          extraData={selection.selected}
-          onEndReachedThreshold={0.5}
-          onEndReached={() => {
-            if (threads.hasNextPage && !threads.isFetchingNextPage) threads.fetchNextPage();
-          }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.textSecondary} />}
-          contentContainerStyle={styles.listContent}
-          ListHeaderComponent={
-            <View style={styles.header}>
-              <Typography variant="h1" numberOfLines={1}>
-                {title}
-              </Typography>
-              {subtitle ? (
-                <Typography variant="caption" color={colors.textSecondary} numberOfLines={1} style={styles.subtitle}>
-                  {subtitle}
-                </Typography>
-              ) : null}
-              <View style={styles.filters}>
-                <SegmentedControl
-                  accessibilityLabel={t('threads.filter')}
-                  value={unreadOnly ? 'unread' : 'all'}
-                  onChange={(filter) => setUnreadOnly(filter === 'unread')}
-                  options={[
-                    { value: 'all', label: t('threads.filterAll') },
-                    { value: 'unread', label: t('threads.filterUnread') },
-                  ]}
-                />
-              </View>
-            </View>
-          }
-          ListEmptyComponent={
-            threads.isLoading ? (
-              <EmptyState loading title="" />
-            ) : (
-              <EmptyState
-                icon={<Inbox />}
-                title={unreadOnly ? t('threads.emptyUnread') : t('threads.empty')}
-                description={unreadOnly ? undefined : t('threads.emptyHint')}
-              />
-            )
-          }
-          ListFooterComponent={
-            threads.isFetchingNextPage ? (
-              <Spinner style={styles.footer} />
-            ) : !threads.hasNextPage && data.length > 0 && !unreadOnly ? (
-              <View style={styles.footer}>
-                <IconButton glass round size={40} label={t('threads.loadOlder')} onPress={loadOlder} />
-              </View>
-            ) : null
-          }
-        />
-      </SafeAreaView>
-      {selection.active ? (
-        <SelectionToolbar threads={[...selection.selected.values()]} onDone={selection.end} />
-      ) : (
-        <BottomBar composeAccountId={account?.id} />
-      )}
+          </View>
+        </View>
+      }
+      ListEmptyComponent={
+        threads.isLoading ? (
+          <EmptyState loading title="" />
+        ) : (
+          <EmptyState
+            icon={<Inbox />}
+            title={unreadOnly ? t('threads.emptyUnread') : t('threads.empty')}
+            description={unreadOnly ? undefined : t('threads.emptyHint')}
+          />
+        )
+      }
+      ListFooterComponent={
+        threads.isFetchingNextPage ? (
+          <Spinner style={styles.footer} />
+        ) : !threads.hasNextPage && data.length > 0 && !unreadOnly ? (
+          <View style={styles.footer}>
+            <IconButton glass round size={40} label={t('threads.loadOlder')} onPress={loadOlder} />
+          </View>
+        ) : null
+      }
+    />
+  );
+  const overlays = (
+    <>
       <ThreadPreview
         thread={previewed}
         actions={previewed ? threadActions.actionsFor(previewed) : []}
@@ -221,6 +221,109 @@ export default function MailboxScreen() {
         onSelect={(target) => moving && threadActions.moveTo(moving, target)}
         onClose={() => setMoving(null)}
       />
+    </>
+  );
+
+  // iOS collapses the large title as the list scrolls only when the list is the screen's first view.
+  if (NATIVE_CHROME) {
+    const allSelected = data.length > 0 && selection.selected.size === data.length;
+    return (
+      <>
+        {list}
+        {overlays}
+        {selectionActions.picker}
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            title,
+            headerLargeTitle: true,
+            headerTransparent: true,
+            headerShadowVisible: false,
+            headerLargeTitleShadowVisible: false,
+            headerBackButtonDisplayMode: 'minimal',
+            headerBackVisible: !selection.active,
+          }}
+        />
+        <Stack.Toolbar placement="right">
+          <Stack.Toolbar.Button onPress={selection.active ? selection.end : selection.start} disabled={!selection.active && data.length === 0}>
+            {selection.active ? t('threads.selectDone') : t('threads.select')}
+          </Stack.Toolbar.Button>
+        </Stack.Toolbar>
+        {selection.active ? (
+          <>
+            <Stack.Toolbar placement="left">
+              <Stack.Toolbar.Button onPress={() => selection.toggleAll(data)}>
+                {allSelected ? t('threads.deselectAll') : t('threads.selectAll')}
+              </Stack.Toolbar.Button>
+            </Stack.Toolbar>
+            <Stack.Toolbar placement="bottom">
+              <Stack.Toolbar.Menu title={t('threads.mark')} disabled={selectionActions.empty}>
+                {MARK_ACTIONS.map((action) => (
+                  <Stack.Toolbar.MenuAction key={action} icon={THREAD_ACTION_PRESENTATION[action].symbol} onPress={() => selectionActions.mark(action)}>
+                    {t(THREAD_ACTION_PRESENTATION[action].label)}
+                  </Stack.Toolbar.MenuAction>
+                ))}
+              </Stack.Toolbar.Menu>
+              <Stack.Toolbar.Spacer />
+              <Stack.Toolbar.Button disabled={!selectionActions.canMove} onPress={selectionActions.move}>
+                {t('threads.move')}
+              </Stack.Toolbar.Button>
+              <Stack.Toolbar.Spacer />
+              {selectionActions.canArchive ? (
+                <Stack.Toolbar.Button onPress={selectionActions.archive}>{t('threads.archive')}</Stack.Toolbar.Button>
+              ) : null}
+              <Stack.Toolbar.Button tintColor={colors.danger} disabled={selectionActions.empty} onPress={selectionActions.remove}>
+                {t('threads.delete')}
+              </Stack.Toolbar.Button>
+            </Stack.Toolbar>
+          </>
+        ) : (
+          <>
+            <Stack.SearchBar
+              placeholder={t('search.placeholder')}
+              hideWhenScrolling={false}
+              onChangeText={(event) => setQuery(event.nativeEvent.text)}
+              onFocus={() => setSearchActive(true)}
+              onCancelButtonPress={() => {
+                setQuery('');
+                setSearchActive(false);
+              }}
+            />
+            <Stack.Toolbar placement="bottom">
+              <Stack.Toolbar.SearchBarSlot />
+              <Stack.Toolbar.Spacer />
+              <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={compose} />
+            </Stack.Toolbar>
+          </>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <ViewContainer>
+      <SafeAreaView edges={['top']} style={styles.flex}>
+        <ScreenHeader
+          onBack={() => router.back()}
+          right={
+            <IconButton
+              glass
+              round
+              size={40}
+              label={selection.active ? t('threads.selectDone') : t('threads.select')}
+              onPress={selection.active ? selection.end : selection.start}
+              disabled={!selection.active && data.length === 0}
+            />
+          }
+        />
+        {list}
+      </SafeAreaView>
+      {selection.active ? (
+        <SelectionToolbar threads={[...selection.selected.values()]} onDone={selection.end} />
+      ) : (
+        <BottomBar composeAccountId={account?.id} />
+      )}
+      {overlays}
     </ViewContainer>
   );
 }

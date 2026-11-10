@@ -4,6 +4,10 @@ import { displayName, withoutAddresses, type MailAddress } from '@/utils/address
 
 export type ComposeMode = 'new' | 'reply' | 'replyAll' | 'forward';
 
+export function composeTitleKey(mode: ComposeMode = 'new'): string {
+  return mode === 'new' ? 'compose.newMessage' : mode === 'forward' ? 'compose.forward' : 'compose.reply';
+}
+
 export interface ComposePrefill {
   to: MailAddress[];
   cc: MailAddress[];
