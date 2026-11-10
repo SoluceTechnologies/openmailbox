@@ -169,7 +169,7 @@ export default function ThreadScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { paddingBottom: 40 },
-  titleBlock: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 14 },
+  titleBlock: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 },
   mailbox: { marginTop: 4, fontSize: 13 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 16 },
   toolbar: { flexDirection: 'row', justifyContent: 'space-around', paddingTop: 4, borderTopWidth: StyleSheet.hairlineWidth },
