@@ -8,6 +8,7 @@ android:
     - x86_64
   apiLevel: 24
 ios:
+  cargoExtras: ["--features", "test-ca"]
   targets:
     - aarch64-apple-ios
     - aarch64-apple-ios-sim
