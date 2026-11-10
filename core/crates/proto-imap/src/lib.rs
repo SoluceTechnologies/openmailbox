@@ -248,18 +248,45 @@ fn flags_of(fetch: &Fetch) -> Flags {
     flags
 }
 
+fn declared_role(attributes: &[NameAttribute]) -> Option<MailboxRole> {
+    attributes.iter().find_map(|attribute| match attribute {
+        NameAttribute::Sent => Some(MailboxRole::Sent),
+        NameAttribute::Drafts => Some(MailboxRole::Drafts),
+        NameAttribute::Trash => Some(MailboxRole::Trash),
+        NameAttribute::Junk => Some(MailboxRole::Junk),
+        NameAttribute::Archive => Some(MailboxRole::Archive),
+        NameAttribute::All => Some(MailboxRole::All),
+        NameAttribute::Flagged => Some(MailboxRole::Flagged),
+        _ => None,
+    })
+}
+
+/// Keeps each role on one mailbox: the one the server declares (SPECIAL-USE) over a name guess,
+/// then the shallowest, so a stray `INBOX.INBOX.Sent` listed first cannot take Sent from `INBOX.Sent`.
+fn keep_one_mailbox_per_role(mailboxes: &mut [RemoteMailbox], declared: &[bool]) {
+    let mut best: std::collections::HashMap<MailboxRole, usize> = Default::default();
+    for (index, mailbox) in mailboxes.iter().enumerate() {
+        let Some(role) = mailbox.role else { continue };
+        let rank = |position: usize| (!declared[position], mailboxes[position].depth);
+        if best
+            .get(&role)
+            .is_none_or(|&current| rank(index) < rank(current))
+        {
+            best.insert(role, index);
+        }
+    }
+    for (index, mailbox) in mailboxes.iter_mut().enumerate() {
+        if mailbox
+            .role
+            .is_some_and(|role| best.get(&role) != Some(&index))
+        {
+            mailbox.role = None;
+        }
+    }
+}
+
 fn role_of(remote_name: &str, attributes: &[NameAttribute]) -> Option<MailboxRole> {
-    for attribute in attributes {
-        let role = match attribute {
-            NameAttribute::Sent => MailboxRole::Sent,
-            NameAttribute::Drafts => MailboxRole::Drafts,
-            NameAttribute::Trash => MailboxRole::Trash,
-            NameAttribute::Junk => MailboxRole::Junk,
-            NameAttribute::Archive => MailboxRole::Archive,
-            NameAttribute::All => MailboxRole::All,
-            NameAttribute::Flagged => MailboxRole::Flagged,
-            _ => continue,
-        };
+    if let Some(role) = declared_role(attributes) {
         return Some(role);
     }
     if remote_name.eq_ignore_ascii_case("INBOX") {
@@ -300,34 +327,39 @@ impl ImapConnection {
                 .await
         })
         .await?;
-        let mut mailboxes: Vec<RemoteMailbox> = names
+        let listed: Vec<_> = names
             .iter()
             .filter(|name| {
                 !name.attributes().iter().any(|attribute| {
                     matches!(attribute, NameAttribute::Extension(value) if value.eq_ignore_ascii_case("\\NonExistent"))
                 })
             })
+            .collect();
+        let declared: Vec<bool> = listed
+            .iter()
+            .map(|name| declared_role(name.attributes()).is_some())
+            .collect();
+        let mut mailboxes: Vec<RemoteMailbox> = listed
+            .into_iter()
             .map(|name| {
                 let remote_name = name.name().to_owned();
                 let delimiter = name.delimiter().unwrap_or("/");
                 let segments: Vec<&str> = remote_name.split(delimiter).collect();
                 RemoteMailbox {
-                    name: utf7_imap::decode_utf7_imap(segments.last().copied().unwrap_or_default().to_owned()),
+                    name: utf7_imap::decode_utf7_imap(
+                        segments.last().copied().unwrap_or_default().to_owned(),
+                    ),
                     depth: segments.len().saturating_sub(1) as u32,
                     role: role_of(&remote_name, name.attributes()),
-                    selectable: !name.attributes().iter().any(|attribute| matches!(attribute, NameAttribute::NoSelect)),
+                    selectable: !name
+                        .attributes()
+                        .iter()
+                        .any(|attribute| matches!(attribute, NameAttribute::NoSelect)),
                     remote_name,
                 }
             })
             .collect();
-        let mut claimed_roles = std::collections::HashSet::new();
-        for mailbox in mailboxes.iter_mut() {
-            if let Some(role) = mailbox.role
-                && !claimed_roles.insert(role)
-            {
-                mailbox.role = None;
-            }
-        }
+        keep_one_mailbox_per_role(&mut mailboxes, &declared);
         Ok(mailboxes)
     }
 
@@ -674,6 +706,39 @@ mod tests {
             Some(MailboxRole::All)
         );
         assert_eq!(role_of("Projets", &[]), None);
+    }
+
+    #[test]
+    fn declared_and_shallow_mailboxes_win_a_role() {
+        let mailbox = |remote_name: &str, depth| RemoteMailbox {
+            remote_name: remote_name.into(),
+            name: remote_name.into(),
+            depth,
+            role: role_of(remote_name, &[]),
+            selectable: true,
+        };
+        let mut mailboxes = vec![
+            mailbox("INBOX", 0),
+            mailbox("INBOX.INBOX.Sent", 2),
+            mailbox("INBOX.INBOX.Trash", 2),
+            mailbox("INBOX.Sent Messages", 1),
+            mailbox("INBOX.Trash", 1),
+            mailbox("INBOX.Deleted Messages", 1),
+        ];
+        mailboxes[5].role = Some(MailboxRole::Trash);
+        keep_one_mailbox_per_role(&mut mailboxes, &[false, false, false, false, false, true]);
+        let roles: Vec<_> = mailboxes.iter().map(|mailbox| mailbox.role).collect();
+        assert_eq!(
+            roles,
+            vec![
+                Some(MailboxRole::Inbox),
+                None,
+                None,
+                Some(MailboxRole::Sent),
+                None,
+                Some(MailboxRole::Trash),
+            ]
+        );
     }
 
     #[test]
