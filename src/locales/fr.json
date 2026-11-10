@@ -135,6 +135,7 @@
   "reader": {
     "attachmentFailed": "La pièce jointe n'a pas pu être ouverte.",
     "collapseHint": "Réduit le message",
+    "contactCard": "Afficher la fiche contact",
     "expandHint": "Affiche le message complet",
     "loadFailed": "Le message n'a pas pu être téléchargé.",
     "loadRemoteContent": "Charger les images",

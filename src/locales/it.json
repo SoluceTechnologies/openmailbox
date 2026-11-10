@@ -135,6 +135,7 @@
   "reader": {
     "attachmentFailed": "Impossibile aprire l'allegato.",
     "collapseHint": "Comprime il messaggio",
+    "contactCard": "Mostra scheda contatto",
     "expandHint": "Mostra il messaggio completo",
     "loadFailed": "Impossibile scaricare il messaggio.",
     "loadRemoteContent": "Carica immagini",

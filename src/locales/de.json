@@ -135,6 +135,7 @@
   "reader": {
     "attachmentFailed": "Der Anhang konnte nicht geöffnet werden.",
     "collapseHint": "Klappt die Nachricht ein",
+    "contactCard": "Kontaktkarte anzeigen",
     "expandHint": "Zeigt die vollständige Nachricht",
     "loadFailed": "Die Nachricht konnte nicht geladen werden.",
     "loadRemoteContent": "Bilder laden",

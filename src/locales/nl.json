@@ -135,6 +135,7 @@
   "reader": {
     "attachmentFailed": "De bijlage kon niet worden geopend.",
     "collapseHint": "Klapt het bericht in",
+    "contactCard": "Contactkaart tonen",
     "expandHint": "Toont het volledige bericht",
     "loadFailed": "Het bericht kon niet worden gedownload.",
     "loadRemoteContent": "Laad afbeeldingen",

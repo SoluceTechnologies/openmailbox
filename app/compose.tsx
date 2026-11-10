@@ -22,7 +22,7 @@ import { formatFullDate } from '@/utils/dates';
 const snapshot = (...fields: string[]) => fields.map((field) => field.trim()).join('\u0000');
 const fieldName = (label: string) => label.replace(/\s*:$/, '');
 
-type ComposeParams = { mode?: ComposeMode; emailId?: string; threadId?: string; mailboxId?: string; accountId?: string };
+type ComposeParams = { mode?: ComposeMode; emailId?: string; threadId?: string; mailboxId?: string; accountId?: string; to?: string };
 
 function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   const { colors } = useTheme();
@@ -50,10 +50,13 @@ export default function ComposeScreen() {
   const originalHtml = mode === 'new' ? undefined : originalBody.data?.html;
 
   const initialAccountId = params.accountId ?? defaultAccountId ?? accounts[0]?.id;
-  const [accountId, setAccountId] = useState(
-    accounts.some((account) => account.id === initialAccountId) ? initialAccountId : accounts[0]?.id,
-  );
-  const [to, setTo] = useState<MailAddress[]>([]);
+  const pickAccountId = () => (accounts.some((account) => account.id === initialAccountId) ? initialAccountId : accounts[0]?.id);
+  const [accountId, setAccountId] = useState(pickAccountId);
+  // Accounts may still be loading on the first render (cold deep link); pick one once they arrive.
+  useEffect(() => {
+    if (!accountId && accounts.length > 0) setAccountId(pickAccountId());
+  }, [accounts]);
+  const [to, setTo] = useState<MailAddress[]>(() => (params.to ? [{ email: params.to }] : []));
   const [cc, setCc] = useState<MailAddress[]>([]);
   const [bcc, setBcc] = useState<MailAddress[]>([]);
   const [toText, setToText] = useState('');

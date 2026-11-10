@@ -135,6 +135,7 @@
   "reader": {
     "attachmentFailed": "La pèça junta a pas pogut èsser dobèrta.",
     "collapseHint": "Plega lo messatge",
+    "contactCard": "Veire la fica de contacte",
     "expandHint": "Aficha lo messatge complet",
     "loadFailed": "Lo messatge a pas pogut èsser telecargat.",
     "loadRemoteContent": "Cargar los imatges",

@@ -135,6 +135,7 @@
   "reader": {
     "attachmentFailed": "The attachment couldn't be opened.",
     "collapseHint": "Collapses the message",
+    "contactCard": "View Contact Card",
     "expandHint": "Shows the full message",
     "loadFailed": "The message couldn't be downloaded.",
     "loadRemoteContent": "Load Images",

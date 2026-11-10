@@ -135,6 +135,7 @@
   "reader": {
     "attachmentFailed": "Não foi possível abrir o anexo.",
     "collapseHint": "Recolhe a mensagem",
+    "contactCard": "Ver cartão de contacto",
     "expandHint": "Mostra a mensagem completa",
     "loadFailed": "Não foi possível transferir a mensagem.",
     "loadRemoteContent": "Carregar imagens",
