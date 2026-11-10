@@ -16,6 +16,7 @@ use crate::operations::{self, MAX_ATTEMPTS, Operation, Source};
 
 const FETCH_BATCH_SIZE: usize = 50;
 const CONNECTION_IDLE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const CONNECTION_CHECK_AFTER_MS: i64 = 30 * 1000;
 const MAILBOX_LIST_MAX_AGE: Duration = Duration::from_secs(15 * 60);
 const FLAG_RESYNC_INTERVAL_MS: i64 = 5 * 60 * 1000;
 const SYNC_WINDOW_MS: i64 = 30 * 24 * 60 * 60 * 1000;
@@ -56,6 +57,9 @@ pub struct Worker {
     pub receiver: mpsc::UnboundedReceiver<Command>,
     deferred: VecDeque<Command>,
     connection: Option<ImapConnection>,
+    /// When the kept connection was last used, in milliseconds of wall time, which goes on while
+    /// the phone sleeps.
+    connection_used_at: i64,
     active_mailboxes: VecDeque<i64>,
     mailbox_list_refreshed_at: Option<Instant>,
 }
@@ -76,6 +80,7 @@ impl Worker {
             receiver,
             deferred: VecDeque::new(),
             connection: None,
+            connection_used_at: 0,
             active_mailboxes: VecDeque::new(),
             mailbox_list_refreshed_at: None,
         }
@@ -168,7 +173,11 @@ impl Worker {
     async fn handle_urgent(&mut self, command: Command) {
         match command {
             Command::FetchBody { email_id, reply } => {
-                let result = self.fetch_body(email_id).await;
+                let mut result = self.fetch_body(email_id).await;
+                if retry_on_new_connection(&result) {
+                    self.connection = None;
+                    result = self.fetch_body(email_id).await;
+                }
                 if let Err(error) = &result {
                     self.forget_connection_on(error);
                 }
@@ -180,7 +189,13 @@ impl Worker {
                 directory,
                 reply,
             } => {
-                let result = self.save_attachment(email_id, index, directory).await;
+                let mut result = self
+                    .save_attachment(email_id, index, directory.clone())
+                    .await;
+                if retry_on_new_connection(&result) {
+                    self.connection = None;
+                    result = self.save_attachment(email_id, index, directory).await;
+                }
                 if let Err(error) = &result {
                     self.forget_connection_on(error);
                 }
@@ -222,9 +237,19 @@ impl Worker {
             .is_some()
     }
 
+    fn keep_connection(&mut self, connection: ImapConnection) {
+        self.connection = Some(connection);
+        self.connection_used_at = now_millis();
+    }
+
     async fn take_connection(&mut self) -> Result<ImapConnection> {
-        if let Some(connection) = self.connection.take() {
-            return Ok(connection);
+        if let Some(mut connection) = self.connection.take() {
+            // Servers and NATs drop idle connections without a word: one left aside a while is
+            // checked first, so the command that needs it does not fail on a dead socket.
+            let idle = now_millis() - self.connection_used_at > CONNECTION_CHECK_AFTER_MS;
+            if !idle || connection.noop().await.is_ok() {
+                return Ok(connection);
+            }
         }
         let secret = self
             .secret
@@ -303,7 +328,7 @@ impl Worker {
     async fn refresh_mailbox_list(&mut self) -> Result<()> {
         let mut connection = self.take_connection().await?;
         let remote_mailboxes = connection.list_mailboxes().await;
-        self.connection = Some(connection);
+        self.keep_connection(connection);
         self.store
             .replace_mailboxes(&self.account.id, &remote_mailboxes?)?;
         self.mailbox_list_refreshed_at = Some(Instant::now());
@@ -350,7 +375,7 @@ impl Worker {
         }
         .await;
         if !matches!(result, Err(Error::Network(_) | Error::Auth)) {
-            self.connection = Some(connection);
+            self.keep_connection(connection);
         }
         result
     }
@@ -732,6 +757,12 @@ impl Worker {
             }
         }
     }
+}
+
+/// A connection the server closed half-way answers a FETCH with nothing, then fails on the next
+/// write: what the user is waiting for gets one more try on a new connection.
+fn retry_on_new_connection<T>(result: &Result<T>) -> bool {
+    matches!(result, Err(Error::NotFound | Error::Network(_)))
 }
 
 /// The newest of `found` that no other copy in the mailbox took yet, claimed for this copy.

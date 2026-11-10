@@ -13,6 +13,7 @@ use tokio_rustls::client::TlsStream;
 use tokio_rustls::rustls::pki_types::ServerName;
 
 const NETWORK_TIMEOUT: Duration = Duration::from_secs(45);
+const NOOP_TIMEOUT: Duration = Duration::from_secs(10);
 /// The slowest uplink a large upload is given time for.
 const SLOW_UPLINK_BYTES_PER_SECOND: u64 = 32 * 1024;
 const SUMMARY_HEADER_FIELDS: &str = "DATE FROM TO CC REPLY-TO SUBJECT MESSAGE-ID IN-REPLY-TO REFERENCES \
@@ -369,7 +370,7 @@ impl ImapConnection {
         } else {
             "(MESSAGES UNSEEN UIDNEXT UIDVALIDITY)"
         };
-        let mailbox = timed(self.session.status(remote_name, items)).await?;
+        let mailbox = complete(timed(self.session.status(remote_name, items)).await?)?;
         Ok(MailboxStatus {
             messages: mailbox.exists,
             unseen: mailbox.unseen.unwrap_or_default(),
@@ -380,11 +381,8 @@ impl ImapConnection {
     }
 
     pub async fn select(&mut self, remote_name: &str) -> Result<MailboxStatus> {
-        let mailbox = if self.capabilities.condstore {
-            timed(self.session.select_condstore(remote_name)).await?
-        } else {
-            timed(self.session.select(remote_name)).await?
-        };
+        let mailbox =
+            select_complete(&mut self.session, remote_name, self.capabilities.condstore).await?;
         self.selected = Some(remote_name.to_owned());
         Ok(MailboxStatus {
             messages: mailbox.exists,
@@ -402,11 +400,16 @@ impl ImapConnection {
         Ok(())
     }
 
+    /// Whether the connection still answers, within a few seconds.
+    pub async fn noop(&mut self) -> Result<()> {
+        timed_within(NOOP_TIMEOUT, self.session.noop()).await
+    }
+
     pub async fn search_message_id(&mut self, message_id: &str) -> Result<Vec<u32>> {
         let quoted = message_id.replace('\\', "\\\\").replace('"', "\\\"");
-        let uids = timed(
-            self.session
-                .uid_search(format!("HEADER Message-ID \"<{quoted}>\"")),
+        let uids = search_complete(
+            &mut self.session,
+            format!("HEADER Message-ID \"<{quoted}>\""),
         )
         .await?;
         Ok(uids.into_iter().collect())
@@ -416,7 +419,7 @@ impl ImapConnection {
         let date = chrono::DateTime::from_timestamp_millis(since_millis)
             .unwrap_or_default()
             .format("%d-%b-%Y");
-        let uids = timed(self.session.uid_search(format!("SINCE {date}"))).await?;
+        let uids = search_complete(&mut self.session, format!("SINCE {date}")).await?;
         Ok(uids.into_iter().collect())
     }
 
@@ -633,6 +636,48 @@ impl ImapConnection {
     }
 }
 
+/// async-imap ends SELECT, STATUS and SEARCH replies at the end of the stream without an error, so
+/// a connection the server closed half-way reads as an empty mailbox: synced as is, that empties it
+/// on the phone. Every complete SELECT, and the STATUS we send, carries UIDVALIDITY.
+fn complete(mailbox: async_imap::types::Mailbox) -> Result<async_imap::types::Mailbox> {
+    match mailbox.uid_validity {
+        Some(_) => Ok(mailbox),
+        None => Err(Error::Network("connection lost".into())),
+    }
+}
+
+async fn select_complete<T>(
+    session: &mut async_imap::Session<T>,
+    remote_name: &str,
+    condstore: bool,
+) -> Result<async_imap::types::Mailbox>
+where
+    T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + std::fmt::Debug + Send,
+{
+    let mailbox = if condstore {
+        timed(session.select_condstore(remote_name)).await?
+    } else {
+        timed(session.select(remote_name)).await?
+    };
+    complete(mailbox)
+}
+
+/// UID SEARCH, where an empty result is confirmed with a NOOP: a closed connection answers
+/// "nothing found" too (see [`complete`]), and NOOP does fail on one.
+async fn search_complete<T>(
+    session: &mut async_imap::Session<T>,
+    query: String,
+) -> Result<std::collections::HashSet<u32>>
+where
+    T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + std::fmt::Debug + Send,
+{
+    let uids = timed(session.uid_search(query)).await?;
+    if uids.is_empty() {
+        timed_within(NOOP_TIMEOUT, session.noop()).await?;
+    }
+    Ok(uids)
+}
+
 /// APPEND as async-imap does it, except that untagged responses arriving before the continuation
 /// (an EXISTS for a message just delivered to the selected mailbox) are skipped instead of failing.
 async fn append_seen<T>(
@@ -745,6 +790,81 @@ mod tests {
     fn large_appends_get_time_for_a_slow_uplink() {
         assert_eq!(transfer_timeout(0), NETWORK_TIMEOUT);
         assert!(transfer_timeout(34_000_000) >= Duration::from_secs(17 * 60));
+    }
+
+    /// A fake server that logs in, then answers the next command with `reply` and hangs up when
+    /// `hang_up` (as a server closing an idle connection does), or keeps answering NOOPs.
+    async fn scripted_session(
+        reply: &'static str,
+        hang_up: bool,
+    ) -> async_imap::Session<tokio::io::DuplexStream> {
+        use tokio::io::{AsyncBufReadExt, BufReader};
+
+        let (client, server) = tokio::io::duplex(4096);
+        tokio::spawn(async move {
+            let (read, mut write) = tokio::io::split(server);
+            let mut read = BufReader::new(read);
+            let mut line = String::new();
+            let mut answered = false;
+            while read.read_line(&mut line).await.unwrap_or(0) > 0 {
+                let tag = line.split(' ').next().unwrap_or_default().to_owned();
+                let answer = if line.contains("LOGIN") {
+                    format!("{tag} OK LOGIN completed\r\n")
+                } else if line.contains("NOOP") {
+                    format!("{tag} OK NOOP completed\r\n")
+                } else if !answered {
+                    answered = true;
+                    reply.replace("{tag}", &tag)
+                } else {
+                    format!("{tag} BAD unexpected\r\n")
+                };
+                write.write_all(answer.as_bytes()).await.unwrap();
+                if answered && hang_up {
+                    return;
+                }
+                line.clear();
+            }
+        });
+        async_imap::Client::new(client)
+            .login("alice", "secret")
+            .await
+            .map_err(|(error, _)| error)
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn a_select_cut_off_by_the_server_is_a_lost_connection_not_an_empty_mailbox() {
+        let mut session = scripted_session("* 147 EXISTS\r\n", true).await;
+        let result = select_complete(&mut session, "INBOX", false).await;
+        assert!(matches!(result, Err(Error::Network(_))), "{result:?}");
+    }
+
+    #[tokio::test]
+    async fn a_complete_select_reports_its_uidvalidity() {
+        let reply = "* 147 EXISTS\r\n* OK [UIDVALIDITY 1794294172] UIDs valid\r\n* OK [UIDNEXT 148] next\r\n{tag} OK [READ-WRITE] SELECT completed\r\n";
+        let mut session = scripted_session(reply, false).await;
+        let mailbox = select_complete(&mut session, "INBOX", false).await.unwrap();
+        assert_eq!(
+            (mailbox.exists, mailbox.uid_validity),
+            (147, Some(1_794_294_172))
+        );
+    }
+
+    #[tokio::test]
+    async fn a_search_cut_off_by_the_server_is_a_lost_connection_not_an_empty_result() {
+        let mut session = scripted_session("", true).await;
+        let result = search_complete(&mut session, "SINCE 01-Oct-2026".into()).await;
+        assert!(matches!(result, Err(Error::Network(_))), "{result:?}");
+    }
+
+    #[tokio::test]
+    async fn a_search_that_found_nothing_stays_empty() {
+        let mut session =
+            scripted_session("* SEARCH\r\n{tag} OK SEARCH completed\r\n", false).await;
+        let uids = search_complete(&mut session, "SINCE 01-Oct-2026".into())
+            .await
+            .unwrap();
+        assert!(uids.is_empty());
     }
 
     #[tokio::test]
