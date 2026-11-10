@@ -2,6 +2,7 @@ import { memo, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Alert, Linking, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
+import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 const INITIAL_HEIGHT = 120;
@@ -38,6 +39,17 @@ const fitAndMeasure = (availableWidth: number) => `
 true;
 `;
 
+const SETS_COLORS = /(^|[\s;"'{])(background(-color)?|color)\s*:|\bbgcolor\s*=|<font[^>]*\bcolor\s*=/i;
+
+const PAGE = {
+  light: { background: '#ffffff', text: '#1a1a1a', quote: '#555555', rule: '#d0d0d0', link: '#0b6bcb' },
+  dark: { background: '#1c1c1e', text: '#f1f1f1', quote: '#aaaaaa', rule: '#48484a', link: '#4ea5ff' },
+};
+
+export function pageColors(html: string, dark: boolean) {
+  return dark && !SETS_COLORS.test(html) ? PAGE.dark : PAGE.light;
+}
+
 export async function fetchImageAsDataUri(url: string): Promise<string | null> {
   if (!/^https?:\/\//i.test(url)) return null;
   try {
@@ -63,17 +75,18 @@ Array.prototype.forEach.call(document.images, function (image) {
 true;
 `;
 
-function documentFor(html: string, allowRemoteContent: boolean): string {
+function documentFor(html: string, allowRemoteContent: boolean, page: (typeof PAGE)['light']): string {
   const images = allowRemoteContent ? 'data: https: http:' : 'data:';
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src ${images}; font-src data:; media-src 'none'; frame-src 'none'; form-action 'none';">
 <style>
-html, body { margin: 0; padding: 0; background: #ffffff; color: #1a1a1a; }
+html, body { margin: 0; padding: 0; background: ${page.background}; color: ${page.text}; }
+a { color: ${page.link}; }
 body { padding: 4px 2px; font: 15px/1.45 -apple-system, Roboto, 'Helvetica Neue', sans-serif; overflow-wrap: break-word; }
 img { max-width: 100%; height: auto; }
 pre { white-space: pre-wrap; }
-blockquote { margin: 0 0 0 8px; padding-left: 10px; border-left: 3px solid #d0d0d0; color: #555555; }
+blockquote { margin: 0 0 0 8px; padding-left: 10px; border-left: 3px solid ${page.rule}; color: ${page.quote}; }
 </style></head><body>${html}</body></html>`;
 }
 
@@ -84,10 +97,12 @@ interface HtmlBodyProps {
 
 function HtmlBodyImpl({ html, allowRemoteContent }: HtmlBodyProps) {
   const { t } = useTranslation();
+  const { dark } = useTheme();
+  const page = pageColors(html, dark);
   const [height, setHeight] = useState(INITIAL_HEIGHT);
   const [width, setWidth] = useState(0);
   const webViewRef = useRef<ComponentRef<typeof WebView>>(null);
-  const source = useMemo(() => ({ html: documentFor(html, allowRemoteContent) }), [html, allowRemoteContent]);
+  const source = useMemo(() => ({ html: documentFor(html, allowRemoteContent, page) }), [html, allowRemoteContent, page]);
 
   const onMessage = (event: WebViewMessageEvent) => {
     const message = event.nativeEvent.data;
@@ -120,7 +135,7 @@ function HtmlBodyImpl({ html, allowRemoteContent }: HtmlBodyProps) {
   const onLayout = (event: LayoutChangeEvent) => setWidth(Math.round(event.nativeEvent.layout.width));
 
   return (
-    <View style={[styles.container, { height }]} onLayout={onLayout}>
+    <View style={[styles.container, { height, backgroundColor: page.background }]} onLayout={onLayout}>
       {width > 0 ? (
         <WebView
           ref={webViewRef}
@@ -140,7 +155,7 @@ function HtmlBodyImpl({ html, allowRemoteContent }: HtmlBodyProps) {
           incognito
           scalesPageToFit={false}
           setBuiltInZoomControls={false}
-          style={styles.webView}
+          style={[styles.webView, { backgroundColor: page.background }]}
         />
       ) : null}
     </View>
@@ -150,6 +165,6 @@ function HtmlBodyImpl({ html, allowRemoteContent }: HtmlBodyProps) {
 export const HtmlBody = memo(HtmlBodyImpl);
 
 const styles = StyleSheet.create({
-  container: { width: '100%', borderRadius: 10, overflow: 'hidden', backgroundColor: '#ffffff' },
-  webView: { flex: 1, backgroundColor: '#ffffff' },
+  container: { width: '100%', borderRadius: 10, overflow: 'hidden' },
+  webView: { flex: 1 },
 });
