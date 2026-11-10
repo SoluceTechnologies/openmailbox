@@ -1,13 +1,24 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Alert, Linking, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import WebView, { type WebViewMessageEvent } from 'react-native-webview';
 import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
 import { useTranslation } from 'react-i18next';
 
 const INITIAL_HEIGHT = 120;
+const BROKEN_IMAGE_MESSAGE = 'broken-image:';
+const MAX_REFETCHED_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const fitAndMeasure = (availableWidth: number) => `
 (function () {
+  function reportBrokenImage(image) {
+    if (image.dataset.reported || !/^https?:/i.test(image.src)) return;
+    image.dataset.reported = '1';
+    window.ReactNativeWebView.postMessage('${BROKEN_IMAGE_MESSAGE}' + image.src);
+  }
+  Array.prototype.forEach.call(document.images, function (image) {
+    if (image.complete && image.naturalWidth === 0) reportBrokenImage(image);
+    else image.addEventListener('error', function () { reportBrokenImage(image); });
+  });
   function fit() {
     var body = document.body;
     if (!body) return;
@@ -24,6 +35,31 @@ const fitAndMeasure = (availableWidth: number) => `
   if (window.ResizeObserver) new ResizeObserver(report).observe(document.documentElement);
   report();
 })();
+true;
+`;
+
+export async function fetchImageAsDataUri(url: string): Promise<string | null> {
+  if (!/^https?:\/\//i.test(url)) return null;
+  try {
+    const response = await fetch(url, { credentials: 'omit' });
+    if (!response.ok) return null;
+    const image = await response.blob();
+    if (!image.type.startsWith('image/') || image.size > MAX_REFETCHED_IMAGE_BYTES) return null;
+    return await new Promise((resolve) => {
+      const fileReader = new FileReader();
+      fileReader.onload = () => resolve(typeof fileReader.result === 'string' ? fileReader.result : null);
+      fileReader.onerror = () => resolve(null);
+      fileReader.readAsDataURL(image);
+    });
+  } catch {
+    return null;
+  }
+}
+
+const replaceImageSource = (url: string, dataUri: string) => `
+Array.prototype.forEach.call(document.images, function (image) {
+  if (image.src === ${JSON.stringify(url)}) image.src = ${JSON.stringify(dataUri)};
+});
 true;
 `;
 
@@ -50,10 +86,20 @@ function HtmlBodyImpl({ html, allowRemoteContent }: HtmlBodyProps) {
   const { t } = useTranslation();
   const [height, setHeight] = useState(INITIAL_HEIGHT);
   const [width, setWidth] = useState(0);
+  const webViewRef = useRef<ComponentRef<typeof WebView>>(null);
   const source = useMemo(() => ({ html: documentFor(html, allowRemoteContent) }), [html, allowRemoteContent]);
 
   const onMessage = (event: WebViewMessageEvent) => {
-    const measured = Number(event.nativeEvent.data);
+    const message = event.nativeEvent.data;
+    if (message.startsWith(BROKEN_IMAGE_MESSAGE)) {
+      if (!allowRemoteContent) return;
+      const url = message.slice(BROKEN_IMAGE_MESSAGE.length);
+      fetchImageAsDataUri(url).then((dataUri) => {
+        if (dataUri) webViewRef.current?.injectJavaScript(replaceImageSource(url, dataUri));
+      });
+      return;
+    }
+    const measured = Number(message);
     if (Number.isFinite(measured) && measured > 0) setHeight(measured);
   };
 
@@ -77,6 +123,7 @@ function HtmlBodyImpl({ html, allowRemoteContent }: HtmlBodyProps) {
     <View style={[styles.container, { height }]} onLayout={onLayout}>
       {width > 0 ? (
         <WebView
+          ref={webViewRef}
           key={width}
           source={source}
           originWhitelist={['*']}
