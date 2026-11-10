@@ -405,6 +405,22 @@ impl ImapConnection {
         timed_within(NOOP_TIMEOUT, self.session.noop()).await
     }
 
+    /// The INTERNALDATE of the message at `sequence` in the selected mailbox.
+    pub async fn internal_date(&mut self, sequence: u32) -> Result<Option<i64>> {
+        let fetches: Vec<Fetch> = timed(async {
+            self.session
+                .fetch(sequence.to_string(), "(INTERNALDATE)")
+                .await?
+                .try_collect()
+                .await
+        })
+        .await?;
+        Ok(fetches
+            .iter()
+            .find_map(|fetch| fetch.internal_date())
+            .map(|date| date.timestamp_millis()))
+    }
+
     pub async fn search_message_id(&mut self, message_id: &str) -> Result<Vec<u32>> {
         let quoted = message_id.replace('\\', "\\\\").replace('"', "\\\"");
         let uids = search_complete(

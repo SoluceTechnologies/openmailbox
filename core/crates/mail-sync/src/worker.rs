@@ -20,7 +20,8 @@ const CONNECTION_IDLE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const CONNECTION_CHECK_AFTER_MS: i64 = 30 * 1000;
 const MAILBOX_LIST_MAX_AGE: Duration = Duration::from_secs(15 * 60);
 const FLAG_RESYNC_INTERVAL_MS: i64 = 5 * 60 * 1000;
-const SYNC_WINDOW_MS: i64 = 30 * 24 * 60 * 60 * 1000;
+const ONE_DAY_MS: i64 = 24 * 60 * 60 * 1000;
+const SYNC_WINDOW_MS: i64 = 30 * ONE_DAY_MS;
 const MAX_ACTIVE_MAILBOXES: usize = 5;
 
 pub enum Command {
@@ -332,8 +333,19 @@ impl Worker {
         if force || stale_list {
             self.refresh_mailbox_list().await?;
         }
+        // The newest page of every mailbox comes first, so a new account shows its Sent mail
+        // without waiting for a month of inbox.
+        let mut unfinished = Vec::new();
         for mailbox in self.targets(mailbox_ids)? {
-            self.sync_mailbox(&mailbox, force).await?;
+            if !self
+                .sync_mailbox(&mailbox, force, Some(FETCH_BATCH_SIZE))
+                .await?
+            {
+                unfinished.push(mailbox);
+            }
+        }
+        for mailbox in unfinished {
+            self.sync_mailbox(&mailbox, force, None).await?;
         }
         Ok(())
     }
@@ -394,7 +406,14 @@ impl Worker {
         result
     }
 
-    async fn sync_mailbox(&mut self, mailbox: &Mailbox, force: bool) -> Result<()> {
+    /// With a `page`, fetches at most that many new messages, newest first, and returns false
+    /// when more are left for a later call without one.
+    async fn sync_mailbox(
+        &mut self,
+        mailbox: &Mailbox,
+        force: bool,
+        page: Option<usize>,
+    ) -> Result<bool> {
         let remote_name = mailbox.remote_name.as_str();
         let (status, condstore) = self
             .with_imap(None, async |connection| {
@@ -411,7 +430,7 @@ impl Worker {
             self.events.mailboxes_changed([mailbox.id]);
         }
         let state = self.store.mailbox_sync_state(mailbox.id)?;
-        let window_start = state
+        let mut window_start = state
             .sync_since
             .unwrap_or_else(|| now_millis() - SYNC_WINDOW_MS);
         let flags_unchanged = match (condstore, status.highest_modseq) {
@@ -427,9 +446,10 @@ impl Worker {
             && status.uid_next.is_some()
             && state.uidvalidity == status.uid_validity
             && state.uidnext == status.uid_next
-            && flags_unchanged;
+            && flags_unchanged
+            && (status.messages == 0 || !self.store.local_uids(mailbox.id)?.is_empty());
         if unchanged {
-            return Ok(());
+            return Ok(true);
         }
 
         let selected = self
@@ -443,6 +463,22 @@ impl Worker {
             self.store
                 .remove_uids(mailbox.id, &self.store.local_uids(mailbox.id)?)?;
         }
+        let local_uids: HashSet<u32> = self.store.local_uids(mailbox.id)?.into_iter().collect();
+        if local_uids.is_empty() && selected.messages > 0 {
+            // A quiet mailbox (Sent, Archive) still shows its latest page, however old.
+            let first_of_page = selected
+                .messages
+                .saturating_sub(FETCH_BATCH_SIZE as u32 - 1)
+                .max(1);
+            let date = self
+                .with_imap(Some(remote_name), async |connection| {
+                    connection.internal_date(first_of_page).await
+                })
+                .await?;
+            if let Some(date) = date {
+                window_start = window_start.min(date - ONE_DAY_MS);
+            }
+        }
         let server_uids: HashSet<u32> = self
             .with_imap(Some(remote_name), async |connection| {
                 connection.search_since(window_start).await
@@ -450,7 +486,6 @@ impl Worker {
             .await?
             .into_iter()
             .collect();
-        let local_uids: HashSet<u32> = self.store.local_uids(mailbox.id)?.into_iter().collect();
         let removed: Vec<u32> = local_uids.difference(&server_uids).copied().collect();
         self.store.remove_uids(mailbox.id, &removed)?;
         let held = operations::held_uids(&self.store, &self.account.id, mailbox.id)?;
@@ -460,6 +495,10 @@ impl Worker {
             .copied()
             .collect();
         new_uids.sort_unstable_by(|left, right| right.cmp(left));
+        let unfinished = page.is_some_and(|page| new_uids.len() > page);
+        if let Some(page) = page {
+            new_uids.truncate(page);
+        }
         for batch in new_uids.chunks(FETCH_BATCH_SIZE) {
             let summaries = self
                 .with_imap(Some(remote_name), async |connection| {
@@ -481,6 +520,9 @@ impl Worker {
                 .insert_messages(&self.account.id, mailbox.id, &messages)?;
             self.events.mailboxes_changed([mailbox.id]);
             self.serve_urgent().await;
+        }
+        if unfinished {
+            return Ok(false);
         }
 
         let known_uids: Vec<u32> = local_uids.intersection(&server_uids).copied().collect();
@@ -525,7 +567,7 @@ impl Worker {
             },
         )?;
         self.events.mailboxes_changed([mailbox.id]);
-        Ok(())
+        Ok(true)
     }
 
     async fn fetch_raw(&mut self, email_id: i64) -> Result<Vec<u8>> {
