@@ -40,7 +40,7 @@ function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress, selected }:
           : undefined
       }
       delayLongPress={350}
-      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.surface : colors.background }]}
+      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.pressed : colors.background }]}
     >
       {selected !== undefined ? (
         <View style={styles.checkbox}>
@@ -48,8 +48,11 @@ function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress, selected }:
         </View>
       ) : null}
       <View style={styles.indicator}>
-        {unread ? <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} /> : null}
-        {thread.latest.isAnswered ? <Reply size={13} color={colors.textTertiary} style={styles.replied} /> : null}
+        {unread ? (
+          <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
+        ) : thread.latest.isAnswered ? (
+          <Reply size={15} strokeWidth={2.5} color={colors.primary} />
+        ) : null}
       </View>
       <ContactAvatar email={sender?.email} name={senderName} size={40} />
       <View style={[styles.content, { borderBottomColor: colors.border }]}>
@@ -88,7 +91,6 @@ const styles = StyleSheet.create({
   checkbox: { paddingLeft: 14, paddingTop: 20 },
   indicator: { width: 22, alignItems: 'center', paddingTop: 16 },
   unreadDot: { width: 9, height: 9, borderRadius: 4.5 },
-  replied: { marginTop: 4 },
   content: { flex: 1, marginLeft: 10, paddingRight: 16, paddingBottom: 12, gap: 1, borderBottomWidth: StyleSheet.hairlineWidth },
   line: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   accountDot: { width: 7, height: 7, borderRadius: 3.5 },
