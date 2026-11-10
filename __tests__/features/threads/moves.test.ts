@@ -3,9 +3,10 @@ import { Alert } from 'react-native';
 import { Destination } from '@openmailbox/mail-core';
 
 import { deleteThreadsForever, moveWithUndo, UNDO_HOLD_MS } from '@/features/threads/moves';
+import { queryClient, queryKeys } from '@/core/queryClient';
 import { useUndoStore } from '@/stores/undoStore';
 
-import { core } from '../../helpers/fixtures';
+import { core, makeThread } from '../../helpers/fixtures';
 
 const INBOX_THREAD = { mailboxId: 'mailbox-inbox', threadId: 'thread-1' };
 const WORK_THREAD = { mailboxId: 'mailbox-work', threadId: 'thread-2' };
@@ -35,6 +36,18 @@ describe('moves with undo', () => {
     expect(Destination.Archive.instanceOf(destination)).toBe(true);
     expect(UNDO_HOLD_MS).toBe(5000);
     expect(useUndoStore.getState().entry?.label).toBe('Archived');
+  });
+
+  it('takes the threads off the lists before the core answers', () => {
+    core.moveThread.mockReturnValue(new Promise(() => undefined));
+    const kept = makeThread({ key: 'mailbox-inbox:thread-9', threadId: 'thread-9' });
+    const moved = makeThread({ key: 'mailbox-inbox:thread-1', threadId: 'thread-1', mailboxId: 'mailbox-inbox' });
+    queryClient.setQueryData(queryKeys.threads('unified', false), { pages: [{ threads: [moved, kept] }], pageParams: [undefined] });
+
+    moveWithUndo([INBOX_THREAD], new Destination.Trash(), 'Moved to Trash');
+
+    const pages = queryClient.getQueryData<{ pages: { threads: { threadId: string }[] }[] }>(queryKeys.threads('unified', false));
+    expect(pages?.pages[0].threads.map((thread) => thread.threadId)).toEqual(['thread-9']);
   });
 
   it('puts every thread back where it came from', async () => {
