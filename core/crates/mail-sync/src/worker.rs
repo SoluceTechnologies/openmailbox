@@ -548,9 +548,12 @@ impl Worker {
             .map(|update| (update.uid, update.flags))
             .collect();
         let local_changes_pending = self.store.has_pending_operations(&self.account.id)?;
+        // New messages were announced batch by batch; the rest only when it changed something, as
+        // each announcement makes the app reload what it shows.
+        let mut changed = !removed.is_empty();
         if !local_changes_pending {
-            self.store.update_flags(mailbox.id, &updates)?;
-            self.store.clear_unconfirmed_links(mailbox.id)?;
+            changed |= self.store.update_flags(mailbox.id, &updates)?;
+            changed |= self.store.clear_unconfirmed_links(mailbox.id)?;
         }
         self.store.save_mailbox_sync_state(
             mailbox.id,
@@ -566,7 +569,9 @@ impl Worker {
                 synced_at: (!local_changes_pending).then(now_millis),
             },
         )?;
-        self.events.mailboxes_changed([mailbox.id]);
+        if changed {
+            self.events.mailboxes_changed([mailbox.id]);
+        }
         Ok(true)
     }
 

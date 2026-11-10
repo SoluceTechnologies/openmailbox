@@ -134,7 +134,8 @@ impl Store {
         })
     }
 
-    pub fn clear_unconfirmed_links(&self, mailbox_id: i64) -> Result<()> {
+    /// Returns whether any link was cleared.
+    pub fn clear_unconfirmed_links(&self, mailbox_id: i64) -> Result<bool> {
         self.write(|transaction| {
             let email_ids: Vec<i64> = transaction
                 .prepare_cached("DELETE FROM email_mailbox WHERE mailbox_id = ?1 AND uid IS NULL RETURNING email_id")
@@ -143,7 +144,8 @@ impl Store {
                 .storage()?
                 .collect::<rusqlite::Result<_>>()
                 .storage()?;
-            remove_orphans(transaction, &email_ids)
+            remove_orphans(transaction, &email_ids)?;
+            Ok(!email_ids.is_empty())
         })
     }
 
