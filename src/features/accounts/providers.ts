@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { Security, type ServerConfig } from '@openmailbox/mail-core';
 
-export type ProviderIdentifier = 'gmail' | 'icloud' | 'ovhcloud' | 'orange' | 'free' | 'sfr' | 'laposte' | 'yahoo' | 'other' | 'local';
+export type ProviderIdentifier = 'gmail' | 'icloud' | 'ovhcloud' | 'ionos' | 'yahoo' | 'other' | 'local';
 
 export interface BrandMark {
   color: string;
@@ -59,32 +59,11 @@ export const PROVIDERS: MailProvider[] = [
   },
   { identifier: 'ovhcloud', name: 'OVHcloud', domains: [], brand: OVH_BRAND },
   {
-    identifier: 'orange',
-    name: 'Orange',
-    domains: ['orange.fr', 'wanadoo.fr'],
-    brand: { color: '#FF7900', path: 'M0 0h24v24H0V0Zm3.43 20.572h17.143v-3.429H3.43v3.429Z' },
-    servers: servers('imap.orange.fr', 'smtp.orange.fr'),
-  },
-  {
-    identifier: 'free',
-    name: 'Free',
-    domains: ['free.fr'],
-    brand: { color: '#CD1E25', monogram: 'free' },
-    servers: servers('imap.free.fr', 'smtp.free.fr'),
-  },
-  {
-    identifier: 'sfr',
-    name: 'SFR',
-    domains: ['sfr.fr', 'neuf.fr'],
-    brand: { color: '#E2001A', monogram: 'SFR' },
-    servers: servers('imap.sfr.fr', 'smtp-auth.sfr.fr'),
-  },
-  {
-    identifier: 'laposte',
-    name: 'La Poste',
-    domains: ['laposte.net'],
-    brand: { color: '#FFC917', monogram: 'LP', monogramColor: '#003DA5' },
-    servers: servers('imap.laposte.net', 'smtp.laposte.net'),
+    identifier: 'ionos',
+    name: 'IONOS',
+    domains: [],
+    brand: { color: '#003D8F', monogram: 'IONOS' },
+    servers: servers('imap.ionos.fr', 'smtp.ionos.fr'),
   },
   {
     identifier: 'yahoo',

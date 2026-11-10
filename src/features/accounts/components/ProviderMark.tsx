@@ -7,6 +7,8 @@ import { Typography } from '@/ui/components';
 
 import type { BrandMark } from '../providers';
 
+const monogramScale = (letters: number) => (letters > 4 ? 0.22 : letters > 2 ? 0.3 : 0.44);
+
 export function ProviderMark({ brand, size = 32 }: { brand?: BrandMark; size?: number }) {
   const { colors } = useTheme();
   const tile = { width: size, height: size, borderRadius: size / 4 };
@@ -28,7 +30,7 @@ export function ProviderMark({ brand, size = 32 }: { brand?: BrandMark; size?: n
         <Typography
           weight="800"
           color={brand.monogramColor ?? '#ffffff'}
-          style={{ fontSize: size * ((brand.monogram?.length ?? 0) > 2 ? 0.3 : 0.44), letterSpacing: -0.3 }}
+          style={{ fontSize: size * monogramScale(brand.monogram?.length ?? 0), letterSpacing: -0.3 }}
         >
           {brand.monogram}
         </Typography>

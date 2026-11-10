@@ -8,10 +8,7 @@ describe('providers', () => {
       'gmail',
       'icloud',
       'ovhcloud',
-      'orange',
-      'free',
-      'sfr',
-      'laposte',
+      'ionos',
       'yahoo',
       'other',
     ]);
@@ -28,7 +25,7 @@ describe('providers', () => {
   it('recognises a provider from the address domain, whatever its case', () => {
     expect(providerForAddress('alice@GMAIL.com')?.identifier).toBe('gmail');
     expect(providerForAddress('alice@me.com')?.identifier).toBe('icloud');
-    expect(providerForAddress('alice@orange.fr')?.identifier).toBe('orange');
+    expect(providerForAddress('alice@yahoo.fr')?.identifier).toBe('yahoo');
     expect(providerForAddress('alice@example.org')).toBeUndefined();
     expect(providerForAddress('not an address')).toBeUndefined();
   });

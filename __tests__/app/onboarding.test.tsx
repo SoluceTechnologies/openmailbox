@@ -19,7 +19,7 @@ describe('onboarding', () => {
   it('welcomes the user with the list of providers', () => {
     renderWithProviders(<OnboardingScreen />);
     expect(screen.getByText('Welcome to Open Mailbox')).toBeOnTheScreen();
-    for (const name of ['Google', 'iCloud', 'OVHcloud', 'Orange', 'Free', 'SFR', 'La Poste', 'Yahoo', 'Other']) {
+    for (const name of ['Google', 'iCloud', 'OVHcloud', 'IONOS', 'Yahoo', 'Other']) {
       expect(screen.getByRole('button', { name })).toBeOnTheScreen();
     }
     expect(screen.queryByText(/microsoft|outlook/i)).toBeNull();
@@ -50,16 +50,16 @@ describe('onboarding', () => {
   });
 
   it('signs in to a provider it knows without looking up its servers', async () => {
-    core.addAccount.mockResolvedValue(makeAccount({ email: 'alice@orange.fr' }));
+    core.addAccount.mockResolvedValue(makeAccount({ email: 'alice@ionos.example' }));
     renderWithProviders(<OnboardingScreen />);
-    fireEvent.press(screen.getByRole('button', { name: 'Orange' }));
-    fireEvent.changeText(screen.getByLabelText('Email'), 'alice@orange.fr');
+    fireEvent.press(screen.getByRole('button', { name: 'IONOS' }));
+    fireEvent.changeText(screen.getByLabelText('Email'), 'alice@ionos.example');
     fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
     fireEvent.press(screen.getByText('Sign In'));
 
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/'));
     expect(core.discover).not.toHaveBeenCalled();
-    expect(core.addAccount.mock.calls[0][0].imap.host).toBe('imap.orange.fr');
+    expect(core.addAccount.mock.calls[0][0].imap.host).toBe('imap.ionos.fr');
   });
 
   it('hints the outgoing server with an SMTP name when servers are set by hand', () => {
