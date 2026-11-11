@@ -10,6 +10,7 @@ const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
 jest.mock('expo-router', () => ({
   ...jest.requireActual('expo-router'),
   useRouter: () => mockRouter,
+  router: { back: () => mockRouter.back(), replace: (href: string) => mockRouter.replace(href), canGoBack: () => true },
   useLocalSearchParams: () => mockParams,
 }));
 const PDF = { uri: 'file:///cache/attachments/email-1-0/Facture.pdf', name: 'Facture.pdf', mimeType: 'application/pdf' };

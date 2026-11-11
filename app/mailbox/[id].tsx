@@ -26,6 +26,7 @@ import { accountColor } from '@/theme';
 import { EmptyState, IconButton, ScreenHeader, Spinner, Typography, ViewContainer } from '@/ui/components';
 import { SegmentedPicker } from '@/ui/SegmentedPicker';
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { goBack } from '@/utils/navigation';
 
 const MINIMUM_REFRESH_MS = 700;
 const MARK_ACTIONS: MarkAction[] = ['markRead', 'markUnread', 'flag', 'unflag'];
@@ -304,7 +305,7 @@ export default function MailboxScreen() {
     <ViewContainer>
       <SafeAreaView edges={['top']} style={styles.flex}>
         <ScreenHeader
-          onBack={() => router.back()}
+          onBack={goBack}
           right={
             <IconButton
               glass

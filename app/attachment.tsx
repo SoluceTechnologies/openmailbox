@@ -1,6 +1,6 @@
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useLocalSearchParams, useRouter, useTheme } from 'expo-router';
+import { Stack, useLocalSearchParams, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Sharing from 'expo-sharing';
 import { Share, X } from 'lucide-react-native';
@@ -8,11 +8,11 @@ import WebView from 'react-native-webview';
 
 import { IconButton, Typography, ViewContainer } from '@/ui/components';
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { goBack } from '@/utils/navigation';
 
 export default function AttachmentScreen() {
   const { uri, name, mimeType } = useLocalSearchParams<{ uri: string; name: string; mimeType: string }>();
   const { t } = useTranslation();
-  const router = useRouter();
   const { colors } = useTheme();
   const directory = uri.slice(0, uri.lastIndexOf('/') + 1);
   const share = () => Sharing.shareAsync(uri, { mimeType, dialogTitle: name }).catch(() => undefined);
@@ -40,7 +40,7 @@ export default function AttachmentScreen() {
       <>
         {viewer}
         <Stack.Toolbar placement="left">
-          <Stack.Toolbar.Button icon="xmark" accessibilityLabel={t('common.close')} onPress={() => router.back()} />
+          <Stack.Toolbar.Button icon="xmark" accessibilityLabel={t('common.close')} onPress={goBack} />
         </Stack.Toolbar>
         <Stack.Toolbar placement="right">
           <Stack.Toolbar.Button icon="square.and.arrow.up" accessibilityLabel={t('reader.share')} onPress={share} />
@@ -53,7 +53,7 @@ export default function AttachmentScreen() {
     <ViewContainer>
       <SafeAreaView edges={['top', 'bottom']} style={styles.flex}>
         <View style={[styles.toolbar, { borderBottomColor: colors.border }]}>
-          <IconButton round size={40} accessibilityLabel={t('common.close')} onPress={() => router.back()}>
+          <IconButton round size={40} accessibilityLabel={t('common.close')} onPress={goBack}>
             <X size={20} color={colors.text} />
           </IconButton>
           <Typography weight="600" numberOfLines={1} style={styles.title}>

@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { SearchResults } from '@/features/search/SearchResults';
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
 import { ScreenHeader, TextField, ViewContainer } from '@/ui/components';
+import { goBack } from '@/utils/navigation';
 
 export default function SearchScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
   const [query, setQuery] = useState('');
 
   if (NATIVE_CHROME) {
@@ -25,7 +25,7 @@ export default function SearchScreen() {
           autoFocus
           hideWhenScrolling={false}
           onChangeText={(event) => setQuery(event.nativeEvent.text)}
-          onCancelButtonPress={() => router.back()}
+          onCancelButtonPress={goBack}
         />
       </ViewContainer>
     );
@@ -34,7 +34,7 @@ export default function SearchScreen() {
   return (
     <ViewContainer>
       <SafeAreaView edges={['top']} style={styles.flex}>
-        <ScreenHeader onBack={() => router.back()} title={t('search.title')} />
+        <ScreenHeader onBack={goBack} title={t('search.title')} />
         <View style={styles.field}>
           <TextField
             value={query}

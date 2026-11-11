@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, StyleSheet, TextInput, View } from 'react-native';
-import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
+import { useLocalSearchParams, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw } from 'lucide-react-native';
 import { Security, type ServerEndpoint } from '@openmailbox/mail-core';
@@ -15,6 +15,7 @@ import { useSyncFailureMessage, useSyncLabel } from '@/features/sync/useSyncLabe
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { Button, FormField, FormSection, ListRow, Typography } from '@/ui/components';
+import { goBack } from '@/utils/navigation';
 
 function describeEndpoint(endpoint: ServerEndpoint): string {
   return `${endpoint.host}:${endpoint.port} · ${endpoint.security === Security.Tls ? 'SSL/TLS' : 'STARTTLS'}`;
@@ -23,7 +24,6 @@ function describeEndpoint(endpoint: ServerEndpoint): string {
 export default function AccountSettingsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const router = useRouter();
   const { colors } = useTheme();
   const account = useAccounts().find((candidate) => candidate.id === id);
   const authRequired = useSyncStore((state) => state.authRequired[id] === true);
@@ -71,7 +71,7 @@ export default function AccountSettingsScreen() {
           setSignature(account.id, '');
           useSettingsStore.getState().setAccountNotified(account.id, true);
           await queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
-          router.back();
+          goBack();
         },
       },
     ]);

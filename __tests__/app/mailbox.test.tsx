@@ -14,6 +14,7 @@ let mockParams = { id: 'unified' };
 jest.mock('expo-router', () => ({
   ...jest.requireActual('expo-router'),
   useRouter: () => mockRouter,
+  router: { back: () => mockRouter.back(), replace: (href: string) => mockRouter.replace(href), canGoBack: () => true },
   useLocalSearchParams: () => mockParams,
 }));
 

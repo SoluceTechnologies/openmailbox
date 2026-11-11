@@ -20,6 +20,7 @@ import { useThreadActions } from '@/features/threads/useThreadActions';
 import { ActionList, EmptyState, IconButton, ScreenHeader, Sheet, Typography, ViewContainer } from '@/ui/components';
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
 import { haptic } from '@/utils/haptics';
+import { goBack } from '@/utils/navigation';
 
 const LEAVING_ACTIONS: ThreadActionId[] = ['delete', 'archive', 'moveToInbox', 'junk', 'notJunk', 'markUnread'];
 const COMPOSE_ACTIONS: ThreadActionId[] = ['reply', 'replyAll', 'forward'];
@@ -98,14 +99,14 @@ export default function ThreadScreen() {
   };
 
   const leave = async (work: Promise<unknown>) => {
-    if ((await work) !== false) router.back();
+    if ((await work) !== false) goBack();
   };
   const onAction = (action: ThreadActionId, target: ThreadSummary) => {
     const work = threadActions.run(action, target);
     if (!LEAVING_ACTIONS.includes(action)) return;
     // The move is applied locally first and can be undone, so the screen need not wait for it.
     if (threadActions.confirms(action, target)) leave(work).catch(() => undefined);
-    else router.back();
+    else goBack();
   };
 
   const actions = thread ? threadActions.actionsFor(thread) : [];
@@ -146,7 +147,7 @@ export default function ThreadScreen() {
   return (
     <ViewContainer grouped>
       <SafeAreaView edges={NATIVE_CHROME ? [] : ['top']} style={styles.flex}>
-        {NATIVE_CHROME ? null : <ScreenHeader onBack={() => router.back()} />}
+        {NATIVE_CHROME ? null : <ScreenHeader onBack={goBack} />}
         {emailsQuery.isLoading ? (
           <EmptyState loading title="" />
         ) : emails.length === 0 ? (
@@ -234,7 +235,7 @@ export default function ThreadScreen() {
         onSelect={(target) => {
           if (!moving) return;
           threadActions.moveTo(moving, target);
-          router.back();
+          goBack();
         }}
         onClose={() => setMoving(null)}
       />

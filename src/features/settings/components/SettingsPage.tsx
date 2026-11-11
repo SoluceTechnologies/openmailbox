@@ -1,9 +1,9 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 
 import { ScreenHeader, ViewContainer } from '@/ui/components';
+import { goBack } from '@/utils/navigation';
 
 const MAX_CONTENT_WIDTH = 700;
 
@@ -13,13 +13,12 @@ interface Props {
 }
 
 export function SettingsPage({ title, children }: Props) {
-  const router = useRouter();
 
   return (
     <ViewContainer grouped>
       <SafeAreaView edges={['top']} style={styles.flex}>
         <View style={styles.column}>
-          <ScreenHeader title={title} onBack={() => router.back()} />
+          <ScreenHeader title={title} onBack={goBack} />
         </View>
         <ScrollView
           style={styles.flex}

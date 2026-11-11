@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useLocalSearchParams, useRouter, useTheme } from 'expo-router';
+import { Stack, useLocalSearchParams, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { HStack, Host, Image, Menu, Picker, Text } from '@expo/ui/swift-ui';
 import { foregroundStyle, frame, lineLimit, tag } from '@expo/ui/swift-ui/modifiers';
@@ -21,6 +21,7 @@ import { ActionList, IconButton, Select, Sheet, Typography, ViewContainer } from
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
 import { formatAddressList, parseAddressList, type MailAddress } from '@/utils/addresses';
 import { formatFullDate } from '@/utils/dates';
+import { goBack } from '@/utils/navigation';
 
 const snapshot = (...fields: string[]) => fields.map((field) => field.trim()).join('\u0000');
 const fieldName = (label: string) => label.replace(/\s*:$/, '');
@@ -41,7 +42,6 @@ export default function ComposeScreen() {
   const params = useLocalSearchParams<ComposeParams>();
   const mode: ComposeMode = params.mode ?? 'new';
   const { t } = useTranslation();
-  const router = useRouter();
   const { colors } = useTheme();
   const accounts = useAccounts();
   const defaultAccountId = useSettingsStore((state) => state.defaultAccountId);
@@ -151,12 +151,12 @@ export default function ComposeScreen() {
 
   const close = () => {
     if (!dirty) {
-      router.back();
+      goBack();
       return;
     }
     Alert.alert(t('compose.discardTitle'), undefined, [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('compose.discard'), style: 'destructive', onPress: () => router.back() },
+      { text: t('compose.discard'), style: 'destructive', onPress: goBack },
     ]);
   };
 
@@ -189,7 +189,7 @@ export default function ComposeScreen() {
         attachments: attachments.map(({ path, filename, mimeType }) => ({ path, filename, mimeType })),
       });
       setDefaultAccountId(accountId);
-      router.back();
+      goBack();
       showToast({ label: t('compose.messageSent'), moves: [] });
     } catch (error) {
       setSending(false);

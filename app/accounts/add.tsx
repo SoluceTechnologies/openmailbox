@@ -1,8 +1,6 @@
-import { useRouter } from 'expo-router';
-
 import { AccountSetupFlow } from '@/features/accounts/components/AccountSetupFlow';
+import { goBack } from '@/utils/navigation';
 
 export default function AddAccountScreen() {
-  const router = useRouter();
-  return <AccountSetupFlow onDone={() => router.back()} onClose={() => router.back()} />;
+  return <AccountSetupFlow onDone={goBack} onClose={goBack} />;
 }

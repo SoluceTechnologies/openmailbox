@@ -12,7 +12,7 @@ import { makeAccount } from '../helpers/fixtures';
 import { renderWithProviders } from '../helpers/render';
 
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
-jest.mock('expo-router', () => ({ ...jest.requireActual('expo-router'), useRouter: () => mockRouter }));
+jest.mock('expo-router', () => ({ ...jest.requireActual('expo-router'), useRouter: () => mockRouter, router: { back: () => mockRouter.back(), replace: (href: string) => mockRouter.replace(href), canGoBack: () => true } }));
 
 describe('settings', () => {
   beforeAll(() => i18n.changeLanguage('en'));
