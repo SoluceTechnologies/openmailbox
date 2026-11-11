@@ -46,7 +46,7 @@ function Select<T>({
   value, options, onChange, variant = 'row', icon, glass = false, busy, accessibilityLabel, disabled,
   trigger, header, footer,
 }: SelectProps<T>) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
   const onGlass = glass && LIQUID_GLASS;
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
@@ -110,7 +110,13 @@ function Select<T>({
               ]}
             >
               {onGlass && (
-                <GlassView glassEffectStyle="regular" isInteractive style={[StyleSheet.absoluteFill, styles.iconGlass]} />
+                <GlassView
+                  key={dark ? 'dark' : 'light'}
+                  glassEffectStyle="regular"
+                  colorScheme={dark ? 'dark' : 'light'}
+                  isInteractive
+                  style={[StyleSheet.absoluteFill, styles.iconGlass]}
+                />
               )}
               {busy ? <Spinner size="small" color="secondary" /> : icon?.(colors.text)}
             </View>

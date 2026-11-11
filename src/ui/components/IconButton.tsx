@@ -26,7 +26,7 @@ function IconButton({
   hapticFeedback = Haptics.ImpactFeedbackStyle.Light,
   ...accessibility
 }: IconButtonProps) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, dark } = useTheme();
   const onGlass = glass && isLiquidGlassAvailable();
   const borderRadius = round ? size / 2 : radius.md;
 
@@ -55,7 +55,11 @@ function IconButton({
     >
       {onGlass && (
         <GlassView
+          // A glass view on screen picks up the app's switch of color scheme late, if at all: a new one
+          // is made in the new scheme.
+          key={dark ? 'dark' : 'light'}
           glassEffectStyle="regular"
+          colorScheme={dark ? 'dark' : 'light'}
           isInteractive
           style={[StyleSheet.absoluteFill, { borderRadius }]}
         />
