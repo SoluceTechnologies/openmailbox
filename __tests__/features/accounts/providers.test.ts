@@ -1,6 +1,13 @@
 import { Security } from '@openmailbox/mail-core';
 
-import { LOCAL_TEST_PROVIDER, OVH_OFFERS, PROVIDERS, providerForAddress } from '@/features/accounts/providers';
+import {
+  LOCAL_TEST_PROVIDER,
+  OVH_OFFERS,
+  PROVIDERS,
+  providerForAccount,
+  providerForAddress,
+  providerName,
+} from '@/features/accounts/providers';
 
 describe('providers', () => {
   it('lists the providers in order, without Microsoft', () => {
@@ -52,5 +59,19 @@ describe('providers', () => {
     expect(LOCAL_TEST_PROVIDER.account).toEqual({ email: 'alice@example.com', password: 'secret' });
     expect(LOCAL_TEST_PROVIDER.servers?.imap.port).toBe(3993);
     expect(LOCAL_TEST_PROVIDER.servers?.smtp.port).toBe(3465);
+  });
+
+  it("tells an account's provider, and its OVHcloud offer, from its incoming server", () => {
+    const at = (host: string) => ({ imap: { host } });
+    expect(providerForAccount(at('imap.gmail.com'))?.provider.identifier).toBe('gmail');
+    expect(providerForAccount(at('imap.mail.me.com'))?.provider.identifier).toBe('icloud');
+    expect(providerForAccount(at('IMAP.ionos.de'))?.provider.identifier).toBe('ionos');
+    expect(providerForAccount(at('imap.mail.yahoo.com'))?.provider.identifier).toBe('yahoo');
+    expect(providerForAccount(at(LOCAL_TEST_PROVIDER.servers!.imap.host))?.provider.identifier).toBe('local');
+    expect(providerName(at('pro2.mail.ovh.net'))).toBe('OVHcloud Email Pro');
+    expect(providerName(at('ssl0.ovh.net'))).toBe('OVHcloud MX Plan');
+    expect(providerName(at('mail.ovh.net'))).toBe('OVHcloud');
+    expect(providerForAccount(at('mail.infomaniak.com'))).toBeUndefined();
+    expect(providerName(at('mail.infomaniak.com'))).toBe('infomaniak.com');
   });
 });

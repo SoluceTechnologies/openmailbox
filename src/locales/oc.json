@@ -17,6 +17,7 @@
     "removeMessage": "Los messatges de {{email}} seràn suprimits d'aqueste aparelh. Res es pas suprimit sul servidor.",
     "removeTitle": "Suprimir aqueste compte ?",
     "servers": "Servidors",
+    "provider": "Provesidor",
     "setup": {
       "appPasswordHint": "{{provider}} accèpta pas que los senhals d'aplicacion dins las aplicacions de messatjariá.",
       "appPasswordLink": "Crear un senhal d'aplicacion",

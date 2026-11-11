@@ -1,6 +1,7 @@
 import { Alert } from 'react-native';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import * as Notifications from 'expo-notifications';
+import { Security } from '@openmailbox/mail-core';
 
 import SettingsScreen from '../../app/settings/index';
 import { queryClient, queryKeys } from '@/core/queryClient';
@@ -22,16 +23,18 @@ describe('settings', () => {
     useSettingsStore.setState({ language: 'en', loadRemoteImages: false, contactPictures: true });
     useSyncStore.setState({ statuses: {}, authRequired: {} });
     queryClient.setQueryData(queryKeys.accounts, [
-      makeAccount(),
+      makeAccount({ imap: { host: 'imap.gmail.com', port: 993, security: Security.Tls } }),
       makeAccount({ id: 'account-2', email: 'bob@example.com', displayName: 'bob@example.com' }),
     ]);
   });
 
-  it('lists accounts without repeating an address used as the name', () => {
+  it('lists accounts with their provider, without repeating an address used as the name', () => {
     useSettingsStore.setState({ notificationsEnabled: false });
     renderWithProviders(<SettingsScreen />);
     expect(screen.getByText('Alice Martin')).toBeOnTheScreen();
-    expect(screen.getByText('alice@example.com')).toBeOnTheScreen();
+    expect(screen.getByText('Google · alice@example.com')).toBeOnTheScreen();
+    // A server the app does not know is named after its domain.
+    expect(screen.getByText('example.com')).toBeOnTheScreen();
     expect(screen.getAllByText('bob@example.com')).toHaveLength(1);
   });
 

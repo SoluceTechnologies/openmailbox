@@ -17,6 +17,7 @@
     "removeMessage": "De berichten van {{email}} worden van dit apparaat verwijderd. Er wordt niets verwijderd op de server.",
     "removeTitle": "Deze account verwijderen?",
     "servers": "Servers",
+    "provider": "Provider",
     "setup": {
       "appPasswordHint": "{{provider}} accepteert in e-mailapps alleen app-wachtwoorden.",
       "appPasswordLink": "Een app-wachtwoord aanmaken",

@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { useTheme } from 'expo-router';
 import { Server } from 'lucide-react-native';
 
@@ -9,9 +9,10 @@ import type { BrandMark } from '../providers';
 
 const monogramScale = (letters: number) => (letters > 4 ? 0.22 : letters > 2 ? 0.3 : 0.44);
 
+/** A provider's logo on a tile, like its app icon; a server for providers the app does not know. */
 export function ProviderMark({ brand, size = 32 }: { brand?: BrandMark; size?: number }) {
   const { colors } = useTheme();
-  const tile = { width: size, height: size, borderRadius: size / 4 };
+  const tile = { width: size, height: size, borderRadius: size * 0.24 };
 
   if (!brand) {
     return (
@@ -20,11 +21,30 @@ export function ProviderMark({ brand, size = 32 }: { brand?: BrandMark; size?: n
       </View>
     );
   }
+  const glyph = size * (brand.scale ?? 0.58);
+  const light = brand.background.toLowerCase() === '#ffffff';
   return (
-    <View style={[styles.tile, tile, { backgroundColor: brand.color }]}>
-      {brand.path ? (
-        <Svg width={size * 0.58} height={size * 0.58} viewBox="0 0 24 24">
-          <Path d={brand.path} fill="#ffffff" />
+    <View
+      style={[
+        styles.tile,
+        tile,
+        { backgroundColor: brand.background },
+        light && { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+      ]}
+    >
+      {brand.shapes ? (
+        <Svg width={glyph} height={glyph} viewBox={brand.viewBox ?? '0 0 24 24'}>
+          {brand.gradient ? (
+            <Defs>
+              <LinearGradient id="brand" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={brand.gradient[0]} />
+                <Stop offset="1" stopColor={brand.gradient[1]} />
+              </LinearGradient>
+            </Defs>
+          ) : null}
+          {brand.shapes.map((shape) => (
+            <Path key={shape.d} d={shape.d} fill={brand.gradient ? 'url(#brand)' : shape.fill} />
+          ))}
         </Svg>
       ) : (
         <Typography

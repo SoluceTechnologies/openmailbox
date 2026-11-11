@@ -4,12 +4,14 @@ import { Alert, Linking, StyleSheet, View } from 'react-native';
 import { Bell, CircleUserRound, ImageOff, Info, Palette, Plus, TriangleAlert } from 'lucide-react-native';
 
 import { useAccounts } from '@/core/hooks';
+import { ProviderMark } from '@/features/accounts/components/ProviderMark';
+import { providerForAccount, providerName } from '@/features/accounts/providers';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { requestNotificationPermission } from '@/services/notifications';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { accountColor } from '@/theme';
-import { Avatar, FormSection, ListRow, Toggle } from '@/ui/components';
+import { FormSection, ListRow, Toggle } from '@/ui/components';
 import { LANGUAGES } from '@/utils/i18n';
 
 export default function SettingsScreen() {
@@ -46,8 +48,9 @@ export default function SettingsScreen() {
           <ListRow
             key={account.id}
             title={account.displayName}
-            subtitle={account.displayName === account.email ? undefined : account.email}
-            leading={<Avatar name={account.displayName} size={34} color={accountColor(account.color)} />}
+            // Which provider each account is with, as Mail's account list says.
+            subtitle={[providerName(account), account.displayName === account.email ? null : account.email].filter(Boolean).join(' · ')}
+            leading={<ProviderMark brand={providerForAccount(account)?.provider.brand} size={34} />}
             trailing={authRequired[account.id] ? <TriangleAlert size={18} color={colors.warning} /> : undefined}
             onPress={() => router.push(`/settings/account/${account.id}`)}
           />

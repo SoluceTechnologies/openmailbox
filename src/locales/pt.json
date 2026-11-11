@@ -17,6 +17,7 @@
     "removeMessage": "As mensagens de {{email}} serão removidas deste dispositivo. Nada é apagado no servidor.",
     "removeTitle": "Remover esta conta?",
     "servers": "Servidores",
+    "provider": "Provedor",
     "setup": {
       "appPasswordHint": "{{provider}} só aceita palavras-passe de aplicação nas apps de correio.",
       "appPasswordLink": "Criar uma palavra-passe de aplicação",

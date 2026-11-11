@@ -17,6 +17,7 @@
     "removeMessage": "I messaggi di {{email}} verranno rimossi da questo dispositivo. Nulla viene eliminato sul server.",
     "removeTitle": "Rimuovere questo account?",
     "servers": "Server",
+    "provider": "Provider",
     "setup": {
       "appPasswordHint": "{{provider}} accetta solo password per le app nei client di posta.",
       "appPasswordLink": "Creare una password per le app",

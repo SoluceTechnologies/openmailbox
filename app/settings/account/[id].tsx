@@ -10,6 +10,8 @@ import { mailCore } from '@/core/mailCore';
 import { queryClient, queryKeys } from '@/core/queryClient';
 import { deleteSecret, saveSecret } from '@/core/secrets';
 import { describeCoreError } from '@/features/accounts/coreErrors';
+import { ProviderMark } from '@/features/accounts/components/ProviderMark';
+import { providerForAccount, providerName } from '@/features/accounts/providers';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { useSyncFailureMessage, useSyncLabel } from '@/features/sync/useSyncLabel';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -102,6 +104,12 @@ export default function AccountSettingsScreen() {
       </FormSection>
 
       <FormSection title={t('accounts.servers')}>
+        <ListRow
+          title={t('accounts.provider')}
+          detail={providerName(account)}
+          leading={<ProviderMark brand={providerForAccount(account)?.provider.brand} size={28} />}
+          chevron={false}
+        />
         <ListRow title={t('accounts.setup.incoming')} subtitle={describeEndpoint(account.imap)} />
         <ListRow title={t('accounts.setup.outgoing')} subtitle={describeEndpoint(account.smtp)} />
         <ListRow title={t('accounts.setup.username')} subtitle={account.username} />

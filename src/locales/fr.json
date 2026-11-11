@@ -17,6 +17,7 @@
     "removeMessage": "Les messages de {{email}} seront supprimés de cet appareil. Rien n'est supprimé sur le serveur.",
     "removeTitle": "Supprimer ce compte ?",
     "servers": "Serveurs",
+    "provider": "Fournisseur",
     "setup": {
       "appPasswordHint": "{{provider}} n'accepte que les mots de passe d'application dans les applications de messagerie.",
       "appPasswordLink": "Créer un mot de passe d'application",
