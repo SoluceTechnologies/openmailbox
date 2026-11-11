@@ -79,6 +79,8 @@ jest.mock('expo-contacts/legacy', () => ({
   requestPermissionsAsync: jest.fn(async () => ({ granted: false })),
   getContactsAsync: jest.fn(async () => ({ data: [] })),
   presentContactPickerAsync: jest.fn(async () => null),
+  presentFormAsync: jest.fn(async () => undefined),
+  ContactTypes: { Person: 'person', Company: 'company' },
 }));
 
 jest.mock('react-native-worklets', () => ({

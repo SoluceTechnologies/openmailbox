@@ -29,6 +29,8 @@ interface SelectProps<T> {
   accessibilityLabel?: string;
   disabled?: boolean;
   trigger?: ReactNode;
+  /** Shown above the options, as the title of a menu. */
+  header?: ReactNode;
   footer?: (close: () => void) => ReactNode;
 }
 
@@ -36,12 +38,13 @@ const ROW_HEIGHT = 58;
 const MAX_VISIBLE = 5;
 const MAX_LIST_HEIGHT = ROW_HEIGHT * MAX_VISIBLE;
 const ICON_DROPDOWN_WIDTH = 240;
+const HEADER_HEIGHT = 40;
 
 type Anchor = { x: number; y: number; width: number; height: number };
 
 function Select<T>({
   value, options, onChange, variant = 'row', icon, glass = false, busy, accessibilityLabel, disabled,
-  trigger, footer,
+  trigger, header, footer,
 }: SelectProps<T>) {
   const { colors } = useTheme();
   const onGlass = glass && LIQUID_GLASS;
@@ -66,13 +69,13 @@ function Select<T>({
   let dropdownPos: Record<string, number>;
   if (!a) {
     dropdownPos = { top: 120, left: 16, right: 16 };
-  } else if (variant === 'icon') {
-    dropdownPos = { top: a.y + a.height + 8, left: Math.max(8, a.x + a.width - ICON_DROPDOWN_WIDTH), width: ICON_DROPDOWN_WIDTH };
   } else {
-    const openUp = a.y + a.height + MAX_LIST_HEIGHT + 8 > screenH;
-    dropdownPos = openUp
-      ? { bottom: screenH - a.y + 8, left: a.x, width: a.width }
-      : { top: a.y + a.height + 8, left: a.x, width: a.width };
+    const openUp = a.y + a.height + MAX_LIST_HEIGHT + (header ? HEADER_HEIGHT : 0) + 8 > screenH;
+    const vertical: Record<string, number> = openUp ? { bottom: screenH - a.y + 8 } : { top: a.y + a.height + 8 };
+    dropdownPos =
+      variant === 'icon'
+        ? { ...vertical, left: Math.max(8, a.x + a.width - ICON_DROPDOWN_WIDTH), width: ICON_DROPDOWN_WIDTH }
+        : { ...vertical, left: a.x, width: a.width };
   }
 
   return (
@@ -144,6 +147,7 @@ function Select<T>({
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
         <View style={[styles.dropdown, dropdownPos, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          {header ? <View style={[styles.header, { borderBottomColor: colors.border }]}>{header}</View> : null}
           <ScrollView style={{ maxHeight: MAX_LIST_HEIGHT }} bounces={false}>
             {options.map((option, i) => (
               <AnimatedPressable
@@ -229,6 +233,7 @@ const styles = StyleSheet.create({
   optionBodyIndent: { marginLeft: 14 },
   optionMain: { flexDirection: 'row', alignItems: 'center' },
   optionDesc: { marginTop: 2 },
+  header: { minHeight: HEADER_HEIGHT, justifyContent: 'center', paddingHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth },
   footer: { borderTopWidth: StyleSheet.hairlineWidth },
 });
 

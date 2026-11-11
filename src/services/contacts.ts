@@ -1,6 +1,7 @@
+import { Platform } from 'react-native';
 import * as Contacts from 'expo-contacts/legacy';
 
-import type { MailAddress } from '@/utils/addresses';
+import { displayName, type MailAddress } from '@/utils/addresses';
 
 export async function contactAddresses(query: string): Promise<MailAddress[]> {
   const permission = await Contacts.getPermissionsAsync();
@@ -19,4 +20,16 @@ export async function pickContactAddress(): Promise<MailAddress | null> {
   // On iOS the picker's contact carries firstName/lastName but never `name`.
   const name = contact?.name || [contact?.firstName, contact?.lastName].filter(Boolean).join(' ');
   return email ? { name: name || undefined, email } : null;
+}
+
+/** The system's contact form for an address, to see it or save it as a contact. */
+export async function showContactCard(address: MailAddress): Promise<void> {
+  // Android's form reads the contacts, and is refused without the permission; iOS's needs none.
+  if (Platform.OS === 'android' && !(await Contacts.requestPermissionsAsync()).granted) return;
+  await Contacts.presentFormAsync(null, {
+    contactType: Contacts.ContactTypes.Person,
+    name: displayName(address),
+    firstName: address.name ?? '',
+    emails: [{ email: address.email, label: 'email' }],
+  });
 }
