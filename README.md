@@ -72,7 +72,8 @@ search, menus and long-press previews, in light and dark mode.
 - Mail-style round buttons when you swipe a message aside in a conversation
 - Replies and forwards that keep the original's formatting
 - Recipients suggested from past mail and from your contacts
-- Contact pictures from Gravatar, else the sender's company icon, else initials
+- Contact pictures from Gravatar, else the logo the sender's company publishes for its mail (BIMI) or its
+  website icon, else initials
 
 ### Attachments
 - Opened in place when the phone can: an in-app viewer on iOS, the system's apps on Android
@@ -112,8 +113,9 @@ search, menus and long-press previews, in light and dark mode.
 
 - **Notifications** rely on the system's background scheduling, since there is no push server:
   Android checks at best every 15 minutes and iOS less often, depending on how the app is used.
-- **Contact pictures** tell Gravatar and company websites which addresses you write to. They are
-  fetched once a month per address and can be turned off in Settings.
+- **Contact pictures** tell Gravatar and company websites which addresses you write to, and
+  Cloudflare's DNS resolver which company domains (for their BIMI logos). They are fetched once a month
+  per address and can be turned off in Settings.
 - **Microsoft accounts** need OAuth and are not supported yet.
 
 ---

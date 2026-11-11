@@ -169,7 +169,7 @@
     "accounts": "Comptes",
     "appearance": "Apparence et langue",
     "contactPictures": "Photos des contacts",
-    "contactPicturesHint": "Les photos viennent de Gravatar ou du site de l’entreprise de l’expéditeur, qui peuvent savoir que vous êtes en contact.",
+    "contactPicturesHint": "Les photos viennent de Gravatar, ou du logo ou du site de l’entreprise de l’expéditeur, qui peuvent savoir que vous êtes en contact.",
     "general": "Général",
     "language": "Langue",
     "languageHint": "Les dates et les textes suivent cette langue.",

@@ -49,6 +49,7 @@ The app only connects to the following, and only for the stated purpose:
 | Your IMAP and SMTP servers | To read, sync and send mail | What any mail client sends to your provider |
 | `autoconfig.<your domain>` and `autoconfig.thunderbird.net` (Mozilla) | Once, when you add an account from a provider the app does not know | Your domain; your own domain's server also receives your address |
 | Gravatar (Automattic) and the website of a sender's company | To show contact pictures, at most once a month per address; can be turned off in Settings | That someone looks up this address (Gravatar receives a hash of it) |
+| Cloudflare's DNS resolver (`cloudflare-dns.com`) and the server a company names for its logo | With contact pictures, to find the logo a company publishes for its mail (BIMI), at most once a month per address | The company's domain, never your address |
 | Servers hosting remote images in a message | Only when you choose to load them; they are blocked by default | That the message was opened, and your IP address |
 | The unsubscribe address given by a mailing list | Only when you tap Unsubscribe | Your request to leave the list |
 

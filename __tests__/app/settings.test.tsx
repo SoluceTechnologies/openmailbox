@@ -56,7 +56,7 @@ describe('settings', () => {
     expect(toggle).toBeChecked();
     fireEvent(toggle, 'valueChange', false);
     expect(useSettingsStore.getState().contactPictures).toBe(false);
-    expect(screen.getByText('Pictures come from Gravatar or the website of the sender’s company, which can tell that you are in touch.')).toBeOnTheScreen();
+    expect(screen.getByText('Pictures come from Gravatar, or from the logo or the website of the sender’s company, which can tell that you are in touch.')).toBeOnTheScreen();
   });
 
   it('shows the current language next to Appearance', () => {

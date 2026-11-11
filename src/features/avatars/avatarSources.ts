@@ -1,4 +1,5 @@
 import { PROVIDERS } from '@/features/accounts/providers';
+import { organizationDomain } from '@/utils/addresses';
 import { sha256Hex } from '@/utils/sha256';
 
 const GRAVATAR_SIZE = 128;
@@ -32,18 +33,13 @@ const PERSONAL_DOMAINS = new Set([
 
 const PERSONAL_BRANDS = new Set(['aol', 'gmail', 'gmx', 'hotmail', 'icloud', 'live', 'msn', 'outlook', 'yahoo']);
 
-const SECOND_LEVELS = new Set(['ac', 'co', 'com', 'edu', 'gouv', 'gov', 'ne', 'net', 'or', 'org']);
-
-export function organizationDomain(domain: string): string {
-  const labels = domain.split('.');
-  const keep = labels.length > 2 && labels.at(-1)!.length === 2 && SECOND_LEVELS.has(labels.at(-2)!) ? 3 : 2;
-  return labels.slice(-keep).join('.');
-}
-
 export function isPersonalMailDomain(domain: string): boolean {
   const organization = organizationDomain(domain);
   return PERSONAL_DOMAINS.has(organization) || PERSONAL_BRANDS.has(organization.split('.')[0]);
 }
+
+/** Not a URL: the logo the domain publishes for its mail (BIMI), found in its DNS. */
+export const BIMI_SOURCE = 'bimi:';
 
 export function avatarSources(email: string): string[] {
   const address = email.trim().toLowerCase();
@@ -52,7 +48,8 @@ export function avatarSources(email: string): string[] {
   const sources = [`https://gravatar.com/avatar/${sha256Hex(address)}?s=${GRAVATAR_SIZE}&d=404`];
   if (!isPersonalMailDomain(domain)) {
     const website = organizationDomain(domain);
-    sources.push(`https://${website}/apple-touch-icon.png`, `https://${website}/favicon.ico`);
+    // The brand's logo for mail before its website's icons, which are often small or generic.
+    sources.push(`${BIMI_SOURCE}${domain}`, `https://${website}/apple-touch-icon.png`, `https://${website}/favicon.ico`);
   }
   return sources;
 }

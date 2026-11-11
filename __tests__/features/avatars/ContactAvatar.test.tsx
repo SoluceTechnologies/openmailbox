@@ -7,6 +7,18 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { renderWithProviders } from '../../helpers/render';
 
 jest.mock('@/features/avatars/avatarCache', () => ({ cachedAvatar: jest.fn(), loadAvatar: jest.fn() }));
+jest.mock('expo-file-system', () => ({
+  File: class {
+    mockUri: string;
+    constructor(mockUri: string) {
+      this.mockUri = mockUri;
+    }
+    textSync() {
+      if (this.mockUri.endsWith('broken.svg')) throw new Error('gone');
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1" fill="#0a66c2"/></svg>';
+    }
+  },
+}));
 
 const cachedAvatarMock = cachedAvatar as jest.Mock;
 const loadAvatarMock = loadAvatar as jest.Mock;
@@ -52,5 +64,16 @@ describe('ContactAvatar', () => {
     expect(screen.getByText('CD')).toBeOnTheScreen();
     expect(cachedAvatarMock).not.toHaveBeenCalled();
     expect(loadAvatarMock).not.toHaveBeenCalled();
+  });
+
+  it("draws a brand's BIMI logo, an SVG, and the initials when it cannot be read", () => {
+    cachedAvatarMock.mockReturnValue('file:///cache/avatars/linkedin.svg');
+    const { rerender } = renderWithProviders(<ContactAvatar email="news@linkedin.com" name="LinkedIn" />);
+    expect(screen.getByTestId('avatar-picture')).toBeOnTheScreen();
+    expect(screen.queryByText('L')).toBeNull();
+
+    cachedAvatarMock.mockReturnValue('file:///cache/avatars/broken.svg');
+    rerender(<ContactAvatar email="news@broken.example" name="Broken" />);
+    expect(screen.getByText('B')).toBeOnTheScreen();
   });
 });

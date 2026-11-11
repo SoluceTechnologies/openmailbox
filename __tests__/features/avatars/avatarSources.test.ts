@@ -1,11 +1,13 @@
-import { avatarSources, isPersonalMailDomain, organizationDomain } from '@/features/avatars/avatarSources';
+import { avatarSources, isPersonalMailDomain } from '@/features/avatars/avatarSources';
+import { organizationDomain } from '@/utils/addresses';
 
 const CLAIRE_HASH = 'fcff6bf802768fc08ef2ff4524a7edd6b26d79e94e4d8351982596ad03ead30e';
 
 describe('avatar sources', () => {
-  it('looks up Gravatar first, then the website of a professional domain', () => {
+  it("looks up Gravatar first, then the company's BIMI logo and website icons", () => {
     expect(avatarSources(' Claire.Dubois@Lumen.example ')).toEqual([
       `https://gravatar.com/avatar/${CLAIRE_HASH}?s=128&d=404`,
+      'bimi:lumen.example',
       'https://lumen.example/apple-touch-icon.png',
       'https://lumen.example/favicon.ico',
     ]);

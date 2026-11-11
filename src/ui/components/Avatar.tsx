@@ -1,7 +1,23 @@
 import React, { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
+import { SvgXml } from 'react-native-svg';
+import { File } from 'expo-file-system';
 import { useTheme } from 'expo-router';
 import Typography from './Typography';
+
+const svgs = new Map<string, string | null>();
+
+/** A saved SVG picture (a brand's BIMI logo), read once. */
+function svgAt(uri: string): string | null {
+  if (!svgs.has(uri)) {
+    try {
+      svgs.set(uri, new File(uri).textSync());
+    } catch {
+      svgs.set(uri, null);
+    }
+  }
+  return svgs.get(uri) ?? null;
+}
 
 interface AvatarProps {
   uri?: string | null;
@@ -25,7 +41,19 @@ function Avatar({ uri, name, size = 40, color }: AvatarProps) {
   const [failedUri, setFailedUri] = useState<string | null>(null);
   const radius = size / 2;
 
-  if (uri && uri !== failedUri) {
+  const svg = uri && uri !== failedUri && uri.endsWith('.svg') ? svgAt(uri) : null;
+  if (svg) {
+    return (
+      <View
+        testID="avatar-picture"
+        style={{ width: size, height: size, borderRadius: radius, overflow: 'hidden', backgroundColor: '#ffffff', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}
+      >
+        <SvgXml xml={svg} width={size} height={size} onError={() => setFailedUri(uri ?? null)} />
+      </View>
+    );
+  }
+
+  if (uri && uri !== failedUri && !uri.endsWith('.svg')) {
     return (
       <Image
         testID="avatar-picture"
