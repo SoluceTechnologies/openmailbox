@@ -3,7 +3,6 @@ import type { Image } from '@expo/ui/swift-ui';
 import { Inbox, Megaphone, MessageSquareText, ShoppingCart, UserRound, type LucideIcon } from 'lucide-react-native';
 import { Category } from '@openmailbox/mail-core';
 
-/** What the inbox shows: one category, or all mail. */
 export type InboxFilter = 'primary' | 'transactions' | 'updates' | 'promotions' | 'all';
 
 export const INBOX_FILTERS: InboxFilter[] = ['primary', 'transactions', 'updates', 'promotions', 'all'];
@@ -22,9 +21,7 @@ type SymbolName = NonNullable<ComponentProps<typeof Image>['systemName']>;
 export interface FilterPresentation {
   label: string;
   Icon: LucideIcon;
-  /** The SF Symbol iOS draws in place of `Icon`. */
   symbol: SymbolName;
-  /** Mail's tint for the category, in light and dark mode. */
   tint: { light: string; dark: string };
 }
 
@@ -40,7 +37,6 @@ export function filterOf(category: Category): Exclude<InboxFilter, 'all'> {
   return FILTER_OF[category];
 }
 
-/** The category to list, or undefined for all mail. */
 export function categoryOf(filter: InboxFilter): Category | undefined {
   return CATEGORIES.find((category) => FILTER_OF[category] === filter);
 }

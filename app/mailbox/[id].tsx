@@ -74,7 +74,6 @@ export default function MailboxScreen() {
   const [searchActive, setSearchActive] = useState(false);
   const searching = searchActive || query.trim().length > 1;
   const mailbox = mailboxes.find((candidate) => candidate.id === scope);
-  // Categories sort the inboxes only; other folders list everything.
   const categorized = unified || mailbox?.role === MailboxRole.Inbox;
   const inboxFilter = useSettingsStore((state) => state.inboxFilter);
   const setInboxFilter = useSettingsStore((state) => state.setInboxFilter);
@@ -152,7 +151,6 @@ export default function MailboxScreen() {
   ) : (
     <FlashList
       contentInsetAdjustmentBehavior="automatic"
-      // New mail lands at the top: keep the list there, under the large title, as Mail does.
       maintainVisibleContentPosition={{ disabled: true }}
       data={data}
       keyExtractor={(thread) => thread.key}
@@ -242,7 +240,6 @@ export default function MailboxScreen() {
     </>
   );
 
-  // iOS collapses the large title as the list scrolls only when the list is the screen's first view.
   if (NATIVE_CHROME) {
     const allSelected = data.length > 0 && selection.selected.size === data.length;
     return (

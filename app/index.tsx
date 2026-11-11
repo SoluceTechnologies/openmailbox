@@ -151,7 +151,6 @@ export default function MailboxesScreen() {
       </ScrollView>
     );
 
-  // iOS collapses the large title as the list scrolls only when the list is the screen's first view.
   if (NATIVE_CHROME) {
     return (
       <>

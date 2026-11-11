@@ -9,7 +9,6 @@ import type { BrandMark } from '../providers';
 
 const monogramScale = (letters: number) => (letters > 4 ? 0.22 : letters > 2 ? 0.3 : 0.44);
 
-/** A provider's logo on a tile, like its app icon; a server for providers the app does not know. */
 export function ProviderMark({ brand, size = 32 }: { brand?: BrandMark; size?: number }) {
   const { colors } = useTheme();
   const tile = { width: size, height: size, borderRadius: size * 0.24 };

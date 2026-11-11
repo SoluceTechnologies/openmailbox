@@ -82,7 +82,6 @@ pub fn parse_summary(header: &[u8], partial_text: &[u8]) -> ParsedHeaders {
     }
 }
 
-/// `X-Mailer` values of marketing platforms.
 const MARKETING_MAILERS: &[&str] = &[
     "mailchimp",
     "sendinblue",
@@ -101,7 +100,6 @@ const MARKETING_MAILERS: &[&str] = &[
     "mailjet campaign",
 ];
 
-/// Headers marketing platforms add to campaigns (Mailchimp, Brevo, Mailjet) or to commercial mail.
 const CAMPAIGN_HEADERS: &[&str] = &[
     "X-CSA-Complaints",
     "X-Campaign",

@@ -28,7 +28,6 @@ function threadScope(scope: string): ThreadScope {
 
 const flattenThreadPages = (data: InfiniteData<ThreadPage, string | undefined>) => data.pages.flatMap((page) => page.threads);
 
-/** `category` keeps the threads of that inbox category only. */
 export function threadsQuery(scope: string, unreadOnly: boolean, category?: Category) {
   return infiniteQueryOptions({
     queryKey: queryKeys.threads(scope, unreadOnly, category),

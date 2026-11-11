@@ -63,8 +63,6 @@ const config: ExpoConfig = {
     [
       'expo-splash-screen',
       {
-        // iOS shows the app's background only, like Apple's apps. Android 12+ always draws an icon: the
-        // envelope on the launcher icon's blue, in both themes, so the icon grows into the splash.
         backgroundColor: '#ffffff',
         dark: { backgroundColor: '#000000' },
         android: {

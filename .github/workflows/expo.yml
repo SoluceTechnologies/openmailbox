@@ -1,8 +1,5 @@
 name: Build & Publish (Expo / EAS)
 
-# The Rust core is built on the runner, then uploaded with the project: .easignore keeps the
-# built libraries that .gitignore leaves out.
-
 on:
   workflow_call:
     inputs:
@@ -44,7 +41,6 @@ jobs:
       - name: Install cargo-ndk
         run: cargo install cargo-ndk --locked
 
-      # Unset the runner's default NDK so the script picks NDK 27, as in a local build.
       - name: Build the Rust core
         run: env -u ANDROID_NDK_HOME tools/build-core.sh android --release
 
@@ -58,9 +54,8 @@ jobs:
       - name: Strip tracked native dirs so EAS runs a managed prebuild
         run: rm -rf android ios
 
-      # --no-wait: EAS submits to Google Play itself once the build is done.
       - name: Build & submit on EAS (production)
-        run: eas build --profile production --platform android --non-interactive --no-wait --auto-submit
+        run: eas build --profile production --platform android --non-interactive --auto-submit
 
       - name: Build APK on EAS
         run: |
@@ -78,7 +73,6 @@ jobs:
 
   ios:
     name: EAS iOS (${{ inputs.version }})
-    # The core is an xcframework, which needs Xcode.
     runs-on: macos-latest
 
     steps:
@@ -111,6 +105,5 @@ jobs:
       - name: Strip tracked native dirs so EAS runs a managed prebuild
         run: rm -rf android ios
 
-      # --no-wait: EAS submits to App Store Connect itself, and the macOS runner stops billing now.
       - name: Build & submit on EAS (production)
-        run: eas build --profile production --platform ios --non-interactive --no-wait --auto-submit
+        run: eas build --profile production --platform ios --non-interactive --auto-submit

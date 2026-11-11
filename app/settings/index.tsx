@@ -48,7 +48,6 @@ export default function SettingsScreen() {
           <ListRow
             key={account.id}
             title={account.displayName}
-            // Which provider each account is with, as Mail's account list says.
             subtitle={[providerName(account), account.displayName === account.email ? null : account.email].filter(Boolean).join(' · ')}
             leading={<ProviderMark brand={providerForAccount(account)?.provider.brand} size={34} />}
             trailing={authRequired[account.id] ? <TriangleAlert size={18} color={colors.warning} /> : undefined}

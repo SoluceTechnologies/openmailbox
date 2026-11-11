@@ -11,7 +11,6 @@ const RECHECK_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
 const OFFLINE_RETRY_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 10_000;
 const MAX_BYTES = 512 * 1024;
-/** DNS over HTTPS: React Native has no DNS lookup of its own. */
 const DNS_RESOLVER = 'https://cloudflare-dns.com/dns-query';
 const TXT = 16;
 
@@ -24,7 +23,6 @@ const resolved = new Map<string, Entry>();
 const pending = new Map<string, Promise<string | null>>();
 
 const normalize = (email: string) => email.trim().toLowerCase();
-// Version 2 added BIMI logos: pictures found before are looked up again rather than kept a month.
 const storageKey = (address: string) => `avatar2:${address}`;
 
 export function cachedAvatar(email: string): string | null | undefined {
@@ -78,10 +76,6 @@ function remember(address: string, uri: string | null): string | null {
   return uri;
 }
 
-/**
- * The logo a brand publishes for its mail: a `default._bimi` TXT record at the sender's domain,
- * else at its organization's, points to an SVG.
- */
 async function bimiLogo(domain: string): Promise<Uint8Array | null> {
   const organization = organizationDomain(domain);
   const location = (await bimiLocation(domain)) ?? (organization !== domain ? await bimiLocation(organization) : null);
@@ -104,7 +98,6 @@ async function bimiLocation(domain: string): Promise<string | null> {
   }
 }
 
-/** The `l=` of a BIMI record, from TXT data whose strings are each quoted: only an HTTPS SVG. */
 export function bimiLogoLocation(records: string[]): string | null {
   for (const data of records) {
     const text = (data.match(/"((?:[^"\\]|\\.)*)"/g) ?? [data]).map((part) => part.replace(/^"|"$/g, '')).join('');
@@ -134,7 +127,6 @@ async function download(url: string): Promise<Uint8Array | null> {
   }
 }
 
-/** An `.svg` file holds a BIMI logo, which pictures are drawn from differently. */
 function save(address: string, bytes: Uint8Array, extension: string): string {
   const directory = new Directory(Paths.cache, 'avatars');
   if (!directory.exists) directory.create({ intermediates: true });

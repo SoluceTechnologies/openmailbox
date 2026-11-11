@@ -13,7 +13,6 @@ export function Providers({ children }: { children: ReactNode }) {
   const themePreference = useSettingsStore((state) => state.themePreference);
   const resolved = themePreference === 'system' ? (systemScheme ?? 'light') : themePreference;
 
-  // Native views (glass buttons, menus, alerts, the keyboard) follow the app's choice, not only ours.
   useEffect(() => Appearance.setColorScheme(themePreference === 'system' ? 'unspecified' : themePreference), [themePreference]);
 
   return (

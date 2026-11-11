@@ -1,6 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-// Gesture handler's Pressable: on Android, React Native's misses taps on the left swipe action.
 import { Pressable } from 'react-native-gesture-handler';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,7 +37,6 @@ export default function ThreadScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const swipeable = useRef<SwipeableMethods>(null);
-  // A long-press preview from the list shows the thread without opening it.
   const isPreview = useIsPreview();
   const mailboxes = useMailboxes();
   const emailsQuery = useThreadEmails(threadId, mailboxId);
@@ -68,7 +66,6 @@ export default function ThreadScreen() {
             isFlagged: flagged,
             hasAttachment: emails.some((email) => email.hasAttachment),
             lastReceivedAt: latest.receivedAt,
-            // Not known from the messages; nothing on this screen reads it.
             category: Category.Primary,
           }
         : null,
@@ -110,7 +107,6 @@ export default function ThreadScreen() {
   const onAction = (action: ThreadActionId, target: ThreadSummary) => {
     const work = threadActions.run(action, target);
     if (!LEAVING_ACTIONS.includes(action)) return;
-    // The move is applied locally first and can be undone, so the screen need not wait for it.
     if (threadActions.confirms(action, target)) leave(work).catch(() => undefined);
     else goBack();
   };
@@ -174,7 +170,6 @@ export default function ThreadScreen() {
               </View>
             )}
             renderRightActions={() => (
-              // The toolbar offers the same actions to VoiceOver; these only follow the finger.
               <View style={styles.swipeButtons} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                 {swipeButton('reply', '#0a84ff')}
                 {swipeButton(flagged ? 'unflag' : 'flag', '#ff9500')}
@@ -274,7 +269,6 @@ export default function ThreadScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  // Rounded like a card for the swipe; on Android the bottom meets the toolbar, so only the top is.
   content: {
     flexGrow: 1,
     paddingBottom: 40,

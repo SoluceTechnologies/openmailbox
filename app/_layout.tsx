@@ -24,8 +24,6 @@ function ThemedStatusBar() {
 function Navigator() {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  // Modal headers are set here rather than from the screen: options a screen sets while its modal presents land
-  // late, so the header first shows the route name, then rebuilds under the user's first tap.
   const modalHeader = (title: string) => ({ presentation: 'modal' as const, headerShown: NATIVE_CHROME, headerTransparent: true, title });
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>

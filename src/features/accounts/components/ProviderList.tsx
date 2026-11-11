@@ -54,7 +54,6 @@ function ProviderRow({ provider, onSelect }: { provider: MailProvider; onSelect:
 
 const HEART_RED = '#ff3b30';
 
-/** The signature Deck has too, with a heart that beats now and then. */
 export function MadeWithLove() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -64,7 +63,7 @@ export function MadeWithLove() {
   useEffect(() => {
     if (reduceMotion) return;
     const beat = (to: number, duration: number) => withTiming(to, { duration, easing: Easing.out(Easing.quad) });
-    // Two quick beats, then a rest, like a heartbeat.
+
     scale.value = withRepeat(withSequence(beat(1.22, 140), beat(1, 150), beat(1.12, 120), beat(1, 220), withDelay(1400, beat(1, 0))), -1);
     return () => cancelAnimation(scale);
   }, [reduceMotion, scale]);

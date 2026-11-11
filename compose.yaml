@@ -1,6 +1,3 @@
-# Local mail server for development and integration tests.
-# Use tools/mail-server/mail-server.sh (or `yarn mail:start`): it creates the TLS certificate
-# this service mounts and seeds the mailboxes once the server is up.
 services:
   mail:
     image: greenmail/standalone:2.1.15
@@ -20,12 +17,10 @@ services:
         -Dgreenmail.users.login=email
       JAVA_OPTS: -Djava.net.preferIPv4Stack=true -Xmx1g
 
-  # Production-grade IMAP server for performance measurements (GreenMail resolves UIDs linearly).
-  # Started by `tools/mail-server/mail-server.sh performance`.
   performance-imap:
     image: dovecot/dovecot:2.4.2
     container_name: openmailbox-performance-imap
-    profiles: ["performance"]
+    profiles: [ "performance" ]
     ports:
       - "3994:31993"
     volumes:

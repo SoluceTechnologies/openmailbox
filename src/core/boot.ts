@@ -17,8 +17,7 @@ async function start(): Promise<void> {
   core.subscribe(new CoreEventListener());
   const accounts = await core.listAccounts();
   queryClient.setQueryData(queryKeys.accounts, accounts);
-  // The app opens on All Inboxes: read what it shows before the splash goes, so it appears whole,
-  // and before sync starts writing.
+
   if (accounts.length > 0) {
     const category = categoryOf(useSettingsStore.getState().inboxFilter);
     await Promise.all([

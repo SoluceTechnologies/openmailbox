@@ -55,8 +55,6 @@ function IconButton({
     >
       {onGlass && (
         <GlassView
-          // A glass view on screen picks up the app's switch of color scheme late, if at all: a new one
-          // is made in the new scheme.
           key={dark ? 'dark' : 'light'}
           glassEffectStyle="regular"
           colorScheme={dark ? 'dark' : 'light'}

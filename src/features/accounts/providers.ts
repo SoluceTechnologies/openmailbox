@@ -5,17 +5,12 @@ import { organizationDomain } from '@/utils/addresses';
 
 export type ProviderIdentifier = 'gmail' | 'icloud' | 'ovhcloud' | 'ionos' | 'yahoo' | 'other' | 'local';
 
-/** A provider's logo, drawn on a tile like an app icon. */
 export interface BrandMark {
   background: string;
-  /** The logo's shapes, in the `viewBox` square (24 by default). */
   shapes?: { d: string; fill: string }[];
   viewBox?: string;
-  /** A vertical gradient filling every shape, as on Apple's iCloud icon. */
   gradient?: [string, string];
-  /** How much of the tile the logo spans. */
   scale?: number;
-  /** For brands whose logo is their name. */
   monogram?: string;
   monogramColor?: string;
 }
@@ -188,14 +183,9 @@ export function providerForAddress(email: string): MailProvider | undefined {
   return domain ? PROVIDERS.find((provider) => provider.domains.includes(domain)) : undefined;
 }
 
-/** `ssl0`, `pro1`, `ex5`: the kind of server, without its number. */
 const serverKind = (host: string) => host.split('.')[0].replace(/\d+$/, '');
 const brandName = (host: string) => organizationDomain(host).split('.')[0];
 
-/**
- * Which provider an account is with, from its incoming server, and for OVHcloud which offer;
- * undefined for servers the app does not know.
- */
 export function providerForAccount(account: { imap: { host: string } }): { provider: MailProvider; offer?: string } | undefined {
   const host = account.imap.host.trim().toLowerCase();
   if (host === LOCAL_TEST_PROVIDER.servers?.imap.host) return { provider: LOCAL_TEST_PROVIDER };
@@ -208,7 +198,6 @@ export function providerForAccount(account: { imap: { host: string } }): { provi
   return provider ? { provider } : undefined;
 }
 
-/** "Google", "OVHcloud Email Pro", or the domain of a server the app does not know. */
 export function providerName(account: { imap: { host: string } }): string {
   const known = providerForAccount(account);
   if (!known) return organizationDomain(account.imap.host.trim().toLowerCase());

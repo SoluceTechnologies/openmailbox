@@ -1,6 +1,5 @@
 name: Auto Release & Publish
 
-# Runs when a pull request whose title contains [release] is merged into main, or by hand.
 
 on:
   workflow_dispatch:
@@ -44,7 +43,6 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-      # app.config.ts derives the Android versionCode from this version, so it must stay x.y.z.
       - name: Run release-it
         id: release_step
         run: |

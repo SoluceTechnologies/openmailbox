@@ -7,7 +7,6 @@ import Typography from './Typography';
 
 const svgs = new Map<string, string | null>();
 
-/** A saved SVG picture (a brand's BIMI logo), read once. */
 function svgAt(uri: string): string | null {
   if (!svgs.has(uri)) {
     try {

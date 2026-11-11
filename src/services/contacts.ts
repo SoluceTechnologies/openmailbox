@@ -17,14 +17,11 @@ export async function pickContactAddress(): Promise<MailAddress | null> {
   if (!permission.granted) return null;
   const contact = await Contacts.presentContactPickerAsync();
   const email = contact?.emails?.find((entry) => entry.email)?.email;
-  // On iOS the picker's contact carries firstName/lastName but never `name`.
   const name = contact?.name || [contact?.firstName, contact?.lastName].filter(Boolean).join(' ');
   return email ? { name: name || undefined, email } : null;
 }
 
-/** The system's contact form for an address, to see it or save it as a contact. */
 export async function showContactCard(address: MailAddress): Promise<void> {
-  // Android's form reads the contacts, and is refused without the permission; iOS's needs none.
   if (Platform.OS === 'android' && !(await Contacts.requestPermissionsAsync()).granted) return;
   await Contacts.presentFormAsync(null, {
     contactType: Contacts.ContactTypes.Person,

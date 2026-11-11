@@ -18,13 +18,10 @@ import { haptic } from '@/utils/haptics';
 
 import { INBOX_FILTERS, PRESENTATION, type InboxFilter } from './categories';
 
-/** The header's own margin, which the row lines up with. */
 const MARGIN = 20;
 const GAP = 8;
-/** How much of All Mail shows at the right edge while a category is chosen, as in Mail. */
 const PEEK = 14;
 const ALL_WIDTH = 56;
-/** Wider screens show the whole row rather than stretching it. */
 const MAX_ROW = 520;
 const ICON_SIZE = 17;
 const ICON_BOX = ICON_SIZE + 4;
@@ -43,7 +40,6 @@ function CategoryIcon({ filter, color }: { filter: InboxFilter; color: string })
   const { Icon, symbol } = PRESENTATION[filter];
   if (!NATIVE_CHROME) return <Icon size={ICON_SIZE} color={color} fill={color} strokeWidth={1.5} />;
   return (
-    // A fixed frame: a Host sized from its content is measured a frame late and shifts the row.
     <Host style={styles.icon}>
       <Image systemName={symbol} size={ICON_SIZE} color={color} />
     </Host>
@@ -54,9 +50,7 @@ interface IconLayerProps {
   filter: InboxFilter;
   color: string;
   shown: SharedValue<number>;
-  /** The white icon of a chosen chip, rather than the grey one. */
   lit: boolean;
-  /** Whether this layer shows once the chip has settled. */
   visible: boolean;
 }
 
@@ -72,9 +66,7 @@ function IconLayer({ filter, color, shown, lit, visible }: IconLayerProps) {
 interface CategoryChipProps {
   filter: InboxFilter;
   selected: boolean;
-  /** Shares the row with the other categories rather than keeping a fixed width. */
   flexible: boolean;
-  /** The width of the chip's name, once measured; until then the chosen chip sizes itself. */
   labelWidth: number | undefined;
   motion: boolean;
   onPress: () => void;
@@ -86,8 +78,6 @@ function CategoryChip({ filter, selected, flexible, labelWidth, motion, onPress 
   const idle = IDLE[dark ? 'dark' : 'light'];
   const tint = PRESENTATION[filter].tint[dark ? 'dark' : 'light'];
   const label = t(PRESENTATION[filter].label);
-  // The size springs from an icon (0) to the icon and its name (1), a little past it as Mail's does;
-  // the colors fade quicker, without the bounce.
   const progress = useSharedValue(selected ? 1 : 0);
   const shown = useSharedValue(selected ? 1 : 0);
 
@@ -100,7 +90,6 @@ function CategoryChip({ filter, selected, flexible, labelWidth, motion, onPress 
   const measured = labelWidth !== undefined;
   const nameWidth = labelWidth ?? 0;
   const expanded = 2 * PADDING + ICON_BOX + LABEL_GAP + nameWidth;
-  // Widths follow the spring on every frame, so the pill keeps its rounded ends while it grows.
   const size = useAnimatedStyle(() => {
     if (!measured) return {};
     return flexible
@@ -115,9 +104,7 @@ function CategoryChip({ filter, selected, flexible, labelWidth, motion, onPress 
     const open = Math.max(progress.value, 0);
     return { width: nameWidth * open, marginLeft: LABEL_GAP * Math.min(open, 1), opacity: shown.value };
   });
-  // Until the names are measured, the chosen chip takes its content's width.
   const sizing = measured || !selected ? (flexible ? styles.shared : styles.fixed) : styles.own;
-  // Where the animations come to rest, for the frames before they first run.
   const settledSize = !measured ? null : flexible ? { minWidth: selected ? expanded : COLLAPSED_MIN } : { width: selected ? expanded : ALL_WIDTH };
   const settledName = selected ? { width: nameWidth, marginLeft: LABEL_GAP, opacity: 1 } : { width: 0, marginLeft: 0, opacity: 0 };
 
@@ -156,11 +143,6 @@ interface CategoryBarProps {
   onChange: (filter: InboxFilter) => void;
 }
 
-/**
- * The inbox categories and All Mail, like Mail's: the chosen one spells its name in its color and
- * the others share the rest of the row as icons. All Mail peeks at the edge while a category is
- * chosen, and the chips spring from one choice to the next.
- */
 export function CategoryBar({ value, onChange }: CategoryBarProps) {
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
@@ -168,7 +150,7 @@ export function CategoryBar({ value, onChange }: CategoryBarProps) {
   const scroll = useRef<ScrollView>(null);
   const [labelWidths, setLabelWidths] = useState<Partial<Record<InboxFilter, number>>>({});
   const allMail = value === 'all';
-  // Laid out from the window, not measured: the row is in place from the first frame.
+
   const rowWidth = Math.min(MAX_ROW, allMail ? width - 2 * MARGIN : width - MARGIN - PEEK + ALL_WIDTH);
   const animatedRowWidth = useSharedValue(rowWidth);
   const measured = INBOX_FILTERS.every((filter) => labelWidths[filter] !== undefined);
@@ -209,7 +191,6 @@ export function CategoryBar({ value, onChange }: CategoryBarProps) {
           />
         ))}
       </Animated.View>
-      {/* The names at their natural width, out of sight, so the chips can grow to them. */}
       <View style={styles.measure} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         {INBOX_FILTERS.map((filter) => (
           <Text
@@ -233,8 +214,6 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: MARGIN, paddingVertical: 2 },
   row: { flexDirection: 'row', gap: GAP },
   chip: { height: 34, borderRadius: 17, overflow: 'hidden' },
-  // Sizes come from `width` and `minWidth`, never `flexBasis`: Yoga keeps a flex basis it computed
-  // once, so a chip going from its content's width to `flexBasis: 0` would keep its old width.
   own: { flexGrow: 0, flexShrink: 1, width: 'auto' },
   shared: { flexGrow: 1, flexShrink: 1, width: 0, minWidth: COLLAPSED_MIN },
   fixed: { flexGrow: 0, flexShrink: 0, width: ALL_WIDTH },

@@ -68,9 +68,6 @@ impl SendingSignals {
     }
 }
 
-// The lists below are lowercase and without accents (see `fold`). A `*` ends a stem; terms of
-// several words match those words in a row.
-
 /// Local parts, without their separators, of senders nobody answers.
 const NO_REPLY: &[&str] = &[
     "noreply",

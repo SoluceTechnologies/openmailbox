@@ -18,7 +18,6 @@ export default function AttachmentScreen() {
   const share = () => Sharing.shareAsync(uri, { mimeType, dialogTitle: name }).catch(() => undefined);
 
   const viewer = mimeType.startsWith('image/') ? (
-    // WebKit pins an image to the top-left; this centres it and keeps pinch-to-zoom.
     <ScrollView maximumZoomScale={4} centerContent style={styles.flex} contentContainerStyle={styles.flex}>
       <Image source={{ uri }} resizeMode="contain" accessibilityLabel={name} style={styles.flex} />
     </ScrollView>
@@ -29,7 +28,6 @@ export default function AttachmentScreen() {
       allowingReadAccessToURL={directory}
       allowFileAccess
       javaScriptEnabled={false}
-      // Pages start below the transparent header and scroll under it.
       contentInsetAdjustmentBehavior="automatic"
       style={styles.flex}
     />

@@ -3,10 +3,8 @@ import { ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSynthe
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 const VISIBLE_ROWS = 3;
-// ponytail: fixed row estimate (chip padding + name + size); measure rows if chips change height.
 const ROW_HEIGHT = 58;
 const GAP = 8;
-// Half of the next row peeks out, so the list reads as scrollable.
 const MAX_HEIGHT = VISIBLE_ROWS * (ROW_HEIGHT + GAP) + ROW_HEIGHT / 2;
 const FADE_HEIGHT = 28;
 

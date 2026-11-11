@@ -70,7 +70,7 @@ export function AccountSetupFlow({ onDone, onClose }: AccountSetupFlowProps) {
           </Stack.Toolbar>
         </>
       ) : null}
-      {/* Inside an iOS sheet the native SafeAreaView sees no bottom inset, so the sheet pads itself. */}
+
       <SafeAreaView
         edges={nativeModal ? [] : ['top', 'bottom']}
         style={[styles.flex, nativeModal && { paddingBottom: insets.bottom }]}
@@ -116,7 +116,7 @@ export function AccountSetupFlow({ onDone, onClose }: AccountSetupFlowProps) {
               <ProviderList onSelect={setProvider} />
             )}
           </ScrollView>
-          {/* Pinned under the list, as in Deck, whatever its length. */}
+
           {provider ? null : <MadeWithLove />}
         </KeyboardAvoidingView>
       </SafeAreaView>

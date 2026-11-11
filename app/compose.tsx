@@ -55,7 +55,6 @@ export default function ComposeScreen() {
   const initialAccountId = params.accountId ?? defaultAccountId ?? accounts[0]?.id;
   const pickAccountId = () => (accounts.some((account) => account.id === initialAccountId) ? initialAccountId : accounts[0]?.id);
   const [accountId, setAccountId] = useState(pickAccountId);
-  // Accounts may still be loading on the first render (cold deep link); pick one once they arrive.
   useEffect(() => {
     if (!accountId && accounts.length > 0) setAccountId(pickAccountId());
   }, [accounts]);

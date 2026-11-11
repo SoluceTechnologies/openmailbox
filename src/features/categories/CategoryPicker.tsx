@@ -10,9 +10,7 @@ import { displayName } from '@/utils/addresses';
 import { CATEGORIES, PRESENTATION, filterOf } from './categories';
 
 interface CategoryPickerProps {
-  /** The sender to move, past and future mail; the sheet is shown while there is one. */
   sender: Address | undefined;
-  /** The category the thread is in, when known. */
   current?: Category;
   onClose: () => void;
 }

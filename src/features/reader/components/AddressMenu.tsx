@@ -11,7 +11,6 @@ import { displayName, formatAddress, type MailAddress } from '@/utils/addresses'
 
 type AddressAction = 'compose' | 'contact';
 
-/** A name in a message's From, To or Cc, with a menu to write to it or see it as a contact. */
 export function AddressMenu({ address }: { address: MailAddress }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -27,7 +26,6 @@ export function AddressMenu({ address }: { address: MailAddress }) {
       </View>
     );
     return (
-      // The same menu as Mail's on iOS: the name, then its address over what can be done with it.
       <Select<AddressAction | null>
         value={null}
         variant="icon"

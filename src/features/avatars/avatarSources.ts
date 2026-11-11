@@ -38,7 +38,6 @@ export function isPersonalMailDomain(domain: string): boolean {
   return PERSONAL_DOMAINS.has(organization) || PERSONAL_BRANDS.has(organization.split('.')[0]);
 }
 
-/** Not a URL: the logo the domain publishes for its mail (BIMI), found in its DNS. */
 export const BIMI_SOURCE = 'bimi:';
 
 export function avatarSources(email: string): string[] {
@@ -48,7 +47,6 @@ export function avatarSources(email: string): string[] {
   const sources = [`https://gravatar.com/avatar/${sha256Hex(address)}?s=${GRAVATAR_SIZE}&d=404`];
   if (!isPersonalMailDomain(domain)) {
     const website = organizationDomain(domain);
-    // The brand's logo for mail before its website's icons, which are often small or generic.
     sources.push(`${BIMI_SOURCE}${domain}`, `https://${website}/apple-touch-icon.png`, `https://${website}/favicon.ico`);
   }
   return sources;

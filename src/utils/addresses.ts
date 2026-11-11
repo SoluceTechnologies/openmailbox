@@ -4,7 +4,6 @@ const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 
 const SECOND_LEVELS = new Set(['ac', 'co', 'com', 'edu', 'gouv', 'gov', 'ne', 'net', 'or', 'org']);
 
-/** The domain an organization registered: `github.com` for `notifications.github.com`. */
 export function organizationDomain(domain: string): string {
   const labels = domain.split('.');
   const keep = labels.length > 2 && labels.at(-1)!.length === 2 && SECOND_LEVELS.has(labels.at(-2)!) ? 3 : 2;
