@@ -53,6 +53,26 @@ search, menus and long-press previews, in light and dark mode.
 
 ---
 
+## 📥 Download
+
+<p>
+  <a href="https://github.com/SoluceTechnologies/openmailbox/releases/latest">
+    <img src="https://img.shields.io/badge/Download-APK-3DDC84?logo=android&logoColor=white&style=for-the-badge" alt="Download the latest APK" height="28" />
+  </a>
+  &nbsp;
+  <img src="https://img.shields.io/badge/App%20Store-Coming%20soon-lightgrey?logo=apple&logoColor=white&style=for-the-badge" alt="App Store: coming soon" height="28" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/Google%20Play-Coming%20soon-lightgrey?logo=googleplay&logoColor=white&style=for-the-badge" alt="Google Play: coming soon" height="28" />
+</p>
+
+- **Android**: the APK is attached to the [latest release](https://github.com/SoluceTechnologies/openmailbox/releases/latest).
+- **iOS** and **Google Play**: coming soon.
+
+Want early access? Beta builds are available, reach out at
+[contact@soluce-technologies.com](mailto:contact@soluce-technologies.com).
+
+---
+
 ## ✨ Features
 
 ### All your accounts, one inbox
@@ -190,6 +210,16 @@ yarn typecheck
 App tests live in `__tests__/`, grouped like the sources, and use Jest with React Native Testing
 Library. They load the generated bindings for their types but replace the core itself with the fake
 in `jest.setup.js`, so they run without a native build.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome. For anything larger than a fix, open an issue first so we can agree on the
+approach. [CONTRIBUTING.md](.github/CONTRIBUTING.md) covers the setup, the local test server, tests,
+commit conventions and how releases are made.
+
+Found a bug or have an idea? [Open an issue](https://github.com/SoluceTechnologies/openmailbox/issues/new/choose).
 
 ---
 
