@@ -30,6 +30,7 @@ import { EmptyState, IconButton, ScreenHeader, Spinner, Typography, ViewContaine
 import { SegmentedPicker } from '@/ui/SegmentedPicker';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { haptic } from '@/utils/haptics';
 import { goBack } from '@/utils/navigation';
 
 const MINIMUM_REFRESH_MS = 700;
@@ -51,6 +52,7 @@ function usePullToRefresh(accountIds: string[]) {
   }, [now, requestedAt, syncing]);
 
   const refresh = useCallback(() => {
+    haptic();
     setRequestedAt(Date.now());
     for (const accountId of accountIds) mailCore().syncNow(accountId);
   }, [accountIds]);
