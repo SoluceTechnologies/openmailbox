@@ -38,7 +38,12 @@ const config: ExpoConfig = {
     allowBackup: false,
     blockedPermissions: ['android.permission.WRITE_CONTACTS'],
   },
-
+  owner: "soluce",
+  extra: {
+    eas: {
+      projectId: '8c646dba-55b4-4bf3-ac99-bedbc5d51dbd',
+    },
+  },
   plugins: [
     'expo-router',
     'expo-secure-store',
