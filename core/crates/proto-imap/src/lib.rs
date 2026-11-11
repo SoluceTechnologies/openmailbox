@@ -370,7 +370,8 @@ impl ImapConnection {
         } else {
             "(MESSAGES UNSEEN UIDNEXT UIDVALIDITY)"
         };
-        let mailbox = complete(timed(self.session.status(remote_name, items)).await?)?;
+        let selected = self.selected.as_deref() == Some(remote_name);
+        let mailbox = status_complete(&mut self.session, remote_name, items, selected).await?;
         Ok(MailboxStatus {
             messages: mailbox.exists,
             unseen: mailbox.unseen.unwrap_or_default(),
@@ -678,6 +679,24 @@ where
     complete(mailbox)
 }
 
+/// Dovecot answers STATUS on the selected mailbox from the session's own view, which only takes
+/// in mail delivered since on a NOOP: without one, a new message stays unseen until the
+/// connection idles long enough to be checked.
+async fn status_complete<T>(
+    session: &mut async_imap::Session<T>,
+    remote_name: &str,
+    items: &str,
+    selected: bool,
+) -> Result<async_imap::types::Mailbox>
+where
+    T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + std::fmt::Debug + Send,
+{
+    if selected {
+        timed_within(NOOP_TIMEOUT, session.noop()).await?;
+    }
+    complete(timed(session.status(remote_name, items)).await?)
+}
+
 /// UID SEARCH, where an empty result is confirmed with a NOOP: a closed connection answers
 /// "nothing found" too (see [`complete`]), and NOOP does fail on one.
 async fn search_complete<T>(
@@ -864,6 +883,51 @@ mod tests {
             (mailbox.exists, mailbox.uid_validity),
             (147, Some(1_794_294_172))
         );
+    }
+
+    #[tokio::test]
+    async fn the_selected_mailbox_status_includes_mail_delivered_since_it_was_selected() {
+        use tokio::io::{AsyncBufReadExt, BufReader};
+
+        // Like Dovecot: STATUS on the selected mailbox answers from the session's view, which
+        // only takes in the message delivered meanwhile on the next NOOP.
+        let (client, server) = tokio::io::duplex(4096);
+        tokio::spawn(async move {
+            let (read, mut write) = tokio::io::split(server);
+            let mut read = BufReader::new(read);
+            let mut line = String::new();
+            let mut uid_next = 16;
+            while read.read_line(&mut line).await.unwrap_or(0) > 0 {
+                let tag = line.split(' ').next().unwrap_or_default().to_owned();
+                let answer = if line.contains("NOOP") {
+                    uid_next = 17;
+                    format!("* 16 EXISTS\r\n{tag} OK NOOP completed\r\n")
+                } else if line.contains("STATUS") {
+                    format!(
+                        "* STATUS INBOX (MESSAGES {} UIDNEXT {uid_next} UIDVALIDITY 1)\r\n{tag} OK STATUS completed\r\n",
+                        uid_next - 1
+                    )
+                } else {
+                    format!("{tag} OK completed\r\n")
+                };
+                write.write_all(answer.as_bytes()).await.unwrap();
+                line.clear();
+            }
+        });
+        let mut session = async_imap::Client::new(client)
+            .login("alice", "secret")
+            .await
+            .map_err(|(error, _)| error)
+            .unwrap();
+        let mailbox = status_complete(
+            &mut session,
+            "INBOX",
+            "(MESSAGES UIDNEXT UIDVALIDITY)",
+            true,
+        )
+        .await
+        .unwrap();
+        assert_eq!((mailbox.exists, mailbox.uid_next), (16, Some(17)));
     }
 
     #[tokio::test]
