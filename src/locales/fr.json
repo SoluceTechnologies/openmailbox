@@ -54,7 +54,8 @@
       "signIn": "Se connecter",
       "username": "Identifiant",
       "welcome": "Bienvenue dans Open Mailbox",
-      "welcomeHint": "Ajoutez un compte de messagerie pour commencer. Vos messages sont stockés uniquement sur cet appareil."
+      "welcomeHint": "Ajoutez un compte de messagerie pour commencer. Vos messages sont stockés uniquement sur cet appareil.",
+      "madeWith": "Fait avec ♥ pour la communauté · Open Source"
     },
     "signature": "Signature",
     "signatureHint": "Ajoutée aux nouveaux messages, réponses et transferts envoyés depuis ce compte.",

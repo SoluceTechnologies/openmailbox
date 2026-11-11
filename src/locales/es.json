@@ -54,7 +54,8 @@
       "signIn": "Iniciar sesión",
       "username": "Usuario",
       "welcome": "Te damos la bienvenida a Open Mailbox",
-      "welcomeHint": "Añade una cuenta de correo para empezar. Tus mensajes se guardan solo en este dispositivo."
+      "welcomeHint": "Añade una cuenta de correo para empezar. Tus mensajes se guardan solo en este dispositivo.",
+      "madeWith": "Hecho con ♥ para la comunidad · Código abierto"
     },
     "signature": "Firma",
     "signatureHint": "Se añade a los mensajes nuevos, respuestas y reenvíos de esta cuenta.",

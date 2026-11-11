@@ -33,7 +33,7 @@ function Navigator() {
         name="compose"
         options={({ route }) => modalHeader(t(composeTitleKey((route.params as { mode?: ComposeMode } | undefined)?.mode)))}
       />
-      <Stack.Screen name="accounts/add" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="accounts/add" options={modalHeader(t('accounts.setup.chooseProvider'))} />
       <Stack.Screen name="attachment" options={({ route }) => modalHeader((route.params as { name?: string } | undefined)?.name ?? '')} />
     </Stack>
   );

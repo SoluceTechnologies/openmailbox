@@ -54,7 +54,8 @@
       "signIn": "Sign In",
       "username": "Username",
       "welcome": "Welcome to Open Mailbox",
-      "welcomeHint": "Add a mail account to get started. Your messages are stored on this device only."
+      "welcomeHint": "Add a mail account to get started. Your messages are stored on this device only.",
+      "madeWith": "Made with ♥ for the community · Open Source"
     },
     "signature": "Signature",
     "signatureHint": "Added to new messages, replies and forwards sent from this account.",

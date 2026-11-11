@@ -54,7 +54,8 @@
       "signIn": "Log in",
       "username": "Gebruikersnaam",
       "welcome": "Welkom bij Open Mailbox",
-      "welcomeHint": "Voeg een e-mailaccount toe om te beginnen. Je berichten worden alleen op dit apparaat bewaard."
+      "welcomeHint": "Voeg een e-mailaccount toe om te beginnen. Je berichten worden alleen op dit apparaat bewaard.",
+      "madeWith": "Gemaakt met ♥ voor de community · Open source"
     },
     "signature": "Handtekening",
     "signatureHint": "Toegevoegd aan nieuwe berichten, antwoorden en doorgestuurde berichten van dit account.",

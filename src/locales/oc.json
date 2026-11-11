@@ -54,7 +54,8 @@
       "signIn": "Se connectar",
       "username": "Identificant",
       "welcome": "Benvenguda dins Open Mailbox",
-      "welcomeHint": "Apondètz un compte de messatjariá per començar. Vòstres messatges son gardats sonque sus aqueste aparelh."
+      "welcomeHint": "Apondètz un compte de messatjariá per començar. Vòstres messatges son gardats sonque sus aqueste aparelh.",
+      "madeWith": "Fach amb ♥ per la comunautat · Open Source"
     },
     "signature": "Signatura",
     "signatureHint": "Aponduda als messatges novèls, responsas e transferiments mandats dempuèi aqueste compte.",

@@ -54,7 +54,8 @@
       "signIn": "Anmelden",
       "username": "Benutzername",
       "welcome": "Willkommen bei Open Mailbox",
-      "welcomeHint": "Füge ein E-Mail-Konto hinzu, um loszulegen. Deine Nachrichten werden nur auf diesem Gerät gespeichert."
+      "welcomeHint": "Füge ein E-Mail-Konto hinzu, um loszulegen. Deine Nachrichten werden nur auf diesem Gerät gespeichert.",
+      "madeWith": "Mit ♥ für die Community gemacht · Open Source"
     },
     "signature": "Signatur",
     "signatureHint": "Wird neuen Nachrichten, Antworten und Weiterleitungen von diesem Konto hinzugefügt.",

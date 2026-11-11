@@ -111,6 +111,11 @@ jest.mock('react-native-reanimated', () => {
       return value;
     },
     withSpring: (value) => value,
+    withRepeat: (value) => value,
+    withSequence: (...values) => values.at(-1),
+    withDelay: (_delay, value) => value,
+    cancelAnimation: () => undefined,
+    Easing: { out: (easing) => easing, quad: (progress) => progress },
     FadeIn: {},
     FadeOut: {},
     LinearTransition: {},

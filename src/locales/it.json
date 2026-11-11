@@ -54,7 +54,8 @@
       "signIn": "Accedi",
       "username": "Nome utente",
       "welcome": "Benvenuto in Open Mailbox",
-      "welcomeHint": "Aggiungi un account di posta per iniziare. I tuoi messaggi sono salvati solo su questo dispositivo."
+      "welcomeHint": "Aggiungi un account di posta per iniziare. I tuoi messaggi sono salvati solo su questo dispositivo.",
+      "madeWith": "Fatto con ♥ per la comunità · Open Source"
     },
     "signature": "Firma",
     "signatureHint": "Aggiunta ai nuovi messaggi, alle risposte e agli inoltri inviati da questo account.",
