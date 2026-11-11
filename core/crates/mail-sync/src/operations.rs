@@ -324,7 +324,13 @@ mod tests {
             .thread_email_ids(
                 inbox,
                 store
-                    .list_threads(mail_model::ThreadScope::Mailbox(inbox), false, None, 1)
+                    .list_threads(
+                        mail_model::ThreadScope::Mailbox(inbox),
+                        false,
+                        None,
+                        None,
+                        1,
+                    )
                     .unwrap()
                     .threads[0]
                     .thread_id,
@@ -397,7 +403,13 @@ mod tests {
             )
             .unwrap();
         let thread_id = store
-            .list_threads(mail_model::ThreadScope::Mailbox(inbox), false, None, 1)
+            .list_threads(
+                mail_model::ThreadScope::Mailbox(inbox),
+                false,
+                None,
+                None,
+                1,
+            )
             .unwrap()
             .threads[0]
             .thread_id;

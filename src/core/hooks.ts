@@ -1,5 +1,5 @@
-import { useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-query';
-import { ThreadScope, type Account, type Mailbox, type ThreadPage } from '@openmailbox/mail-core';
+import { infiniteQueryOptions, keepPreviousData, useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-query';
+import { ThreadScope, type Account, type Category, type Mailbox, type ThreadPage } from '@openmailbox/mail-core';
 
 import { useSyncStore } from '@/stores/syncStore';
 
@@ -16,8 +16,10 @@ export function useAccounts(): Account[] {
   return useQuery({ queryKey: queryKeys.accounts, queryFn: () => mailCore().listAccounts() }).data ?? EMPTY_ACCOUNTS;
 }
 
+export const mailboxesQuery = { queryKey: queryKeys.mailboxes, queryFn: () => mailCore().listMailboxes(undefined) };
+
 export function useMailboxes(): Mailbox[] {
-  return useQuery({ queryKey: queryKeys.mailboxes, queryFn: () => mailCore().listMailboxes(undefined) }).data ?? EMPTY_MAILBOXES;
+  return useQuery(mailboxesQuery).data ?? EMPTY_MAILBOXES;
 }
 
 function threadScope(scope: string): ThreadScope {
@@ -26,13 +28,23 @@ function threadScope(scope: string): ThreadScope {
 
 const flattenThreadPages = (data: InfiniteData<ThreadPage, string | undefined>) => data.pages.flatMap((page) => page.threads);
 
-export function useThreads(scope: string, unreadOnly: boolean) {
-  return useInfiniteQuery({
-    queryKey: queryKeys.threads(scope, unreadOnly),
-    queryFn: ({ pageParam }) => mailCore().listThreads(threadScope(scope), unreadOnly, pageParam, THREAD_PAGE_SIZE),
+/** `category` keeps the threads of that inbox category only. */
+export function threadsQuery(scope: string, unreadOnly: boolean, category?: Category) {
+  return infiniteQueryOptions({
+    queryKey: queryKeys.threads(scope, unreadOnly, category),
+    queryFn: ({ pageParam }) => mailCore().listThreads(threadScope(scope), unreadOnly, category, pageParam, THREAD_PAGE_SIZE),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (page) => page.nextCursor,
+  });
+}
+
+export function useThreads(scope: string, unreadOnly: boolean, category?: Category) {
+  return useInfiniteQuery({
+    ...threadsQuery(scope, unreadOnly, category),
     select: flattenThreadPages,
+    // Another category or the unread filter keeps the list on screen until its threads are read,
+    // rather than flashing a spinner.
+    placeholderData: keepPreviousData,
   });
 }
 

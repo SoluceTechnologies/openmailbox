@@ -11,6 +11,9 @@ import { BottomBar } from '@/components/BottomBar';
 import { useAccounts, useMailboxes, useThreads } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
+import { CategoryBar } from '@/features/categories/CategoryBar';
+import { CategoryPicker } from '@/features/categories/CategoryPicker';
+import { categoryOf } from '@/features/categories/categories';
 import { MailboxPicker } from '@/features/mailboxes/components/MailboxPicker';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { SearchResults } from '@/features/search/SearchResults';
@@ -25,6 +28,7 @@ import { useThreadSelection } from '@/features/threads/useThreadSelection';
 import { accountColor } from '@/theme';
 import { EmptyState, IconButton, ScreenHeader, Spinner, Typography, ViewContainer } from '@/ui/components';
 import { SegmentedPicker } from '@/ui/SegmentedPicker';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
 import { goBack } from '@/utils/navigation';
 
@@ -67,9 +71,13 @@ export default function MailboxScreen() {
   const [query, setQuery] = useState('');
   const [searchActive, setSearchActive] = useState(false);
   const searching = searchActive || query.trim().length > 1;
-  const threads = useThreads(scope, unreadOnly);
-
   const mailbox = mailboxes.find((candidate) => candidate.id === scope);
+  // Categories sort the inboxes only; other folders list everything.
+  const categorized = unified || mailbox?.role === MailboxRole.Inbox;
+  const inboxFilter = useSettingsStore((state) => state.inboxFilter);
+  const setInboxFilter = useSettingsStore((state) => state.setInboxFilter);
+  const threads = useThreads(scope, unreadOnly, categorized ? categoryOf(inboxFilter) : undefined);
+
   const account = accounts.find((candidate) => candidate.id === mailbox?.accountId);
   const accountIds = useMemo(
     () => (unified ? accounts.map((candidate) => candidate.id) : account ? [account.id] : []),
@@ -96,9 +104,10 @@ export default function MailboxScreen() {
   const [previewed, setPreviewed] = useState<ThreadSummary | null>(null);
   const [sheetThread, setSheetThread] = useState<ThreadSummary | null>(null);
   const [moving, setMoving] = useState<ThreadSummary | null>(null);
+  const [categorizing, setCategorizing] = useState<ThreadSummary | null>(null);
   const selection = useThreadSelection();
   const selectionActions = useSelectionActions([...selection.selected.values()], selection.end);
-  const threadActions = useThreadActions(setMoving);
+  const threadActions = useThreadActions(setMoving, setCategorizing);
   const { run: runThreadAction, actionsFor } = threadActions;
 
   const openThread = useCallback(
@@ -165,6 +174,11 @@ export default function MailboxScreen() {
               {subtitle}
             </Typography>
           ) : null}
+          {categorized ? (
+            <View style={styles.categories}>
+              <CategoryBar value={inboxFilter} onChange={setInboxFilter} />
+            </View>
+          ) : null}
           <View style={styles.filters}>
             <SegmentedPicker
               accessibilityLabel={t('threads.filter')}
@@ -222,6 +236,7 @@ export default function MailboxScreen() {
         onSelect={(target) => moving && threadActions.moveTo(moving, target)}
         onClose={() => setMoving(null)}
       />
+      <CategoryPicker sender={categorizing?.latest.from[0]} current={categorizing?.category} onClose={() => setCategorizing(null)} />
     </>
   );
 
@@ -333,6 +348,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   header: { paddingHorizontal: 20, paddingBottom: 12 },
   subtitle: { marginTop: 2, fontSize: 13 },
+  categories: { marginTop: 14, marginHorizontal: -20 },
   filters: { marginTop: 14, width: 240 },
   listContent: { paddingBottom: 120 },
   footer: { marginVertical: 20, alignSelf: 'center' },

@@ -1,3 +1,7 @@
+mod category;
+
+pub use category::{CLASSIFIER_VERSION, Category, SendingSignals, classify};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, thiserror::Error)]
@@ -224,6 +228,7 @@ pub struct ThreadSummary {
     pub is_flagged: bool,
     pub has_attachment: bool,
     pub last_received_at: i64,
+    pub category: Category,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -321,6 +326,7 @@ pub struct ParsedHeaders {
     pub date: Option<i64>,
     pub has_attachment: bool,
     pub preview: Option<String>,
+    pub signals: SendingSignals,
 }
 
 impl ParsedHeaders {

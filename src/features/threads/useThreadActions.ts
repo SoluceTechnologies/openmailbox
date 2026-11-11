@@ -11,7 +11,7 @@ import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { deleteThreadsForever, moveWithUndo } from './moves';
 import { availableThreadActions, deletesForGood, indexMailboxes, threadActionContext, type ThreadActionId } from './threadActions';
 
-export function useThreadActions(onMove?: (thread: ThreadSummary) => void) {
+export function useThreadActions(onMove?: (thread: ThreadSummary) => void, onCategorize?: (thread: ThreadSummary) => void) {
   const router = useRouter();
   const { t } = useTranslation();
   const mailboxes = useMailboxes();
@@ -44,6 +44,8 @@ export function useThreadActions(onMove?: (thread: ThreadSummary) => void) {
             return setThreadRead(thread, action === 'markRead');
           case 'move':
             return onMove?.(thread);
+          case 'categorize':
+            return onCategorize?.(thread);
           case 'archive':
             return move(new Destination.Archive(), t('undo.archived'));
           case 'moveToInbox':
@@ -59,7 +61,7 @@ export function useThreadActions(onMove?: (thread: ThreadSummary) => void) {
       })();
       return Promise.resolve(work).catch(() => undefined);
     },
-    [router, t, index, onMove],
+    [router, t, index, onMove, onCategorize],
   );
 
   const moveTo = useCallback(

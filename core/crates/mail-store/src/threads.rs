@@ -1,8 +1,9 @@
 use std::collections::HashSet;
 
-use mail_model::{EmailSummary, Result, ThreadPage, ThreadScope, ThreadSummary};
+use mail_model::{Category, EmailSummary, Result, ThreadPage, ThreadScope, ThreadSummary};
 use rusqlite::{Transaction, params};
 
+use crate::categories::THREAD_CATEGORY;
 use crate::{EMAIL_COLUMNS, StorageResult, Store, email_from_row};
 
 const NO_MAILBOX: i64 = -1;
@@ -15,11 +16,12 @@ pub(crate) fn refresh_threads(transaction: &Transaction, thread_ids: &HashSet<i6
         )
         .storage()?;
     let mut upsert = transaction
-        .prepare_cached(
+        .prepare_cached(&format!(
             "INSERT INTO mailbox_thread (mailbox_id, thread_id, account_id, unified, latest_email_id,
-               last_received_at, message_count, unread_count, is_flagged, has_attachment)
+               last_received_at, message_count, unread_count, is_flagged, has_attachment, category)
              SELECT em.mailbox_id, e.thread_id, e.account_id, COALESCE(m.role = 'inbox', 0), e.id,
-               MAX(e.received_at), COUNT(*), SUM(1 - e.is_seen), SUM(e.is_flagged) > 0, SUM(e.has_attachment) > 0
+               MAX(e.received_at), COUNT(*), SUM(1 - e.is_seen), SUM(e.is_flagged) > 0, SUM(e.has_attachment) > 0,
+               {THREAD_CATEGORY}
              FROM email e
              JOIN email_mailbox em ON em.email_id = e.id
              JOIN mailbox m ON m.id = em.mailbox_id
@@ -32,8 +34,9 @@ pub(crate) fn refresh_threads(transaction: &Transaction, thread_ids: &HashSet<i6
                message_count = excluded.message_count,
                unread_count = excluded.unread_count,
                is_flagged = excluded.is_flagged,
-               has_attachment = excluded.has_attachment",
-        )
+               has_attachment = excluded.has_attachment,
+               category = excluded.category"
+        ))
         .storage()?;
     let mut remove_empty = transaction
         .prepare_cached("DELETE FROM thread WHERE id = ?1 AND NOT EXISTS (SELECT 1 FROM email WHERE thread_id = ?1)")
@@ -58,6 +61,7 @@ impl Store {
         &self,
         scope: ThreadScope,
         unread_only: bool,
+        category: Option<Category>,
         cursor: Option<&str>,
         limit: u32,
     ) -> Result<ThreadPage> {
@@ -70,10 +74,11 @@ impl Store {
         let mut statement = connection
             .prepare_cached(&format!(
                 "SELECT mt.rowid, mt.thread_id, mt.mailbox_id, mt.message_count, mt.unread_count, mt.is_flagged,
-                   mt.has_attachment, mt.last_received_at, {EMAIL_COLUMNS}
+                   mt.has_attachment, mt.last_received_at, mt.category, {EMAIL_COLUMNS}
                  FROM mailbox_thread mt JOIN email e ON e.id = mt.latest_email_id
                  WHERE {scope_filter}
                    AND (?2 = 0 OR mt.unread_count > 0)
+                   AND (?6 IS NULL OR mt.category = ?6)
                    AND (mt.last_received_at < ?3 OR (mt.last_received_at = ?3 AND mt.rowid < ?4))
                  ORDER BY mt.last_received_at DESC, mt.rowid DESC
                  LIMIT ?5"
@@ -87,13 +92,14 @@ impl Store {
                     unread_only,
                     cursor_received_at,
                     cursor_row_id,
-                    limit
+                    limit,
+                    category.map(Category::code)
                 ],
                 |row| {
                     let row_id: i64 = row.get(0)?;
                     let last_received_at: i64 = row.get(7)?;
                     last_position = Some((last_received_at, row_id));
-                    let latest = email_from_row(row, 8)?;
+                    let latest = email_from_row(row, 9)?;
                     Ok(ThreadSummary {
                         thread_id: row.get(1)?,
                         mailbox_id: row.get(2)?,
@@ -103,6 +109,7 @@ impl Store {
                         is_flagged: row.get(5)?,
                         has_attachment: row.get(6)?,
                         last_received_at,
+                        category: Category::from_code(row.get(8)?),
                         latest,
                     })
                 },
@@ -235,7 +242,7 @@ mod tests {
             .unwrap();
 
         let first_page = store
-            .list_threads(ThreadScope::Unified, false, None, 1)
+            .list_threads(ThreadScope::Unified, false, None, None, 1)
             .unwrap();
         assert_eq!(first_page.threads.len(), 1);
         assert_eq!(first_page.threads[0].message_count, 2);
@@ -249,6 +256,7 @@ mod tests {
             .list_threads(
                 ThreadScope::Unified,
                 false,
+                None,
                 first_page.next_cursor.as_deref(),
                 1,
             )
@@ -261,6 +269,7 @@ mod tests {
             .list_threads(
                 ThreadScope::Unified,
                 false,
+                None,
                 second_page.next_cursor.as_deref(),
                 1,
             )
@@ -276,7 +285,7 @@ mod tests {
             .unwrap();
         store.set_mailbox_counts(inbox, 1, 1).unwrap();
         let thread = store
-            .list_threads(ThreadScope::Mailbox(inbox), true, None, 10)
+            .list_threads(ThreadScope::Mailbox(inbox), true, None, None, 10)
             .unwrap()
             .threads[0]
             .clone();
@@ -286,7 +295,7 @@ mod tests {
             .unwrap();
         assert!(
             store
-                .list_threads(ThreadScope::Mailbox(inbox), true, None, 10)
+                .list_threads(ThreadScope::Mailbox(inbox), true, None, None, 10)
                 .unwrap()
                 .threads
                 .is_empty()
@@ -299,14 +308,14 @@ mod tests {
         assert_eq!(sources[0].uid, Some(1));
         assert!(
             store
-                .list_threads(ThreadScope::Unified, false, None, 10)
+                .list_threads(ThreadScope::Unified, false, None, None, 10)
                 .unwrap()
                 .threads
                 .is_empty()
         );
         assert_eq!(
             store
-                .list_threads(ThreadScope::Mailbox(trash), false, None, 10)
+                .list_threads(ThreadScope::Mailbox(trash), false, None, None, 10)
                 .unwrap()
                 .threads
                 .len(),
@@ -339,7 +348,7 @@ mod tests {
         store.update_flags(inbox, &[(1, Flags::default())]).unwrap();
         let unread = |store: &Store| {
             store
-                .list_threads(ThreadScope::Mailbox(inbox), false, None, 1)
+                .list_threads(ThreadScope::Mailbox(inbox), false, None, None, 1)
                 .unwrap()
                 .threads[0]
                 .unread_count

@@ -7,11 +7,12 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Stack, useIsPreview, useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ellipsis, Flag, FolderInput, Forward, Reply, ReplyAll, Trash2 } from 'lucide-react-native';
-import { Keyword, type ThreadSummary } from '@openmailbox/mail-core';
+import { Category, Keyword, type ThreadSummary } from '@openmailbox/mail-core';
 
 import { setThreadRead, type ThreadReference } from '@/core/actions';
 import { useMailboxes, useThreadEmails } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
+import { CategoryPicker } from '@/features/categories/CategoryPicker';
 import { MailboxPicker } from '@/features/mailboxes/components/MailboxPicker';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { MessageCard } from '@/features/reader/components/MessageCard';
@@ -46,7 +47,8 @@ export default function ThreadScreen() {
   const [replyMenuVisible, setReplyMenuVisible] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [moving, setMoving] = useState<ThreadSummary | null>(null);
-  const threadActions = useThreadActions(setMoving);
+  const [categorizing, setCategorizing] = useState<ThreadSummary | null>(null);
+  const threadActions = useThreadActions(setMoving, setCategorizing);
 
   const mailbox = mailboxes.find((candidate) => candidate.id === mailboxId);
   const reference: ThreadReference | null = mailboxId ? { mailboxId, threadId } : null;
@@ -66,6 +68,8 @@ export default function ThreadScreen() {
             isFlagged: flagged,
             hasAttachment: emails.some((email) => email.hasAttachment),
             lastReceivedAt: latest.receivedAt,
+            // Not known from the messages; nothing on this screen reads it.
+            category: Category.Primary,
           }
         : null,
     [latest, mailboxId, threadId, emails, flagged],
@@ -241,6 +245,7 @@ export default function ThreadScreen() {
         }}
         onClose={() => setMoving(null)}
       />
+      <CategoryPicker sender={categorizing?.latest.from[0]} onClose={() => setCategorizing(null)} />
       {NATIVE_CHROME && !isPreview ? (
         <>
           <Stack.Screen options={{ headerShown: true, title: '', headerTransparent: true, headerBackButtonDisplayMode: 'minimal' }} />

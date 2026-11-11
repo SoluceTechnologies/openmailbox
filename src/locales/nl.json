@@ -63,6 +63,15 @@
     "syncNow": "Haal nieuwe e-mail op",
     "updatePassword": "Werk wachtwoord bij"
   },
+  "categories": {
+    "all": "Alle mail",
+    "filter": "Categorie",
+    "moveSender": "Mail van {{sender}} verplaatsen",
+    "primary": "Primair",
+    "promotions": "Promoties",
+    "transactions": "Transacties",
+    "updates": "Updates"
+  },
   "common": {
     "back": "Terug",
     "cancel": "Annuleer",
@@ -201,6 +210,7 @@
   },
   "threads": {
     "archive": "Archiveer",
+    "categorize": "Afzender indelen",
     "delete": "Verwijderen",
     "deleteForever": "Definitief verwijderen",
     "deleteForeverMessage": "De berichten worden van de server verwijderd. Dit kan niet ongedaan worden gemaakt.",

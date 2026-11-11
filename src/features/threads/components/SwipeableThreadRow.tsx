@@ -20,7 +20,7 @@ import { ThreadRow } from './ThreadRow';
 const ACTION_WIDTH = 80;
 const MENU_ORDER: ThreadActionId[] = [
   'reply', 'replyAll', 'forward', 'markRead', 'markUnread', 'flag', 'unflag',
-  'move', 'archive', 'moveToInbox', 'junk', 'notJunk', 'delete',
+  'move', 'categorize', 'archive', 'moveToInbox', 'junk', 'notJunk', 'delete',
 ];
 
 interface SwipeActionProps {

@@ -1,8 +1,9 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
-import { Destination, MailboxRole } from '@openmailbox/mail-core';
+import { Category, Destination, MailboxRole } from '@openmailbox/mail-core';
 
 import MailboxScreen from '../../app/mailbox/[id]';
 import { queryClient, queryKeys } from '@/core/queryClient';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useUndoStore } from '@/stores/undoStore';
 import i18n from '@/utils/i18n';
 
@@ -35,6 +36,7 @@ describe('thread list', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockParams = { id: 'unified' };
+    useSettingsStore.setState({ inboxFilter: 'primary' });
     queryClient.clear();
     queryClient.setQueryData(queryKeys.accounts, [makeAccount()]);
     queryClient.setQueryData(queryKeys.mailboxes, [makeMailbox({ unreadCount: 1 })]);
@@ -54,7 +56,29 @@ describe('thread list', () => {
     await screen.findByText('Facture disponible');
     fireEvent.press(screen.getByRole('tab', { name: 'Unread' }));
     await waitFor(() => expect(screen.queryByText('Facture disponible')).toBeNull());
-    expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), true, undefined, 50);
+    expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), true, Category.Primary, undefined, 50);
+  });
+
+  it('shows one inbox category at a time and remembers the choice', async () => {
+    renderWithProviders(<MailboxScreen />);
+    await screen.findByText('Facture disponible');
+    expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, Category.Primary, undefined, 50);
+    fireEvent.press(screen.getByRole('tab', { name: 'Promotions' }));
+    await waitFor(() =>
+      expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, Category.Promotions, undefined, 50),
+    );
+    expect(useSettingsStore.getState().inboxFilter).toBe('promotions');
+    fireEvent.press(screen.getByRole('tab', { name: 'All Mail' }));
+    await waitFor(() => expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, undefined, undefined, 50));
+  });
+
+  it('lists every thread of other folders, without categories', async () => {
+    mockParams = { id: 'mailbox-archive' };
+    queryClient.setQueryData(queryKeys.mailboxes, [makeMailbox({ id: 'mailbox-archive', role: MailboxRole.Archive, name: 'Archive' })]);
+    renderWithProviders(<MailboxScreen />);
+    await screen.findByText('Facture disponible');
+    expect(screen.queryByRole('tab', { name: 'Promotions' })).toBeNull();
+    expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, undefined, undefined, 50);
   });
 
   it('opens a thread in the mailbox it was listed from', async () => {

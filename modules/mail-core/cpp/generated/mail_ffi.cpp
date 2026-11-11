@@ -195,6 +195,7 @@ extern "C" {
         /*handle*/ uint64_t ptr, 
         RustBuffer scope, 
         int8_t unread_only, 
+        RustBuffer category, 
         RustBuffer cursor, 
         uint32_t limit
     );
@@ -258,6 +259,11 @@ extern "C" {
         RustBuffer email_ids, 
         RustBuffer add, 
         RustBuffer remove
+    );
+    /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_set_sender_category(
+        /*handle*/ uint64_t ptr, 
+        RustBuffer sender, 
+        RustBuffer category
     );
     /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_set_thread_keywords(
         /*handle*/ uint64_t ptr, 
@@ -537,6 +543,8 @@ extern "C" {
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_send(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_set_keywords(
+    );
+    uint16_t uniffi_mail_ffi_checksum_method_mailcore_set_sender_category(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_set_thread_keywords(
     );
@@ -2571,7 +2579,7 @@ NativeMailFfi::NativeMailFfi(
     props["ubrn_uniffi_mail_ffi_fn_method_mailcore_list_threads"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_list_threads"),
-        5,
+        6,
         [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_list_threads(rt, thisVal, args, count);
         }
@@ -2670,6 +2678,14 @@ NativeMailFfi::NativeMailFfi(
         4,
         [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_set_keywords(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_mail_ffi_fn_method_mailcore_set_sender_category"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_set_sender_category"),
+        3,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_fn_method_mailcore_set_sender_category(rt, thisVal, args, count);
         }
     );
     props["ubrn_uniffi_mail_ffi_fn_method_mailcore_set_thread_keywords"] = jsi::Function::createFromHostFunction(
@@ -3280,6 +3296,14 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_set_keywords(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_sender_category"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_sender_category"),
+        0,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_set_sender_category(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_thread_keywords"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_thread_keywords"),
@@ -3672,7 +3696,7 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_list_mailboxes(
         return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_list_threads(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-        auto value = uniffi_mail_ffi_fn_method_mailcore_list_threads(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi_jsi::Bridging<int8_t>::fromJs(rt, callInvoker, args[2]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[3]), uniffi_jsi::Bridging<uint32_t>::fromJs(rt, callInvoker, args[4])
+        auto value = uniffi_mail_ffi_fn_method_mailcore_list_threads(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi_jsi::Bridging<int8_t>::fromJs(rt, callInvoker, args[2]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[3]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[4]), uniffi_jsi::Bridging<uint32_t>::fromJs(rt, callInvoker, args[5])
         );
 
         
@@ -3763,6 +3787,13 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_send(jsi::Runti
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_set_keywords(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_fn_method_mailcore_set_keywords(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[2]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[3])
+        );
+
+        
+        return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_set_sender_category(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_fn_method_mailcore_set_sender_category(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[2])
         );
 
         
@@ -4340,6 +4371,13 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_send(jsi:
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_set_keywords(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_checksum_method_mailcore_set_keywords(
+        );
+
+        
+        return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_set_sender_category(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_checksum_method_mailcore_set_sender_category(
         );
 
         

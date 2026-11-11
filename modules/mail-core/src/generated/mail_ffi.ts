@@ -957,6 +957,43 @@ const FfiConverterTypeServerConfig = (() => {
     return new FFIConverter();
 })();
 
+/**
+ * Inbox categories, from the most to the least important.
+ */
+export enum Category {
+    Primary,
+    Transactions,
+    Updates,
+    Promotions
+}
+
+const FfiConverterTypeCategory = (() => {
+    type TypeName = Category;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            switch (c.readI32()) {
+                case 1: return Category.Primary;
+                case 2: return Category.Transactions;
+                case 3: return Category.Updates;
+                case 4: return Category.Promotions;
+                default: throw new UniffiInternalError.UnexpectedEnumCase();
+            }
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            switch (value) {
+                case Category.Primary: return c.writeI32(1);
+                case Category.Transactions: return c.writeI32(2);
+                case Category.Updates: return c.writeI32(3);
+                case Category.Promotions: return c.writeI32(4);
+            }
+        }
+        allocationSize(value: TypeName): number {
+            return 4;
+        }
+    }
+    return new FFIConverter();
+})();
+
 export type ThreadSummary = {
     key: string,
     threadId: string,
@@ -967,7 +1004,8 @@ export type ThreadSummary = {
     unreadCount: number,
     isFlagged: boolean,
     hasAttachment: boolean,
-    lastReceivedAt: number
+    lastReceivedAt: number,
+    category: Category
 }
 
 /**
@@ -1000,7 +1038,8 @@ const FfiConverterTypeThreadSummary = (() => {
                 unreadCount: FfiConverterUInt32.readFromCursor(c), 
                 isFlagged: FfiConverterBool.readFromCursor(c), 
                 hasAttachment: FfiConverterBool.readFromCursor(c), 
-                lastReceivedAt: FfiConverterFloat64.readFromCursor(c)
+                lastReceivedAt: FfiConverterFloat64.readFromCursor(c), 
+                category: FfiConverterTypeCategory.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
@@ -1014,6 +1053,7 @@ const FfiConverterTypeThreadSummary = (() => {
             FfiConverterBool.writeIntoCursor(value.isFlagged, c);
             FfiConverterBool.writeIntoCursor(value.hasAttachment, c);
             FfiConverterFloat64.writeIntoCursor(value.lastReceivedAt, c);
+            FfiConverterTypeCategory.writeIntoCursor(value.category, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterString.allocationSize(value.key) +
@@ -1025,7 +1065,8 @@ const FfiConverterTypeThreadSummary = (() => {
              FfiConverterUInt32.allocationSize(value.unreadCount) +
              FfiConverterBool.allocationSize(value.isFlagged) +
              FfiConverterBool.allocationSize(value.hasAttachment) +
-             FfiConverterFloat64.allocationSize(value.lastReceivedAt);
+             FfiConverterFloat64.allocationSize(value.lastReceivedAt) +
+             FfiConverterTypeCategory.allocationSize(value.category);
             
         }
     };
@@ -2575,7 +2616,10 @@ export interface MailCoreLike {
     discover(email: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<ServerConfig>;
     listAccounts(asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<Account>>;
     listMailboxes(accountId: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<Mailbox>>;
-    listThreads(scope: ThreadScope, unreadOnly: boolean, cursor: string | undefined, limit: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<ThreadPage>;
+/**
+ * `category` keeps the threads of that category only; `None` lists them all.
+ */
+    listThreads(scope: ThreadScope, unreadOnly: boolean, category: Category | undefined, cursor: string | undefined, limit: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<ThreadPage>;
     loadOlder(mailboxId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     moveEmails(emailIds: Array<string>, fromMailboxId: string, destination: Destination, holdMs: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Relocation>;
     moveThread(mailboxId: string, threadId: string, destination: Destination, holdMs: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Relocation>;
@@ -2591,6 +2635,10 @@ export interface MailCoreLike {
     search(query: string, limit: number, mailboxIds: Array<string>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<SearchHit>>;
     send(draft: Draft, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     setKeywords(emailIds: Array<string>, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
+/**
+ * Moves every message from `sender`, past and future, to `category`.
+ */
+    setSenderCategory(sender: string, category: Category, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     setThreadKeywords(mailboxId: string, threadId: string, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     subscribe(listener: EventListener): void;
     suggestAddresses(query: string, limit: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<Address>>;
@@ -2882,14 +2930,17 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
-    async listThreads(scope: ThreadScope, unreadOnly: boolean, cursor: string | undefined, limit: number, asyncOpts_?: { signal: AbortSignal }): Promise<ThreadPage> /*throws*/ {
+/**
+ * `category` keeps the threads of that category only; `None` lists them all.
+ */
+    async listThreads(scope: ThreadScope, unreadOnly: boolean, category: Category | undefined, cursor: string | undefined, limit: number, asyncOpts_?: { signal: AbortSignal }): Promise<ThreadPage> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
         return await uniffiRustCallAsync(
             /*rustCaller:*/ uniffiCaller,
             /*rustFutureFunc:*/ () => {
                 return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_list_threads(
-                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterTypeThreadScope.lower(scope, nativeModule().rustbuffer_alloc),FfiConverterBool.lower(unreadOnly, nativeModule().rustbuffer_alloc),FfiConverterOptionalString.lower(cursor, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(limit, nativeModule().rustbuffer_alloc)
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterTypeThreadScope.lower(scope, nativeModule().rustbuffer_alloc),FfiConverterBool.lower(unreadOnly, nativeModule().rustbuffer_alloc),FfiConverterOptionalTypeCategory.lower(category, nativeModule().rustbuffer_alloc),FfiConverterOptionalString.lower(cursor, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(limit, nativeModule().rustbuffer_alloc)
                 );
             },
             /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
@@ -3270,6 +3321,36 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
+/**
+ * Moves every message from `sender`, past and future, to `category`.
+ */
+    async setSenderCategory(sender: string, category: Category, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_set_sender_category(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(sender, nativeModule().rustbuffer_alloc),FfiConverterTypeCategory.lower(category, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_void,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_void,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_void,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_void,
+            /*liftFunc:*/ (_v) => {},
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
     async setThreadKeywords(mailboxId: string, threadId: string, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3584,6 +3665,9 @@ const FfiConverterSequenceTypeAccount = new FfiConverterArray(FfiConverterTypeAc
 // FfiConverter for Array<Mailbox>
 const FfiConverterSequenceTypeMailbox = new FfiConverterArray(FfiConverterTypeMailbox);
 
+// FfiConverter for Category | undefined
+const FfiConverterOptionalTypeCategory = new FfiConverterOptional(FfiConverterTypeCategory);
+
 // FfiConverter for Array<SearchHit>
 const FfiConverterSequenceTypeSearchHit = new FfiConverterArray(FfiConverterTypeSearchHit);
 
@@ -3636,7 +3720,7 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_list_mailboxes() !== 29520) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_list_mailboxes");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_list_threads() !== 60704) {
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_list_threads() !== 11404) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_list_threads");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_load_older() !== 1859) {
@@ -3675,6 +3759,9 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_keywords() !== 6845) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_set_keywords");
     }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_sender_category() !== 56143) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_set_sender_category");
+    }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_thread_keywords() !== 51422) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_set_thread_keywords");
     }
@@ -3710,6 +3797,7 @@ export default Object.freeze({
     FfiConverterTypeAccountConfig,
     FfiConverterTypeAddress,
     FfiConverterTypeAttachment,
+    FfiConverterTypeCategory,
     FfiConverterTypeCoreError,
     FfiConverterTypeCoreEvent,
     FfiConverterTypeDestination,

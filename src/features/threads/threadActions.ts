@@ -11,6 +11,7 @@ import {
   ReplyAll,
   ShieldAlert,
   ShieldCheck,
+  Tag,
   Trash2,
   type LucideIcon,
 } from 'lucide-react-native';
@@ -33,7 +34,8 @@ export type ThreadActionId =
   | 'archive'
   | 'moveToInbox'
   | 'junk'
-  | 'notJunk';
+  | 'notJunk'
+  | 'categorize';
 
 export interface ThreadActionContext {
   role?: MailboxRole;
@@ -53,6 +55,7 @@ export function availableThreadActions({ role, accountRoles, flagged, unread }: 
   }
   if (role === MailboxRole.Junk) actions.push('notJunk');
   else if (!NEVER_JUNK.includes(role) && accountRoles.has(MailboxRole.Junk)) actions.push('junk');
+  if (role === MailboxRole.Inbox) actions.push('categorize');
   return actions;
 }
 
@@ -102,4 +105,5 @@ export const THREAD_ACTION_PRESENTATION: Record<
   moveToInbox: { label: 'threads.moveToInbox', Icon: Inbox, symbol: 'tray.and.arrow.down' },
   junk: { label: 'threads.junk', Icon: ShieldAlert, symbol: 'xmark.bin' },
   notJunk: { label: 'threads.notJunk', Icon: ShieldCheck, symbol: 'checkmark.shield' },
+  categorize: { label: 'threads.categorize', Icon: Tag, symbol: 'tag' },
 };

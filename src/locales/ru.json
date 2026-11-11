@@ -63,6 +63,15 @@
     "syncNow": "Проверить почту",
     "updatePassword": "Обновить пароль"
   },
+  "categories": {
+    "all": "Все письма",
+    "filter": "Категория",
+    "moveSender": "Переместить письма от {{sender}}",
+    "primary": "Основные",
+    "promotions": "Акции",
+    "transactions": "Транзакции",
+    "updates": "Обновления"
+  },
   "common": {
     "back": "Назад",
     "cancel": "Отменить",
@@ -203,6 +212,7 @@
   },
   "threads": {
     "archive": "В архив",
+    "categorize": "Категория отправителя",
     "delete": "Удалить",
     "deleteForever": "Удалить навсегда",
     "deleteForeverMessage": "Письма будут удалены с сервера. Это действие нельзя отменить.",

@@ -1,4 +1,5 @@
 import {
+  Category,
   MailboxRole,
   Security,
   type Account,
@@ -74,6 +75,7 @@ export function makeThread(overrides: Partial<ThreadSummary> = {}): ThreadSummar
     isFlagged: latest.isFlagged,
     hasAttachment: latest.hasAttachment,
     lastReceivedAt: latest.receivedAt,
+    category: Category.Primary,
     ...overrides,
   };
 }

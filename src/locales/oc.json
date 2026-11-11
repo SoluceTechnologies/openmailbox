@@ -63,6 +63,15 @@
     "syncNow": "Relevar los messatges",
     "updatePassword": "Metre a jorn lo senhal"
   },
+  "categories": {
+    "all": "Totes los corrièrs",
+    "filter": "Categoria",
+    "moveSender": "Desplaçar los corrièrs de {{sender}}",
+    "primary": "Principal",
+    "promotions": "Promocions",
+    "transactions": "Transaccions",
+    "updates": "Actualitats"
+  },
   "common": {
     "back": "Tornar",
     "cancel": "Anullar",
@@ -201,6 +210,7 @@
   },
   "threads": {
     "archive": "Archivar",
+    "categorize": "Classar l’expeditor",
     "delete": "Suprimir",
     "deleteForever": "Suprimir definitivament",
     "deleteForeverMessage": "Los messatges seràn suprimits del servidor. Aquesta accion es irreversibla.",

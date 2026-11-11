@@ -222,7 +222,7 @@ fn main() {
         "Unified inbox, first page",
         measure(SAMPLES, |_| {
             store
-                .list_threads(ThreadScope::Unified, false, None, PAGE_SIZE)
+                .list_threads(ThreadScope::Unified, false, None, None, PAGE_SIZE)
                 .unwrap()
         }),
     );
@@ -230,7 +230,13 @@ fn main() {
     let mut cursor = None;
     for _ in 0..20 {
         cursor = store
-            .list_threads(ThreadScope::Unified, false, cursor.as_deref(), PAGE_SIZE)
+            .list_threads(
+                ThreadScope::Unified,
+                false,
+                None,
+                cursor.as_deref(),
+                PAGE_SIZE,
+            )
             .unwrap()
             .next_cursor;
     }
@@ -238,7 +244,13 @@ fn main() {
         "Unified inbox, page 21 (cursor)",
         measure(SAMPLES, |_| {
             store
-                .list_threads(ThreadScope::Unified, false, cursor.as_deref(), PAGE_SIZE)
+                .list_threads(
+                    ThreadScope::Unified,
+                    false,
+                    None,
+                    cursor.as_deref(),
+                    PAGE_SIZE,
+                )
                 .unwrap()
         }),
     );
@@ -246,7 +258,7 @@ fn main() {
         "Unified inbox, unread only, first page",
         measure(SAMPLES, |_| {
             store
-                .list_threads(ThreadScope::Unified, true, None, PAGE_SIZE)
+                .list_threads(ThreadScope::Unified, true, None, None, PAGE_SIZE)
                 .unwrap()
         }),
     );
@@ -254,13 +266,25 @@ fn main() {
         "Mailbox, first page",
         measure(SAMPLES, |_| {
             store
-                .list_threads(ThreadScope::Mailbox(alice_inbox), false, None, PAGE_SIZE)
+                .list_threads(
+                    ThreadScope::Mailbox(alice_inbox),
+                    false,
+                    None,
+                    None,
+                    PAGE_SIZE,
+                )
                 .unwrap()
         }),
     );
 
     let page = store
-        .list_threads(ThreadScope::Mailbox(alice_inbox), false, None, PAGE_SIZE)
+        .list_threads(
+            ThreadScope::Mailbox(alice_inbox),
+            false,
+            None,
+            None,
+            PAGE_SIZE,
+        )
         .unwrap()
         .threads;
     report(
@@ -305,6 +329,7 @@ fn main() {
         .list_threads(
             ThreadScope::Mailbox(alice_inbox),
             false,
+            None,
             None,
             SAMPLES as u32,
         )

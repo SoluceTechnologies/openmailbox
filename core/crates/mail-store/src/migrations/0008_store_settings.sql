@@ -1,0 +1,4 @@
+CREATE TABLE store_setting (
+  key   TEXT PRIMARY KEY,
+  value INTEGER NOT NULL
+) WITHOUT ROWID;

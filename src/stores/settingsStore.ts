@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { zustandStorage } from '@/storage';
+import type { InboxFilter } from '@/features/categories/categories';
 import { getInitialLanguage, type AppLanguage } from '@/utils/i18n';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
@@ -17,6 +18,7 @@ interface SettingsState {
   signatures: Record<string, string>;
   notificationsEnabled: boolean;
   silencedAccountIds: string[];
+  inboxFilter: InboxFilter;
   setThemePreference: (preference: ThemePreference) => void;
   setLanguage: (language: AppLanguage) => void;
   setHapticsEnabled: (enabled: boolean) => void;
@@ -26,6 +28,7 @@ interface SettingsState {
   setSignature: (accountId: string, signature: string) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setAccountNotified: (accountId: string, notified: boolean) => void;
+  setInboxFilter: (filter: InboxFilter) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -41,6 +44,7 @@ export const useSettingsStore = create<SettingsState>()(
       signatures: {},
       notificationsEnabled: true,
       silencedAccountIds: [],
+      inboxFilter: 'primary',
       setThemePreference: (themePreference) => set({ themePreference }),
       setLanguage: (language) => set({ language }),
       setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
@@ -48,6 +52,7 @@ export const useSettingsStore = create<SettingsState>()(
       setContactPictures: (contactPictures) => set({ contactPictures }),
       setDefaultAccountId: (defaultAccountId) => set({ defaultAccountId }),
       setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
+      setInboxFilter: (inboxFilter) => set({ inboxFilter }),
       setAccountNotified: (accountId, notified) =>
         set(({ silencedAccountIds }) => ({
           silencedAccountIds: notified
@@ -74,6 +79,7 @@ export const useSettingsStore = create<SettingsState>()(
         signatures,
         notificationsEnabled,
         silencedAccountIds,
+        inboxFilter,
       }) => ({
         themePreference,
         language,
@@ -85,6 +91,7 @@ export const useSettingsStore = create<SettingsState>()(
         signatures,
         notificationsEnabled,
         silencedAccountIds,
+        inboxFilter,
       }),
     },
   ),

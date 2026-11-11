@@ -48,6 +48,7 @@ class NativeMailFfi : public jsi::HostObject {
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_search(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_send(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_set_keywords(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
+    jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_set_sender_category(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_set_thread_keywords(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_subscribe(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_suggest_addresses(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
@@ -124,6 +125,7 @@ class NativeMailFfi : public jsi::HostObject {
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_search(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_send(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_set_keywords(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
+    jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_set_sender_category(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_set_thread_keywords(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_subscribe(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_suggest_addresses(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);

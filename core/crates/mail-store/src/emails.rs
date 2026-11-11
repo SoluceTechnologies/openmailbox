@@ -1,11 +1,12 @@
 use std::collections::HashSet;
 
 use mail_model::{
-    Address, Error, FetchedMessage, Flags, Keyword, NewMessage, RenderedBody, Result, SearchHit,
-    now_millis,
+    Address, Category, Error, FetchedMessage, Flags, Keyword, NewMessage, RenderedBody, Result,
+    SearchHit, now_millis,
 };
 use rusqlite::{OptionalExtension, Transaction, params, params_from_iter};
 
+use crate::categories::category_of;
 use crate::correspondents::record_received;
 use crate::threads::refresh_threads;
 use crate::{
@@ -67,7 +68,9 @@ impl Store {
                 let (email_id, thread_id) = match existing {
                     Some(found) => found,
                     None => {
-                        let inserted = insert_email(transaction, account_id, mailbox_id, message)?;
+                        let category = category_of(transaction, &account_email, &message.headers)?;
+                        let inserted =
+                            insert_email(transaction, account_id, mailbox_id, message, category)?;
                         record_received(
                             transaction,
                             &account_email,
@@ -322,6 +325,7 @@ impl Store {
                  JOIN mailbox m ON m.id = em.mailbox_id
                  WHERE m.account_id = ?1 AND m.role = 'inbox' AND e.is_seen = 0
                    AND e.received_at >= ?2 AND e.id > ?3
+                   AND COALESCE(e.category, 0) = 0
                  ORDER BY e.received_at, e.id"
             ))
             .storage()?;
@@ -547,6 +551,7 @@ fn insert_email(
     account_id: &str,
     mailbox_id: i64,
     message: &FetchedMessage,
+    category: Category,
 ) -> Result<(i64, i64)> {
     let headers = &message.headers;
     let root = headers
@@ -570,8 +575,9 @@ fn insert_email(
         .prepare_cached(
             "INSERT INTO email (account_id, thread_id, message_id, references_header, subject, from_json, to_json,
                cc_json, reply_to_json, received_at, size, preview, has_attachment, is_seen, is_flagged,
-               is_answered, is_draft)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17) RETURNING id",
+               is_answered, is_draft, category, sender, signals)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20)
+             RETURNING id",
         )
         .storage()?
         .query_row(
@@ -593,6 +599,9 @@ fn insert_email(
                 message.flags.flagged,
                 message.flags.answered,
                 message.flags.draft,
+                category.code(),
+                headers.from.first().map(|address| address.email.to_lowercase()),
+                headers.signals.bits(),
             ],
             |row| row.get(0),
         )

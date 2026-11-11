@@ -28,7 +28,7 @@ function multipart(subtype, parts) {
   return `Content-Type: multipart/${subtype}; boundary="${boundary}"\r\n\r\n${body}\r\n--${boundary}--`;
 }
 
-export function buildMessage({ from, to, cc = [], subject, date, messageId, inReplyTo, references = [], text, html, inlineImages = [], attachments = [] }) {
+export function buildMessage({ from, to, cc = [], subject, date, messageId, inReplyTo, references = [], text, html, inlineImages = [], attachments = [], headers: extra = [] }) {
   const textPart = leaf({ type: 'text/plain; charset=utf-8', content: text });
   let body = textPart;
   if (html) {
@@ -49,6 +49,7 @@ export function buildMessage({ from, to, cc = [], subject, date, messageId, inRe
     `Message-ID: <${messageId}>`,
     ...(inReplyTo ? [`In-Reply-To: <${inReplyTo}>`] : []),
     ...(references.length > 0 ? [`References: ${references.map((id) => `<${id}>`).join(' ')}`] : []),
+    ...extra,
     'MIME-Version: 1.0',
   ];
   return `${headers.join('\r\n')}\r\n${body}\r\n`;

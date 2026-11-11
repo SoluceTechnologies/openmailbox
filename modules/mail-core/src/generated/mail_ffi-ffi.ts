@@ -80,7 +80,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_fn_method_mailcore_discover(uniffiSelf: bigint, email: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_list_accounts(uniffiSelf: bigint): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_list_mailboxes(uniffiSelf: bigint, accountId: Uint8Array): bigint;
-    ubrn_uniffi_mail_ffi_fn_method_mailcore_list_threads(uniffiSelf: bigint, scope: Uint8Array, unreadOnly: number, cursor: Uint8Array, limit: number): bigint;
+    ubrn_uniffi_mail_ffi_fn_method_mailcore_list_threads(uniffiSelf: bigint, scope: Uint8Array, unreadOnly: number, category: Uint8Array, cursor: Uint8Array, limit: number): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_load_older(uniffiSelf: bigint, mailboxId: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_move_emails(uniffiSelf: bigint, emailIds: Uint8Array, fromMailboxId: Uint8Array, destination: Uint8Array, holdMs: number): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_move_thread(uniffiSelf: bigint, mailboxId: Uint8Array, threadId: Uint8Array, destination: Uint8Array, holdMs: number): bigint;
@@ -93,6 +93,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_fn_method_mailcore_search(uniffiSelf: bigint, query: Uint8Array, limit: number, mailboxIds: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_send(uniffiSelf: bigint, draft: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_set_keywords(uniffiSelf: bigint, emailIds: Uint8Array, add: Uint8Array, remove: Uint8Array): bigint;
+    ubrn_uniffi_mail_ffi_fn_method_mailcore_set_sender_category(uniffiSelf: bigint, sender: Uint8Array, category: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_set_thread_keywords(uniffiSelf: bigint, mailboxId: Uint8Array, threadId: Uint8Array, add: Uint8Array, remove: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_subscribe(uniffiSelf: bigint, listener: bigint, uniffi_out_err: UniffiRustCallStatus): void;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_suggest_addresses(uniffiSelf: bigint, query: Uint8Array, limit: number): bigint;
@@ -123,6 +124,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_search(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_send(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_keywords(): number;
+    ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_sender_category(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_thread_keywords(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_subscribe(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_suggest_addresses(): number;

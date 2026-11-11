@@ -63,6 +63,15 @@
     "syncNow": "Neue E-Mails abrufen",
     "updatePassword": "Passwort aktualisieren"
   },
+  "categories": {
+    "all": "Alle E-Mails",
+    "filter": "Kategorie",
+    "moveSender": "E-Mails von {{sender}} verschieben",
+    "primary": "Primär",
+    "promotions": "Werbung",
+    "transactions": "Transaktionen",
+    "updates": "Updates"
+  },
   "common": {
     "back": "Zurück",
     "cancel": "Abbrechen",
@@ -201,6 +210,7 @@
   },
   "threads": {
     "archive": "Archivieren",
+    "categorize": "Absender einordnen",
     "delete": "Löschen",
     "deleteForever": "Endgültig löschen",
     "deleteForeverMessage": "Die Nachrichten werden vom Server gelöscht. Das kann nicht rückgängig gemacht werden.",

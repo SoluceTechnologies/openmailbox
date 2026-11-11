@@ -63,6 +63,15 @@
     "syncNow": "Controlla nuova posta",
     "updatePassword": "Aggiorna password"
   },
+  "categories": {
+    "all": "Tutta la posta",
+    "filter": "Categoria",
+    "moveSender": "Sposta la posta di {{sender}}",
+    "primary": "Principale",
+    "promotions": "Promozioni",
+    "transactions": "Transazioni",
+    "updates": "Aggiornamenti"
+  },
   "common": {
     "back": "Indietro",
     "cancel": "Annulla",
@@ -201,6 +210,7 @@
   },
   "threads": {
     "archive": "Archivia",
+    "categorize": "Classifica mittente",
     "delete": "Elimina",
     "deleteForever": "Elimina definitivamente",
     "deleteForeverMessage": "I messaggi verranno eliminati dal server. L'operazione non può essere annullata.",

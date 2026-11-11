@@ -27,7 +27,16 @@ const services = {
   calendar: { name: 'Agenda', email: 'agenda@lumen.example' },
   bank: { name: 'Banque Exemple', email: 'alertes@banque.example' },
   spam: { name: 'Service Clients', email: 'gagnant@promo-offres.example' },
+  shop: { name: 'Boutique Lumière', email: 'offres@news.boutique.example' },
+  orders: { name: 'Boutique Lumière', email: 'commandes@boutique.example' },
+  forum: { name: 'Forum Rust FR', email: 'notifications@forum.example' },
+  login: { name: 'Compte Lumen', email: 'noreply@compte.example' },
 };
+
+// What lists and marketing platforms add, which the app sorts the inbox by.
+function listHeaders(domain) {
+  return [`List-Unsubscribe: <https://${domain}/desinscription>`, 'List-Unsubscribe-Post: List-Unsubscribe=One-Click'];
+}
 
 const LOGO_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGklEQVR4nGNgGAWjYBSMglEwCkbBKBgFgwEAA/AAAZ8C5KcAAAAASUVORK5CYII=',
@@ -141,7 +150,11 @@ const notifications = [
   (index) => ({ from: services.parcel, subject: 'Votre colis est en cours de livraison', text: `Votre colis n° CE${880000 + index}FR sera livré aujourd'hui entre 9h et 13h.` }),
   (index) => ({ from: services.calendar, subject: 'Rappel : réunion d\'équipe demain à 10:00', text: `Réunion d'équipe hebdomadaire\nDemain, 10:00 – 10:45\nSalle Rivoli\n\nÉvénement n°${index}` }),
   (index) => ({ from: services.bank, subject: 'Votre relevé mensuel est disponible', text: `Votre relevé du mois est disponible dans votre espace.\nRéférence : REL-${2000 + index}` }),
-  (index) => ({ from: services.newsletter, subject: `Le Fil Tech — n°${40 + index}`, text: `Ce qu'il fallait retenir cette semaine. Lire le numéro : https://www.lefil.example/numero/${40 + index}`, html: newsletterHtml(40 + index), inlineImages: [{ type: 'image/png', filename: 'logo.png', contentId: 'logo@lefil.example', content: LOGO_PNG }] }),
+  (index) => ({ from: services.newsletter, subject: `Le Fil Tech — n°${40 + index}`, text: `Ce qu'il fallait retenir cette semaine. Lire le numéro : https://www.lefil.example/numero/${40 + index}`, html: newsletterHtml(40 + index), inlineImages: [{ type: 'image/png', filename: 'logo.png', contentId: 'logo@lefil.example', content: LOGO_PNG }], headers: listHeaders('lefil.example') }),
+  (index) => ({ from: services.shop, subject: `Black Friday : -${20 + (index % 4) * 10} % sur toute la boutique`, text: 'Nos lampes et nos luminaires à prix réduit jusqu\'à dimanche.\n\nVoir les offres : https://boutique.example/black-friday', headers: [...listHeaders('boutique.example'), 'X-Mailin-Campaign: 4211'] }),
+  (index) => ({ from: services.orders, subject: `Votre commande n° ${4521 + index} a été expédiée`, text: `Votre commande n° ${4521 + index} est en route. Suivez-la : https://boutique.example/suivi/${4521 + index}` }),
+  (index) => ({ from: services.forum, subject: '[Forum Rust FR] Nouvelle réponse dans « Async et lifetimes »', text: `Hugo a répondu au sujet « Async et lifetimes ».\n\nRéponse n°${index}`, headers: ['List-Id: <rust.forum.example>', 'Auto-Submitted: auto-generated'] }),
+  (index) => ({ from: services.login, subject: `${String(482910 + index * 7).slice(-6)} est votre code de connexion`, text: 'Saisissez ce code pour vous connecter. Il expire dans 10 minutes.', headers: ['Auto-Submitted: auto-generated'] }),
 ];
 
 class Mailboxes {
@@ -211,6 +224,7 @@ function addNotification(mailboxes, folder, index, date, random) {
     html: template.html,
     inlineImages: template.inlineImages ?? [],
     attachments: template.attachment ? [template.attachment] : [],
+    headers: template.headers,
   });
   const flags = random() < 0.75 ? ['\\Seen'] : [];
   if (random() < 0.05) flags.push('\\Flagged');

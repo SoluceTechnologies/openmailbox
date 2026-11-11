@@ -63,6 +63,15 @@
     "syncNow": "Relever les messages",
     "updatePassword": "Mettre à jour le mot de passe"
   },
+  "categories": {
+    "all": "Tous les e-mails",
+    "filter": "Catégorie",
+    "moveSender": "Déplacer les e-mails de {{sender}}",
+    "primary": "Principal",
+    "promotions": "Promotions",
+    "transactions": "Transactions",
+    "updates": "Mises à jour"
+  },
   "common": {
     "back": "Retour",
     "cancel": "Annuler",
@@ -201,6 +210,7 @@
   },
   "threads": {
     "archive": "Archiver",
+    "categorize": "Classer l’expéditeur",
     "delete": "Supprimer",
     "deleteForever": "Supprimer définitivement",
     "deleteForeverMessage": "Les messages seront supprimés du serveur. Cette action est irréversible.",

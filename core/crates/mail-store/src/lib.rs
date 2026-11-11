@@ -1,4 +1,5 @@
 mod accounts;
+mod categories;
 mod correspondents;
 mod emails;
 mod mailboxes;
@@ -21,6 +22,10 @@ const MIGRATIONS: &[&str] = &[
     include_str!("migrations/0003_unsubscribe.sql"),
     include_str!("migrations/0004_correspondents.sql"),
     include_str!("migrations/0005_notified_until.sql"),
+    include_str!("migrations/0006_categories.sql"),
+    include_str!("migrations/0007_unknown_signals.sql"),
+    include_str!("migrations/0008_store_settings.sql"),
+    include_str!("migrations/0009_stored_signals.sql"),
 ];
 
 pub struct Store {
@@ -73,7 +78,8 @@ fn open_connection(path: &Path) -> Result<Connection> {
 
 fn migrate(connection: &Connection) -> Result<()> {
     migrate_with(connection, MIGRATIONS)?;
-    add_notified_email_id(connection)
+    add_notified_email_id(connection)?;
+    categories::classify_again(connection)
 }
 
 /// 0005 first shipped without `notified_email_id`; databases created then are at version 5 too.

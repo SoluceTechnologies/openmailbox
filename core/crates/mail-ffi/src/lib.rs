@@ -142,6 +142,37 @@ pub struct SearchHit {
     pub mailbox_id: String,
 }
 
+/// Inbox categories, from the most to the least important.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum Category {
+    Primary,
+    Transactions,
+    Updates,
+    Promotions,
+}
+
+impl From<mail_model::Category> for Category {
+    fn from(category: mail_model::Category) -> Category {
+        match category {
+            mail_model::Category::Primary => Category::Primary,
+            mail_model::Category::Transactions => Category::Transactions,
+            mail_model::Category::Updates => Category::Updates,
+            mail_model::Category::Promotions => Category::Promotions,
+        }
+    }
+}
+
+impl From<Category> for mail_model::Category {
+    fn from(category: Category) -> mail_model::Category {
+        match category {
+            Category::Primary => mail_model::Category::Primary,
+            Category::Transactions => mail_model::Category::Transactions,
+            Category::Updates => mail_model::Category::Updates,
+            Category::Promotions => mail_model::Category::Promotions,
+        }
+    }
+}
+
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct ThreadSummary {
     pub key: String,
@@ -154,6 +185,7 @@ pub struct ThreadSummary {
     pub is_flagged: bool,
     pub has_attachment: bool,
     pub last_received_at: f64,
+    pub category: Category,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -452,6 +484,7 @@ impl From<mail_model::ThreadSummary> for ThreadSummary {
             is_flagged: thread.is_flagged,
             has_attachment: thread.has_attachment,
             last_received_at: thread.last_received_at as f64,
+            category: thread.category.into(),
         }
     }
 }
@@ -669,10 +702,12 @@ impl MailCore {
         ))
     }
 
+    /// `category` keeps the threads of that category only; `None` lists them all.
     pub async fn list_threads(
         &self,
         scope: ThreadScope,
         unread_only: bool,
+        category: Option<Category>,
         cursor: Option<String>,
         limit: u32,
     ) -> CoreResult<ThreadPage> {
@@ -684,7 +719,13 @@ impl MailCore {
         };
         let page = self
             .blocking(move |engine| {
-                engine.list_threads(scope, unread_only, cursor.as_deref(), limit)
+                engine.list_threads(
+                    scope,
+                    unread_only,
+                    category.map(Into::into),
+                    cursor.as_deref(),
+                    limit,
+                )
             })
             .await?;
         Ok(ThreadPage {
@@ -780,6 +821,12 @@ impl MailCore {
                 mailbox_id: hit.mailbox_id.to_string(),
             })
             .collect())
+    }
+
+    /// Moves every message from `sender`, past and future, to `category`.
+    pub async fn set_sender_category(&self, sender: String, category: Category) -> CoreResult<()> {
+        self.blocking(move |engine| engine.set_sender_category(&sender, category.into()))
+            .await
     }
 
     pub async fn set_keywords(

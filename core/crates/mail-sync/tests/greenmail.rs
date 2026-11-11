@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use mail_model::{
-    AccountConfig, Address, Draft, Keyword, MailboxRole, OutgoingAttachment, Security,
+    AccountConfig, Address, Category, Draft, Keyword, MailboxRole, OutgoingAttachment, Security,
     ServerEndpoint, ThreadScope, ThreadSummary,
 };
 use mail_sync::{Destination, Engine};
@@ -117,7 +117,7 @@ async fn eventually<T>(engine: &Engine, mut probe: impl FnMut() -> Option<T>) ->
 
 fn thread_with(engine: &Engine, token: &str) -> Option<ThreadSummary> {
     engine
-        .list_threads(ThreadScope::Unified, false, None, 100)
+        .list_threads(ThreadScope::Unified, false, None, None, 100)
         .unwrap()
         .threads
         .into_iter()
@@ -602,4 +602,95 @@ async fn background_check_reports_new_mail() {
         .await
         .unwrap();
     assert!(!flags[0].flags.seen);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn classifies_mail_from_the_headers_the_server_sends() {
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    // Only their headers tell the first two from mail a person wrote.
+    let cases = [
+        (
+            "Boutique <contact@shop.example>",
+            "Nouvelle collection",
+            "X-Mailin-Campaign: 42\r\n",
+            Category::Promotions,
+        ),
+        (
+            "Code <gitlab@code.example>",
+            "Pipeline passed",
+            "X-Auto-Response-Suppress: All\r\n",
+            Category::Updates,
+        ),
+        (
+            "Weekly <editor@weekly.example>",
+            "Issue 12",
+            "List-Unsubscribe: <https://weekly.example/u>\r\nList-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n",
+            Category::Updates,
+        ),
+        (
+            "Cloud <billing@cloud.example>",
+            "Invoice 2026-118",
+            "",
+            Category::Transactions,
+        ),
+        (
+            "Accounts <noreply@accounts.example>",
+            "Your login code",
+            "Auto-Submitted: auto-generated\r\n",
+            Category::Primary,
+        ),
+    ];
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
+        .await
+        .unwrap();
+    for (index, (from, subject, headers, _)) in cases.iter().enumerate() {
+        let raw = format!(
+            "From: {from}\r\nTo: bob@example.com\r\nSubject: {subject} {token}\r\nMessage-ID: <{index}.{token}@test.example>\r\n\
+             {headers}MIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nBonjour\r\n"
+        );
+        connection.append("INBOX", raw.as_bytes()).await.unwrap();
+    }
+
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    for (_, subject, _, category) in &cases {
+        let thread = eventually(&engine, || {
+            thread_with(&engine, &format!("{subject} {token}"))
+        })
+        .await;
+        assert_eq!(thread.category, *category, "{subject}");
+    }
+
+    connection.select("INBOX").await.unwrap();
+    let uids = connection.search_since(0).await.unwrap();
+    let appended: Vec<u32> = connection
+        .fetch_summaries(&uids)
+        .await
+        .unwrap()
+        .iter()
+        .filter(|summary| {
+            mail_mime::parse_summary(&summary.header, &summary.text)
+                .subject
+                .is_some_and(|subject| subject.contains(&token))
+        })
+        .map(|summary| summary.uid)
+        .collect();
+    connection.delete_messages(&appended).await.unwrap();
 }

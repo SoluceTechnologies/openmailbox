@@ -21,7 +21,7 @@ describe('core hooks', () => {
   it('reads the unified inbox page by page and flattens the pages', async () => {
     const first = makeThread({ key: 'a', latest: makeEmail({ threadId: 'thread-a' }) });
     const second = makeThread({ key: 'b', latest: makeEmail({ threadId: 'thread-b' }) });
-    core.listThreads.mockImplementation(async (_scope, _unreadOnly, cursor) =>
+    core.listThreads.mockImplementation(async (_scope, _unreadOnly, _category, cursor) =>
       cursor === 'cursor-1' ? { threads: [second], nextCursor: undefined } : { threads: [first], nextCursor: 'cursor-1' },
     );
 
@@ -31,7 +31,7 @@ describe('core hooks', () => {
 
     await act(() => result.current.fetchNextPage());
     await waitFor(() => expect(result.current.data).toEqual([first, second]));
-    expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, 'cursor-1', 50);
+    expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, undefined, 'cursor-1', 50);
     expect(result.current.hasNextPage).toBe(false);
   });
 

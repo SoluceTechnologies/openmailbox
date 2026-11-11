@@ -72,7 +72,7 @@ export function ThreadActionSheet({ thread, actions, onAction, onClose }: Thread
             })}
           </View>
           <ActionList actions={list(STATE_ACTIONS)} />
-          <ActionList actions={list(['move', 'archive', 'moveToInbox', 'junk', 'notJunk'])} />
+          <ActionList actions={list(['move', 'categorize', 'archive', 'moveToInbox', 'junk', 'notJunk'])} />
         </View>
       ) : null}
     </Sheet>

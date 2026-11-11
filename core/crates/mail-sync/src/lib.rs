@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use mail_mime::{AttachmentContent, OutgoingMessage};
 use mail_model::{
-    Account, AccountConfig, Address, CoreEvent, Draft, EmailSummary, Error, Keyword,
+    Account, AccountConfig, Address, Category, CoreEvent, Draft, EmailSummary, Error, Keyword,
     MAX_ATTACHMENTS_BYTES, Mailbox, MailboxRole, NewMessage, OutgoingAttachment, RenderedBody,
     Result, SearchHit, ServerConfig, ThreadPage, ThreadScope, UnsubscribeOutcome, now_millis,
 };
@@ -278,10 +278,19 @@ impl Engine {
         &self,
         scope: ThreadScope,
         unread_only: bool,
+        category: Option<Category>,
         cursor: Option<&str>,
         limit: u32,
     ) -> Result<ThreadPage> {
-        self.store.list_threads(scope, unread_only, cursor, limit)
+        self.store
+            .list_threads(scope, unread_only, category, cursor, limit)
+    }
+
+    /// Moves every message from `sender`, past and future, to `category`.
+    pub fn set_sender_category(&self, sender: &str, category: Category) -> Result<()> {
+        let mailbox_ids = self.store.set_sender_category(sender, category)?;
+        self.events.mailboxes_changed(mailbox_ids);
+        Ok(())
     }
 
     pub fn thread_emails(
@@ -923,7 +932,7 @@ mod tests {
         fn threads(&self, mailbox_id: i64) -> Vec<i64> {
             self.engine
                 .store
-                .list_threads(ThreadScope::Mailbox(mailbox_id), false, None, 50)
+                .list_threads(ThreadScope::Mailbox(mailbox_id), false, None, None, 50)
                 .unwrap()
                 .threads
                 .into_iter()

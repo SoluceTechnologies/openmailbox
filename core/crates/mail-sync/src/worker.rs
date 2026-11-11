@@ -16,6 +16,8 @@ use crate::events::Events;
 use crate::operations::{self, MAX_ATTEMPTS, Operation, Source};
 
 const FETCH_BATCH_SIZE: usize = 50;
+/// Batches of older inbox messages whose headers one sync checks again, so it stays quick.
+const RECLASSIFY_BATCHES: usize = 20;
 const CONNECTION_IDLE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const CONNECTION_CHECK_AFTER_MS: i64 = 30 * 1000;
 const MAILBOX_LIST_MAX_AGE: Duration = Duration::from_secs(15 * 60);
@@ -336,16 +338,23 @@ impl Worker {
         // The newest page of every mailbox comes first, so a new account shows its Sent mail
         // without waiting for a month of inbox.
         let mut unfinished = Vec::new();
-        for mailbox in self.targets(mailbox_ids)? {
+        let targets = self.targets(mailbox_ids)?;
+        for mailbox in &targets {
             if !self
-                .sync_mailbox(&mailbox, force, Some(FETCH_BATCH_SIZE))
+                .sync_mailbox(mailbox, force, Some(FETCH_BATCH_SIZE))
                 .await?
             {
                 unfinished.push(mailbox);
             }
         }
         for mailbox in unfinished {
-            self.sync_mailbox(&mailbox, force, None).await?;
+            self.sync_mailbox(mailbox, force, None).await?;
+        }
+        // After new mail, so it is not kept waiting.
+        for mailbox in &targets {
+            if mailbox.role == Some(MailboxRole::Inbox) {
+                self.reclassify_older_messages(mailbox).await?;
+            }
         }
         Ok(())
     }
@@ -404,6 +413,34 @@ impl Worker {
             self.keep_connection(connection);
         }
         result
+    }
+
+    /// Inbox messages stored before their sending headers were fetched get their category from
+    /// those headers, a few batches per sync.
+    async fn reclassify_older_messages(&mut self, mailbox: &Mailbox) -> Result<()> {
+        for _ in 0..RECLASSIFY_BATCHES {
+            let uids = self
+                .store
+                .uids_with_unknown_signals(mailbox.id, FETCH_BATCH_SIZE)?;
+            if uids.is_empty() {
+                break;
+            }
+            let summaries = self
+                .with_imap(Some(&mailbox.remote_name), async |connection| {
+                    connection.fetch_summaries(&uids).await
+                })
+                .await?;
+            let messages: Vec<FetchedMessage> =
+                summaries.into_iter().map(fetched_message).collect();
+            if self
+                .store
+                .reclassify(&self.account.id, mailbox.id, &uids, &messages)?
+            {
+                self.events.mailboxes_changed([mailbox.id]);
+            }
+            self.serve_urgent().await;
+        }
+        Ok(())
     }
 
     /// With a `page`, fetches at most that many new messages, newest first, and returns false
@@ -508,13 +545,7 @@ impl Worker {
             let messages: Vec<FetchedMessage> = summaries
                 .into_iter()
                 .filter(|summary| !summary.flags.deleted)
-                .map(|summary| FetchedMessage {
-                    uid: summary.uid,
-                    flags: summary.flags,
-                    internal_date: summary.internal_date,
-                    size: summary.size,
-                    headers: mail_mime::parse_summary(&summary.header, &summary.text),
-                })
+                .map(fetched_message)
                 .collect();
             self.store
                 .insert_messages(&self.account.id, mailbox.id, &messages)?;
@@ -817,6 +848,16 @@ impl Worker {
                 Ok(())
             }
         }
+    }
+}
+
+fn fetched_message(summary: proto_imap::FetchedSummary) -> FetchedMessage {
+    FetchedMessage {
+        uid: summary.uid,
+        flags: summary.flags,
+        internal_date: summary.internal_date,
+        size: summary.size,
+        headers: mail_mime::parse_summary(&summary.header, &summary.text),
     }
 }
 

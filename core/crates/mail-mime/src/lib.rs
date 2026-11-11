@@ -6,7 +6,9 @@ use lettre::message::header::ContentType;
 use lettre::message::{
     Attachment as LettreAttachment, Mailbox as LettreMailbox, MessageBuilder, MultiPart, SinglePart,
 };
-use mail_model::{Address, Attachment, Error, ParsedHeaders, RenderedBody, Result, Unsubscribe};
+use mail_model::{
+    Address, Attachment, Error, ParsedHeaders, RenderedBody, Result, SendingSignals, Unsubscribe,
+};
 use mail_parser::{AddressList, Message, MessageParser};
 
 const PREVIEW_LENGTH: usize = 180;
@@ -76,6 +78,61 @@ pub fn parse_summary(header: &[u8], partial_text: &[u8]) -> ParsedHeaders {
         preview: message
             .body_preview(PREVIEW_LENGTH * 2)
             .map(|preview| normalize_whitespace(&preview, PREVIEW_LENGTH)),
+        signals: sending_signals(&message),
+    }
+}
+
+/// `X-Mailer` values of marketing platforms.
+const MARKETING_MAILERS: &[&str] = &[
+    "mailchimp",
+    "sendinblue",
+    "brevo",
+    "klaviyo",
+    "hubspot",
+    "exacttarget",
+    "salesforce",
+    "campaign monitor",
+    "emarsys",
+    "selligent",
+    "sarbacane",
+    "mailerlite",
+    "constant contact",
+    "acoustic",
+    "mailjet campaign",
+];
+
+/// Headers marketing platforms add to campaigns (Mailchimp, Brevo, Mailjet) or to commercial mail.
+const CAMPAIGN_HEADERS: &[&str] = &[
+    "X-CSA-Complaints",
+    "X-Campaign",
+    "X-CampaignID",
+    "X-Mailin-Campaign",
+    "X-Mailjet-Campaign",
+];
+
+fn sending_signals(message: &Message) -> SendingSignals {
+    let headers = message.headers();
+    let text = |name: &str| {
+        headers
+            .value(name)
+            .and_then(|value| value.as_text().map(str::to_ascii_lowercase))
+    };
+    let precedence = text("Precedence").unwrap_or_default();
+    let auto_submitted = text("Auto-Submitted").unwrap_or_default();
+    let mailer = text("X-Mailer").unwrap_or_default();
+    SendingSignals {
+        bulk: message.list_unsubscribe().is_some()
+            || headers.contains("List-Id")
+            || ["bulk", "list", "junk"].contains(&precedence.trim()),
+        automated: (!auto_submitted.is_empty() && auto_submitted.trim() != "no")
+            || precedence.trim() == "auto_reply"
+            || headers.contains("X-Auto-Response-Suppress"),
+        // Certified Senders Alliance members are commercial senders; the others name the campaign.
+        marketing: CAMPAIGN_HEADERS.iter().any(|name| headers.contains(*name))
+            || MARKETING_MAILERS
+                .iter()
+                .any(|platform| mailer.contains(platform)),
+        one_click: text("List-Unsubscribe-Post").is_some_and(|value| value.contains("one-click")),
     }
 }
 
@@ -523,6 +580,41 @@ Content-Type: multipart/alternative; boundary=\"b\"\r\n\r\n";
             "From: news@x.example\r\nTo: bob@example.com\r\nSubject: News\r\n{headers}Content-Type: text/plain\r\n\r\nHello\r\n"
         );
         render(raw.as_bytes()).unwrap().unsubscribe
+    }
+
+    #[test]
+    fn reads_how_a_message_was_sent_from_its_headers() {
+        let signals = |headers: &[u8]| parse_summary(headers, b"").signals;
+        let newsletter = signals(
+            b"From: News <news@brand.example>\r\nSubject: Hi\r\nList-Unsubscribe: <https://brand.example/u>\r\nX-Mailer: Mailchimp Mailer\r\n\r\n",
+        );
+        assert!(newsletter.bulk && newsletter.marketing && !newsletter.automated);
+        let robot = signals(
+            b"From: robot@ci.example\r\nSubject: Build\r\nAuto-Submitted: auto-generated\r\n\r\n",
+        );
+        assert!(robot.automated && !robot.bulk);
+        assert!(
+            signals(b"From: list@lists.example\r\nSubject: Digest\r\nPrecedence: bulk\r\n\r\n")
+                .bulk
+        );
+        assert!(signals(b"From: list@lists.example\r\nSubject: Digest\r\nList-Id: <dev.lists.example>\r\n\r\n").bulk);
+        assert!(signals(b"From: shop@brand.example\r\nSubject: Hi\r\nX-CSA-Complaints: csa-complaints@eco.de\r\n\r\n").marketing);
+        assert!(
+            signals(b"From: shop@brand.example\r\nSubject: Hi\r\nX-Mailin-Campaign: 42\r\n\r\n")
+                .marketing
+        );
+        let one_click = signals(
+            b"From: news@brand.example\r\nSubject: Hi\r\nList-Unsubscribe: <https://brand.example/u>\r\nList-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n\r\n",
+        );
+        assert!(one_click.bulk && one_click.one_click && !one_click.marketing);
+        assert!(
+            signals(b"From: gitlab@code.example\r\nSubject: Pipeline\r\nX-Auto-Response-Suppress: All\r\n\r\n")
+                .automated
+        );
+        assert_eq!(
+            signals(b"From: bob@example.com\r\nSubject: Lunch\r\nAuto-Submitted: no\r\n\r\n"),
+            SendingSignals::default()
+        );
     }
 
     #[test]

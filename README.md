@@ -60,6 +60,9 @@ search, menus and long-press previews, in light and dark mode.
 - Sign-in for **Google**, **iCloud**, **OVHcloud**, **IONOS**, **Yahoo**, or any IMAP/SMTP account,
   with servers found automatically when possible
 - A signature per account and a sender picker when you write
+- Mail sorted on the device into **Primary, Transactions, Updates and Promotions**, with All Mail one tap
+  away; sign-in codes, security alerts and bounces stay in Primary, and moving a sender to another
+  category takes its past and future mail with it
 
 ### Fast, local-first mail
 - Messages are stored on the device (SQLite) and searchable offline with full-text search, in the

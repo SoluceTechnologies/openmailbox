@@ -75,7 +75,7 @@ async fn main() {
 
     let first_page = loop {
         if !engine
-            .list_threads(ThreadScope::Unified, false, None, 50)
+            .list_threads(ThreadScope::Unified, false, None, None, 50)
             .unwrap()
             .threads
             .is_empty()
@@ -95,7 +95,7 @@ async fn main() {
     let mut cursor = None;
     loop {
         let page = engine
-            .list_threads(ThreadScope::Unified, false, cursor.as_deref(), 500)
+            .list_threads(ThreadScope::Unified, false, None, cursor.as_deref(), 500)
             .unwrap();
         threads += page.threads.len();
         cursor = page.next_cursor;
@@ -109,7 +109,7 @@ async fn main() {
     let refresh = wait_for_idle(&events, refresh_started).await - refresh_started;
 
     let page = engine
-        .list_threads(ThreadScope::Unified, false, None, 50)
+        .list_threads(ThreadScope::Unified, false, None, None, 50)
         .unwrap()
         .threads;
     let mut cold = Vec::new();
@@ -129,7 +129,7 @@ async fn main() {
     for _ in 0..100 {
         std::hint::black_box(
             engine
-                .list_threads(ThreadScope::Unified, false, None, 50)
+                .list_threads(ThreadScope::Unified, false, None, None, 50)
                 .unwrap(),
         );
     }

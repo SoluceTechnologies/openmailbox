@@ -63,6 +63,15 @@
     "syncNow": "Check for New Mail",
     "updatePassword": "Update Password"
   },
+  "categories": {
+    "all": "All Mail",
+    "filter": "Category",
+    "moveSender": "Move Mail from {{sender}}",
+    "primary": "Primary",
+    "promotions": "Promotions",
+    "transactions": "Transactions",
+    "updates": "Updates"
+  },
   "common": {
     "back": "Back",
     "cancel": "Cancel",
@@ -201,6 +210,7 @@
   },
   "threads": {
     "archive": "Archive",
+    "categorize": "Categorize Sender",
     "delete": "Delete",
     "deleteForever": "Delete Permanently",
     "deleteForeverMessage": "The messages will be deleted from the server. This can't be undone.",
