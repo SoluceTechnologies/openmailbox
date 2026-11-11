@@ -60,9 +60,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cache Cargo
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        uses: actions/cache@v4
         with:
-          workspaces: core
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            core/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('core/rust-toolchain.toml', 'core/Cargo.lock') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-
 
       - name: Run tests
         run: cargo test --workspace --locked
