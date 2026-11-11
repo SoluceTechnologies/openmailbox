@@ -1,0 +1,109 @@
+name: Build & Publish (Expo / EAS)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      ref:
+        required: true
+        type: string
+    secrets:
+      EXPO_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: EAS Android (${{ inputs.version }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
+
+      - name: Build the Rust core
+        run: env -u ANDROID_NDK_HOME tools/build-core.sh android --release
+
+      - name: Setup Expo & EAS
+        uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8.2.1
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
+
+      - name: Strip tracked native dirs so EAS runs a managed prebuild
+        run: rm -rf android ios
+
+      - name: Build & submit on EAS (production)
+        run: eas build --profile production --platform android --non-interactive --auto-submit
+
+      - name: Build APK on EAS
+        run: |
+          eas build --profile apk --platform android --non-interactive --wait --json > build-output.json
+          cat build-output.json
+          APK_URL=$(jq -r '.[0].artifacts.applicationArchiveUrl // .[0].artifacts.buildUrl' build-output.json)
+          echo "Downloading APK from: $APK_URL"
+          curl -fL -o "./OpenMailbox-v${{ inputs.version }}.apk" "$APK_URL"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: ./OpenMailbox-v${{ inputs.version }}.apk
+
+  ios:
+    name: EAS iOS (${{ inputs.version }})
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build the Rust core
+        run: tools/build-core.sh ios --release
+
+      - name: Setup Expo & EAS
+        uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8.2.1
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
+
+      - name: Strip tracked native dirs so EAS runs a managed prebuild
+        run: rm -rf android ios
+
+      - name: Build & submit on EAS (production)
+        run: eas build --profile production --platform ios --non-interactive --auto-submit

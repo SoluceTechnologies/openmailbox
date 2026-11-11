@@ -1,0 +1,19 @@
+[package]
+name = "mail-ffi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "mail_ffi"
+crate-type = ["lib", "staticlib"]
+
+[features]
+test-ca = ["mail-sync/test-ca"]
+
+[dependencies]
+mail-model.workspace = true
+mail-sync.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+uniffi.workspace = true

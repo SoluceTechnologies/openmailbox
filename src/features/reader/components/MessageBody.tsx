@@ -1,0 +1,135 @@
+import { memo, useState } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { useTheme } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { File, FileArchive, FileImage, FileSpreadsheet, FileText, ImageOff, type LucideIcon } from 'lucide-react-native';
+import type { Attachment } from '@openmailbox/mail-core';
+
+import { useBody } from '@/core/hooks';
+import { describeCoreError } from '@/features/accounts/coreErrors';
+import { AttachmentStack } from '@/features/attachments/AttachmentStack';
+import { openAttachment } from '@/features/attachments/openAttachment';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { formatSize } from '@/utils/sizes';
+import { Button, Spinner, Typography } from '@/ui/components';
+
+import { HtmlBody } from './HtmlBody';
+import { UnsubscribeBanner } from './UnsubscribeBanner';
+
+function attachmentIcon(mimeType: string): LucideIcon {
+  if (mimeType.startsWith('image/')) return FileImage;
+  if (mimeType === 'application/pdf' || mimeType.startsWith('text/') || mimeType.includes('word')) return FileText;
+  if (mimeType.includes('sheet') || mimeType.includes('excel') || mimeType === 'text/csv') return FileSpreadsheet;
+  if (mimeType.includes('zip') || mimeType.includes('compressed')) return FileArchive;
+  return File;
+}
+
+function AttachmentChip({ emailId, attachment }: { emailId: string; attachment: Attachment }) {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const [opening, setOpening] = useState(false);
+  const Icon = attachmentIcon(attachment.mimeType);
+
+  const open = async () => {
+    setOpening(true);
+    try {
+      await openAttachment(emailId, attachment);
+    } catch {
+      Alert.alert(t('reader.attachmentFailed'));
+    } finally {
+      setOpening(false);
+    }
+  };
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t('reader.openAttachment', { name: attachment.filename })}
+      accessibilityState={{ busy: opening }}
+      onPress={open}
+      disabled={opening}
+      style={({ pressed }) => [
+        styles.attachment,
+        { backgroundColor: pressed ? colors.border : colors.surface, borderColor: colors.border },
+      ]}
+    >
+      {opening ? <Spinner size="small" /> : <Icon size={22} color={colors.primary} />}
+      <View style={styles.attachmentText}>
+        <Typography variant="body2" numberOfLines={1}>
+          {attachment.filename}
+        </Typography>
+        <Typography variant="caption" color="secondary">
+          {formatSize(attachment.size, t)}
+        </Typography>
+      </View>
+    </Pressable>
+  );
+}
+
+function MessageBodyImpl({ emailId }: { emailId: string }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const loadRemoteImagesByDefault = useSettingsStore((state) => state.loadRemoteImages);
+  const [remoteAllowed, setRemoteAllowed] = useState(loadRemoteImagesByDefault);
+  const body = useBody(emailId);
+
+  if (body.isLoading) return <Spinner style={styles.loading} />;
+  if (body.isError || !body.data) {
+    return (
+      <View style={styles.error}>
+        <Typography color="secondary">{t('reader.loadFailed')}</Typography>
+        {body.error ? (
+          <Typography variant="caption" color="secondary" align="center">
+            {describeCoreError(body.error, t)}
+          </Typography>
+        ) : null}
+        <Button variant="link" title={t('common.retry')} onPress={() => body.refetch()} />
+      </View>
+    );
+  }
+
+  const { html, text, hasRemoteContent, attachments, unsubscribe } = body.data;
+  return (
+    <View style={styles.body}>
+      {unsubscribe ? <UnsubscribeBanner emailId={emailId} list={unsubscribe} /> : null}
+      {html && hasRemoteContent && !remoteAllowed ? (
+        <Pressable onPress={() => setRemoteAllowed(true)} style={[styles.remoteBanner, { backgroundColor: colors.surface }]}>
+          <ImageOff size={16} color={colors.textSecondary} />
+          <Typography variant="caption" color="secondary" style={styles.flex}>
+            {t('reader.remoteContentBlocked')}
+          </Typography>
+          <Typography variant="caption" color="primary" weight="600">
+            {t('reader.loadRemoteContent')}
+          </Typography>
+        </Pressable>
+      ) : null}
+      {html ? (
+        <HtmlBody html={html} allowRemoteContent={remoteAllowed} />
+      ) : text.trim() ? (
+        <Typography variant="body1" weight="400" selectable style={styles.text}>
+          {text}
+        </Typography>
+      ) : null}
+      {attachments.length > 0 ? (
+        <AttachmentStack count={attachments.length} background={colors.card}>
+          {attachments.map((attachment) => (
+            <AttachmentChip key={attachment.index} emailId={emailId} attachment={attachment} />
+          ))}
+        </AttachmentStack>
+      ) : null}
+    </View>
+  );
+}
+
+export const MessageBody = memo(MessageBodyImpl);
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  body: { gap: 12, paddingHorizontal: 16 },
+  loading: { marginVertical: 24 },
+  error: { alignItems: 'center', paddingVertical: 16, paddingHorizontal: 16, gap: 4 },
+  text: { fontSize: 16, lineHeight: 23 },
+  remoteBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 10 },
+  attachment: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth },
+  attachmentText: { flex: 1 },
+});

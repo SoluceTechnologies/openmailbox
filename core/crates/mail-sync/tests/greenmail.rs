@@ -1,0 +1,696 @@
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+use mail_model::{
+    AccountConfig, Address, Category, Draft, Keyword, MailboxRole, OutgoingAttachment, Security,
+    ServerEndpoint, ThreadScope, ThreadSummary,
+};
+use mail_sync::{Destination, Engine};
+
+fn endpoint(port: u16) -> ServerEndpoint {
+    ServerEndpoint {
+        host: "localhost".into(),
+        port,
+        security: Security::Tls,
+    }
+}
+
+fn bob() -> Address {
+    Address {
+        name: Some("Bob".into()),
+        email: "bob@example.com".into(),
+    }
+}
+
+fn draft(
+    account_id: &str,
+    subject: String,
+    body_text: &str,
+    in_reply_to_email_id: Option<i64>,
+) -> Draft {
+    Draft {
+        account_id: account_id.into(),
+        to: vec![bob()],
+        cc: vec![],
+        bcc: vec![],
+        subject,
+        body_text: body_text.into(),
+        body_html: None,
+        in_reply_to_email_id,
+        attachments: vec![],
+    }
+}
+
+async fn server_subjects() -> Vec<String> {
+    server_subjects_in("INBOX").await
+}
+
+async fn server_subjects_in(mailbox: &str) -> Vec<String> {
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
+        .await
+        .unwrap();
+    connection.select(mailbox).await.unwrap();
+    let uids = connection.search_since(0).await.unwrap();
+    if uids.is_empty() {
+        return Vec::new();
+    }
+    connection
+        .fetch_summaries(&uids)
+        .await
+        .unwrap_or_default()
+        .iter()
+        .filter(|summary| !summary.flags.deleted)
+        .filter_map(|summary| mail_mime::parse_summary(&summary.header, &summary.text).subject)
+        .collect()
+}
+
+async fn ensure_mailboxes() {
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
+        .await
+        .unwrap();
+    let mailboxes = connection.list_mailboxes().await.unwrap();
+    for (name, role) in [
+        ("Sent", MailboxRole::Sent),
+        ("Trash", MailboxRole::Trash),
+        ("Junk", MailboxRole::Junk),
+    ] {
+        if !mailboxes.iter().any(|mailbox| mailbox.role == Some(role)) {
+            let _ = connection.create_mailbox(name).await;
+        }
+    }
+}
+
+async fn wait_on_server(mailbox: &str, token: &str, present: bool) {
+    let started = Instant::now();
+    while server_subjects_in(mailbox)
+        .await
+        .iter()
+        .any(|subject| subject.contains(token))
+        != present
+    {
+        assert!(
+            started.elapsed() < Duration::from_secs(20),
+            "{mailbox} did not change on the server"
+        );
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+}
+
+async fn eventually<T>(engine: &Engine, mut probe: impl FnMut() -> Option<T>) -> T {
+    let started = Instant::now();
+    let mut last_sync = Instant::now();
+    loop {
+        if let Some(value) = probe() {
+            return value;
+        }
+        assert!(
+            started.elapsed() < Duration::from_secs(30),
+            "condition not reached in time"
+        );
+        if last_sync.elapsed() > Duration::from_secs(2) {
+            engine.sync_now(None);
+            last_sync = Instant::now();
+        }
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+}
+
+fn thread_with(engine: &Engine, token: &str) -> Option<ThreadSummary> {
+    engine
+        .list_threads(ThreadScope::Unified, false, None, None, 100)
+        .unwrap()
+        .threads
+        .into_iter()
+        .find(|thread| {
+            thread
+                .latest
+                .subject
+                .as_deref()
+                .is_some_and(|subject| subject.contains(token))
+        })
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn sends_syncs_reads_and_acts_on_a_real_server() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let account = engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(
+            &account.id,
+            format!("Hello {token}"),
+            "Premier message",
+            None,
+        ))
+        .unwrap();
+    let thread = eventually(&engine, || thread_with(&engine, &token)).await;
+    assert_eq!(thread.latest.preview.as_deref(), Some("Premier message"));
+    let first = engine
+        .thread_emails(thread.thread_id, Some(thread.mailbox_id))
+        .unwrap()
+        .remove(0);
+    let body = engine.body(first.id).await.unwrap();
+    assert!(body.text.contains("Premier message"));
+
+    engine
+        .send(draft(
+            &account.id,
+            format!("Re: Hello {token}"),
+            "Réponse",
+            Some(first.id),
+        ))
+        .unwrap();
+    let thread = eventually(&engine, || {
+        thread_with(&engine, &token)
+            .filter(|thread| thread.message_count == 2 && thread.unread_count == 0)
+    })
+    .await;
+
+    engine
+        .set_thread_keywords(thread.mailbox_id, thread.thread_id, &[], &[Keyword::Seen])
+        .unwrap();
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    engine.sync_now(None);
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    assert_eq!(
+        thread_with(&engine, &token).unwrap().unread_count,
+        2,
+        "the read copy in Sent was marked unread too"
+    );
+
+    engine
+        .set_thread_keywords(thread.mailbox_id, thread.thread_id, &[Keyword::Seen], &[])
+        .unwrap();
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    engine.sync_now(None);
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    assert_eq!(
+        thread_with(&engine, &token).unwrap().unread_count,
+        0,
+        "seen flags reached the server"
+    );
+
+    engine
+        .move_thread(
+            thread.mailbox_id,
+            thread.thread_id,
+            Destination::Trash,
+            Duration::ZERO,
+        )
+        .unwrap();
+    assert!(thread_with(&engine, &token).is_none());
+    let started = Instant::now();
+    while server_subjects()
+        .await
+        .iter()
+        .any(|subject| subject.contains(&token))
+    {
+        assert!(
+            started.elapsed() < Duration::from_secs(15),
+            "deletion did not reach the server"
+        );
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn deleting_an_unopened_thread_removes_it_from_the_server() {
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let account = engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(&account.id, format!("Delete {token}"), "Body", None))
+        .unwrap();
+    let thread = eventually(&engine, || thread_with(&engine, &token)).await;
+    tokio::time::sleep(Duration::from_secs(4)).await;
+
+    engine
+        .move_thread(
+            thread.mailbox_id,
+            thread.thread_id,
+            Destination::Trash,
+            Duration::ZERO,
+        )
+        .unwrap();
+    let started = Instant::now();
+    while server_subjects()
+        .await
+        .iter()
+        .any(|subject| subject.contains(&token))
+    {
+        assert!(
+            started.elapsed() < Duration::from_secs(15),
+            "deletion did not reach the server"
+        );
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn moves_a_thread_out_of_the_trash_and_back_to_the_inbox() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let account = engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(&account.id, format!("Restore {token}"), "Body", None))
+        .unwrap();
+    let thread = eventually(&engine, || thread_with(&engine, &token)).await;
+    tokio::time::sleep(Duration::from_secs(4)).await;
+
+    let relocation = engine
+        .move_thread(
+            thread.mailbox_id,
+            thread.thread_id,
+            Destination::Trash,
+            Duration::ZERO,
+        )
+        .unwrap();
+    let trash = relocation
+        .target_mailbox_id
+        .expect("bob has a Trash folder");
+    wait_on_server("Trash", &token, true).await;
+    engine.open_mailbox(trash).unwrap();
+    tokio::time::sleep(Duration::from_secs(4)).await;
+
+    engine
+        .move_thread(trash, thread.thread_id, Destination::Inbox, Duration::ZERO)
+        .unwrap();
+    wait_on_server("INBOX", &token, true).await;
+    wait_on_server("Trash", &token, false).await;
+
+    let junk = engine
+        .move_thread(
+            thread.mailbox_id,
+            thread.thread_id,
+            Destination::Junk,
+            Duration::ZERO,
+        )
+        .unwrap()
+        .target_mailbox_id
+        .expect("bob has a Junk folder");
+    wait_on_server("Junk", &token, true).await;
+    engine.open_mailbox(junk).unwrap();
+    tokio::time::sleep(Duration::from_secs(4)).await;
+    engine
+        .move_thread(junk, thread.thread_id, Destination::Inbox, Duration::ZERO)
+        .unwrap();
+    wait_on_server("INBOX", &token, true).await;
+    wait_on_server("Junk", &token, false).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn a_thread_waiting_to_be_trashed_stays_out_of_the_inbox_when_it_syncs() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let account = engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(&account.id, format!("Hold {token}"), "Body", None))
+        .unwrap();
+    let thread = eventually(&engine, || thread_with(&engine, &token)).await;
+    tokio::time::sleep(Duration::from_secs(4)).await;
+
+    engine
+        .move_thread(
+            thread.mailbox_id,
+            thread.thread_id,
+            Destination::Trash,
+            Duration::from_secs(60),
+        )
+        .unwrap();
+    assert!(thread_with(&engine, &token).is_none());
+    engine.sync_now(None);
+    tokio::time::sleep(Duration::from_secs(5)).await;
+
+    assert!(
+        thread_with(&engine, &token).is_none(),
+        "the held thread came back into the inbox"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn sends_an_attachment_that_arrives_intact() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let account = engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    let file = directory.join("relevé.pdf");
+    let content: Vec<u8> = (0..300_000u32).map(|index| (index % 251) as u8).collect();
+    std::fs::write(&file, &content).unwrap();
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    let mut message = draft(
+        &account.id,
+        format!("Attachment {token}"),
+        "Ci-joint.",
+        None,
+    );
+    message.attachments = vec![OutgoingAttachment {
+        path: file.to_string_lossy().into_owned(),
+        filename: "relevé.pdf".into(),
+        mime_type: "application/pdf".into(),
+    }];
+    engine.send(message).unwrap();
+
+    let thread = eventually(&engine, || thread_with(&engine, &token)).await;
+    assert!(thread.has_attachment);
+    let body = engine.body(thread.latest.id).await.unwrap();
+    assert_eq!(body.attachments.len(), 1);
+    assert_eq!(body.attachments[0].filename, "relevé.pdf");
+    assert_eq!(body.attachments[0].size, content.len() as u64);
+    let saved = engine
+        .save_attachment(
+            thread.latest.id,
+            body.attachments[0].index,
+            directory.join("saved"),
+        )
+        .await
+        .unwrap();
+    assert_eq!(std::fs::read(saved).unwrap(), content);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn unsubscribes_from_a_list_by_mail() {
+    ensure_mailboxes().await;
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    let newsletter = format!(
+        "From: news@lists.example\r\nTo: bob@example.com\r\nSubject: Newsletter {token}\r\n\
+         Message-ID: <{token}@lists.example>\r\n\
+         List-Unsubscribe: <mailto:bob@example.com?subject=Leave%20{token}>\r\n\
+         Content-Type: text/plain\r\n\r\nNews of the week.\r\n"
+    );
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
+        .await
+        .unwrap();
+    connection
+        .append("INBOX", newsletter.as_bytes())
+        .await
+        .unwrap();
+
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    let thread = eventually(&engine, || {
+        thread_with(&engine, &format!("Newsletter {token}"))
+    })
+    .await;
+    let body = engine.body(thread.latest.id).await.unwrap();
+    assert!(body.unsubscribe.is_some());
+
+    assert_eq!(
+        engine.unsubscribe(thread.latest.id).unwrap(),
+        mail_model::UnsubscribeOutcome::Done
+    );
+    wait_on_server("INBOX", &format!("Leave {token}"), true).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn background_check_reports_new_mail() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let added_at = mail_model::now_millis();
+    engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    tokio::time::sleep(Duration::from_secs(3)).await;
+    engine.on_background();
+    let earlier = engine
+        .check_new_mail(Duration::from_secs(20))
+        .await
+        .unwrap();
+    assert!(
+        earlier
+            .iter()
+            .all(|message| message.email.received_at >= added_at - 1_000),
+        "mail from before the account was added was notified"
+    );
+
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    let raw = format!(
+        "From: alice@example.com\r\nTo: bob@example.com\r\nSubject: Background {token}\r\n\
+         Message-ID: <{token}@example.com>\r\nContent-Type: text/plain\r\n\r\nHello Bob.\r\n"
+    );
+    proto_smtp::send(
+        &endpoint(3465),
+        "alice@example.com",
+        "secret",
+        "alice@example.com",
+        &["bob@example.com".into()],
+        raw.as_bytes(),
+    )
+    .await
+    .unwrap();
+    wait_on_server("INBOX", &token, true).await;
+
+    let with_token = |found: Vec<mail_model::NewMessage>| -> Vec<mail_model::NewMessage> {
+        found
+            .into_iter()
+            .filter(|message| {
+                message
+                    .email
+                    .subject
+                    .as_deref()
+                    .is_some_and(|subject| subject.contains(&token))
+            })
+            .collect()
+    };
+    let found = with_token(
+        engine
+            .check_new_mail(Duration::from_secs(20))
+            .await
+            .unwrap(),
+    );
+    assert_eq!(found.len(), 1);
+    assert!(!found[0].email.is_seen);
+    assert!(
+        with_token(
+            engine
+                .check_new_mail(Duration::from_secs(20))
+                .await
+                .unwrap()
+        )
+        .is_empty()
+    );
+
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
+        .await
+        .unwrap();
+    connection.select("INBOX").await.unwrap();
+    let uids = connection
+        .search_message_id(&format!("{token}@example.com"))
+        .await
+        .unwrap();
+    let flags = connection
+        .fetch_flags(&uids[0].to_string(), None)
+        .await
+        .unwrap();
+    assert!(!flags[0].flags.seen);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn classifies_mail_from_the_headers_the_server_sends() {
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    // Only their headers tell the first two from mail a person wrote.
+    let cases = [
+        (
+            "Boutique <contact@shop.example>",
+            "Nouvelle collection",
+            "X-Mailin-Campaign: 42\r\n",
+            Category::Promotions,
+        ),
+        (
+            "Code <gitlab@code.example>",
+            "Pipeline passed",
+            "X-Auto-Response-Suppress: All\r\n",
+            Category::Updates,
+        ),
+        (
+            "Weekly <editor@weekly.example>",
+            "Issue 12",
+            "List-Unsubscribe: <https://weekly.example/u>\r\nList-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n",
+            Category::Updates,
+        ),
+        (
+            "Cloud <billing@cloud.example>",
+            "Invoice 2026-118",
+            "",
+            Category::Transactions,
+        ),
+        (
+            "Accounts <noreply@accounts.example>",
+            "Your login code",
+            "Auto-Submitted: auto-generated\r\n",
+            Category::Primary,
+        ),
+    ];
+    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
+        .await
+        .unwrap();
+    for (index, (from, subject, headers, _)) in cases.iter().enumerate() {
+        let raw = format!(
+            "From: {from}\r\nTo: bob@example.com\r\nSubject: {subject} {token}\r\nMessage-ID: <{index}.{token}@test.example>\r\n\
+             {headers}MIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nBonjour\r\n"
+        );
+        connection.append("INBOX", raw.as_bytes()).await.unwrap();
+    }
+
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+        )
+        .await
+        .unwrap();
+    for (_, subject, _, category) in &cases {
+        let thread = eventually(&engine, || {
+            thread_with(&engine, &format!("{subject} {token}"))
+        })
+        .await;
+        assert_eq!(thread.category, *category, "{subject}");
+    }
+
+    connection.select("INBOX").await.unwrap();
+    let uids = connection.search_since(0).await.unwrap();
+    let appended: Vec<u32> = connection
+        .fetch_summaries(&uids)
+        .await
+        .unwrap()
+        .iter()
+        .filter(|summary| {
+            mail_mime::parse_summary(&summary.header, &summary.text)
+                .subject
+                .is_some_and(|subject| subject.contains(&token))
+        })
+        .map(|summary| summary.uid)
+        .collect();
+    connection.delete_messages(&appended).await.unwrap();
+}

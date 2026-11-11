@@ -1,0 +1,16 @@
+import { storage } from '@/storage';
+import { useSettingsStore } from '@/stores/settingsStore';
+
+describe('settings store', () => {
+  it('keeps remote images blocked until the user allows them', () => {
+    expect(useSettingsStore.getState().loadRemoteImages).toBe(false);
+  });
+
+  it('persists preferences to storage', () => {
+    useSettingsStore.getState().setThemePreference('dark');
+    useSettingsStore.getState().setLanguage('oc');
+    useSettingsStore.getState().setLoadRemoteImages(true);
+    const saved = JSON.parse(storage.getString('settings-store') ?? '{}');
+    expect(saved.state).toMatchObject({ themePreference: 'dark', language: 'oc', loadRemoteImages: true });
+  });
+});

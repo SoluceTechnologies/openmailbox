@@ -1,0 +1,64 @@
+# Same as .gitignore, but keeps the Rust core libraries built by tools/build-core.sh:
+# EAS only gets what this file lets through, and the native build links them.
+
+# dependencies
+node_modules/
+.yarn/install-state.gz
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+modules/*/android/build/
+modules/*/android/.gradle/
+modules/*/android/.cxx/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# EAS runs a managed prebuild, see .github/workflows/expo.yml
+/ios/
+/android/
+
+.claude
+.superpowers
+.codex
+/docs
+
+.idea
+.env
+# Local test mail server
+tools/mail-server/.certificates/
+
+# Rust
+core/target/
+
+# Rust core build leftovers (the libraries themselves are kept)
+modules/mail-core/android/build/
+modules/mail-core/android/.cxx/
+modules/mail-core/build/

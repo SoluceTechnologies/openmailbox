@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: Open Mailbox
+abstract: An open source mail client for iOS and Android, with no server in between.
+authors:
+  - given-names: Charles
+    family-names: Gauthereau
+  - name: Soluce Technologies
+version: 1.0.0
+license: MPL-2.0
+url: "https://openmailbox.eu"
+repository-code: "https://github.com/SoluceTechnologies/openmailbox"
+keywords:
+  - email
+  - imap
+  - smtp
+  - react-native
+  - expo
+  - rust

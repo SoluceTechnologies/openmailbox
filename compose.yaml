@@ -1,0 +1,31 @@
+services:
+  mail:
+    image: greenmail/standalone:2.1.15
+    container_name: openmailbox-mail
+    ports:
+      - "3993:3993"
+      - "3465:3465"
+    volumes:
+      - ./tools/mail-server/.certificates/server.p12:/home/greenmail/greenmail.p12:ro
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.all
+        -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.tls.keystore.file=/home/greenmail/greenmail.p12
+        -Dgreenmail.tls.keystore.password=changeit
+        -Dgreenmail.users=alice:secret@example.com,bob:secret@example.com
+        -Dgreenmail.users.login=email
+      JAVA_OPTS: -Djava.net.preferIPv4Stack=true -Xmx1g
+
+  performance-imap:
+    image: dovecot/dovecot:2.4.2
+    container_name: openmailbox-performance-imap
+    profiles: [ "performance" ]
+    ports:
+      - "3994:31993"
+    volumes:
+      - ./tools/mail-server/.certificates/server.pem:/etc/dovecot/ssl/tls.crt:ro
+      - ./tools/mail-server/.certificates/server.key:/etc/dovecot/ssl/tls.key:ro
+      - ./tools/mail-server/dovecot-performance.conf:/etc/dovecot/conf.d/zz-performance.conf:ro
+    environment:
+      USER_PASSWORD: secret
