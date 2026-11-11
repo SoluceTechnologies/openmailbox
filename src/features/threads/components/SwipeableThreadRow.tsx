@@ -1,5 +1,8 @@
 import { memo, useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+// Gesture handler's Pressable: on Android, React Native's misses taps on the left actions, which lie under
+// the (transparent) right actions container.
+import { Pressable } from 'react-native-gesture-handler';
 import { Link } from 'expo-router';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useTranslation } from 'react-i18next';

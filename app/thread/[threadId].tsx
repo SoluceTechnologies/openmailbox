@@ -1,5 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+// Gesture handler's Pressable: on Android, React Native's misses taps on the left swipe action.
+import { Pressable } from 'react-native-gesture-handler';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useIsPreview, useLocalSearchParams, useRouter, useTheme } from 'expo-router';
@@ -267,7 +269,13 @@ export default function ThreadScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { flexGrow: 1, paddingBottom: 40, borderRadius: 24, overflow: 'hidden' },
+  // Rounded like a card for the swipe; on Android the bottom meets the toolbar, so only the top is.
+  content: {
+    flexGrow: 1,
+    paddingBottom: 40,
+    overflow: 'hidden',
+    ...(NATIVE_CHROME ? { borderRadius: 24 } : { borderTopLeftRadius: 24, borderTopRightRadius: 24 }),
+  },
   titleBlock: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 },
   mailbox: { marginTop: 4, fontSize: 13 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 16 },
