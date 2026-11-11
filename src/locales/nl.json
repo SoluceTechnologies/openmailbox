@@ -2,6 +2,8 @@
   "about": {
     "description": "Open Mailbox is een opensource-mailclient zonder eigen server: berichten en wachtwoorden gaan alleen tussen dit apparaat en je e-mailproviders.",
     "license": "Licentie",
+    "reportBug": "Meld een bug",
+    "sourceCode": "Bekijk op GitHub",
     "version": "Versie"
   },
   "accounts": {

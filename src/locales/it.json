@@ -2,6 +2,8 @@
   "about": {
     "description": "Open Mailbox è un client di posta open source senza server proprio: messaggi e password viaggiano solo tra questo dispositivo e i tuoi provider di posta.",
     "license": "Licenza",
+    "reportBug": "Segnala un bug",
+    "sourceCode": "Vedi su GitHub",
     "version": "Versione"
   },
   "accounts": {

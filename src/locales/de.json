@@ -2,6 +2,8 @@
   "about": {
     "description": "Open Mailbox ist ein quelloffener E-Mail-Client ohne eigenen Server: Nachrichten und Passwörter gehen nur zwischen diesem Gerät und deinen E-Mail-Anbietern hin und her.",
     "license": "Lizenz",
+    "reportBug": "Fehler melden",
+    "sourceCode": "Auf GitHub ansehen",
     "version": "Version"
   },
   "accounts": {

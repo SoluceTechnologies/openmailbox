@@ -2,6 +2,8 @@
   "about": {
     "description": "Open Mailbox es un client de messatjariá liure sens servidor pròpri : los messatges e los senhals circulan pas qu'entre aqueste aparelh e vòstres provesidors de messatjariá.",
     "license": "Licéncia",
+    "reportBug": "Senhalar un bug",
+    "sourceCode": "Veire sus GitHub",
     "version": "Version"
   },
   "accounts": {
