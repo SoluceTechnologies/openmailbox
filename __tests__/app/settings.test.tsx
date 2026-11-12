@@ -23,7 +23,7 @@ describe('settings', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useSettingsStore.setState({ language: 'en', loadRemoteImages: false, contactPictures: true, accountNames: { 'account-1': 'Work' }, accountOrder: [] });
+    useSettingsStore.setState({ language: 'en', loadRemoteImages: false, contactPictures: true, accountNames: { 'account-1': 'Work' }, accountOrder: [], defaultAccountId: null });
     useSyncStore.setState({ statuses: {}, authRequired: {} });
     queryClient.setQueryData(queryKeys.accounts, [
       makeAccount({ imap: { host: 'imap.gmail.com', port: 993, security: Security.Tls } }),
@@ -42,7 +42,7 @@ describe('settings', () => {
 
   it('lists accounts by name with their provider, without repeating an address used as the name', () => {
     renderWithProviders(<AccountsSettingsScreen />);
-    expect(screen.getByText('Work')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Work')).toBeOnTheScreen();
     expect(screen.queryByText('Alice Martin')).toBeNull();
     expect(screen.getByText('Google · alice@example.com')).toBeOnTheScreen();
     // A server the app does not know is named after its domain.
@@ -53,18 +53,35 @@ describe('settings', () => {
   it('moves an account with the accessibility actions, which reorders it everywhere', () => {
     renderWithProviders(<AccountsSettingsScreen />);
     expect(screen.getByText(i18n.t('accounts.reorderHint'))).toBeOnTheScreen();
-    const work = screen.getByRole('button', { name: 'Work' });
+    const work = screen.getByLabelText('Work');
     expect(work.props.accessibilityActions).toEqual([{ name: 'moveDown', label: 'Move Down' }]);
     fireEvent(work, 'accessibilityAction', { nativeEvent: { actionName: 'moveDown' } });
     expect(useSettingsStore.getState().accountOrder).toEqual(['account-2', 'account-1']);
-    expect(screen.getAllByRole('button').map((button) => button.props.accessibilityLabel)).toEqual(['Back', 'bob@example.com', 'Work', 'Add Account']);
+    expect(screen.getAllByRole('button').map((button) => button.props.accessibilityLabel)).toEqual(['Back', 'bob@example.com', 'Work', 'Add Account', 'Default Account']);
   });
 
   it('opens an account and the add account flow', () => {
     renderWithProviders(<AccountsSettingsScreen />);
-    fireEvent.press(screen.getByRole('button', { name: 'Work' }));
+    fireEvent.press(screen.getByLabelText('Work'));
     fireEvent.press(screen.getByRole('button', { name: 'Add Account' }));
     expect(mockRouter.push.mock.calls).toEqual([['/settings/account/account-1'], ['/accounts/add']]);
+  });
+
+  it('picks the default account, the first one until another is chosen', () => {
+    renderWithProviders(<AccountsSettingsScreen />);
+    const picker = screen.getByRole('button', { name: 'Default Account' });
+    expect(picker).toHaveTextContent(/Work/);
+    expect(screen.getByText(i18n.t('accounts.defaultAccountHint'))).toBeOnTheScreen();
+    fireEvent.press(picker);
+    fireEvent.press(screen.getAllByText('bob@example.com').at(-1)!);
+    expect(useSettingsStore.getState().defaultAccountId).toBe('account-2');
+    expect(screen.getByRole('button', { name: 'Default Account' })).toHaveTextContent(/bob@example\.com/);
+  });
+
+  it('hides the default account picker with a single account', () => {
+    queryClient.setQueryData(queryKeys.accounts, [makeAccount()]);
+    renderWithProviders(<AccountsSettingsScreen />);
+    expect(screen.queryByRole('button', { name: 'Default Account' })).toBeNull();
   });
 
   it('blocks remote images until switched on', () => {
