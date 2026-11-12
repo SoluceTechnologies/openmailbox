@@ -11,6 +11,7 @@ import { BottomBar } from '@/components/BottomBar';
 import { useAccounts, useMailboxes, useThreads } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
+import { accountName } from '@/features/accounts/accountName';
 import { CategoryBar } from '@/features/categories/CategoryBar';
 import { CategoryPicker } from '@/features/categories/CategoryPicker';
 import { categoryOf } from '@/features/categories/categories';
@@ -77,6 +78,7 @@ export default function MailboxScreen() {
   const categorized = unified || mailbox?.role === MailboxRole.Inbox;
   const inboxFilter = useSettingsStore((state) => state.inboxFilter);
   const setInboxFilter = useSettingsStore((state) => state.setInboxFilter);
+  const accountNames = useSettingsStore((state) => state.accountNames);
   const threads = useThreads(scope, unreadOnly, categorized ? categoryOf(inboxFilter) : undefined);
 
   const account = accounts.find((candidate) => candidate.id === mailbox?.accountId);
@@ -137,7 +139,7 @@ export default function MailboxScreen() {
   const title = unified ? t('mailboxes.allInboxes') : mailbox ? mailboxName(mailbox, t) : '';
   const subtitle = selection.active
     ? t('threads.selectedCount', { count: selection.selected.size })
-    : [unified ? null : account?.displayName, unreadCount > 0 ? t('threads.unreadCount', { count: unreadCount }) : null, syncLabel]
+    : [unified || !account ? null : accountName(account, accountNames), unreadCount > 0 ? t('threads.unreadCount', { count: unreadCount }) : null, syncLabel]
     .filter(Boolean)
     .join(' · ');
   const data = threads.data ?? [];

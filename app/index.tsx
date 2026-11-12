@@ -9,9 +9,11 @@ import { MailboxRole, type Account, type Mailbox } from '@openmailbox/mail-core'
 import { BottomBar } from '@/components/BottomBar';
 import { useAccounts, useMailboxes } from '@/core/hooks';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
+import { accountName } from '@/features/accounts/accountName';
 import { mailboxBadge, mailboxIcon, mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { SearchResults } from '@/features/search/SearchResults';
 import { useSyncLabel } from '@/features/sync/useSyncLabel';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { accountColor } from '@/theme';
 import { FormSection, IconButton, ListRow, Typography, ViewContainer } from '@/ui/components';
@@ -38,7 +40,7 @@ function MailboxRow({ mailbox, title, accent }: { mailbox: Mailbox; title: strin
   );
 }
 
-function AccountSection({ account, mailboxes }: { account: Account; mailboxes: Mailbox[] }) {
+function AccountSection({ account, name, mailboxes }: { account: Account; name: string; mailboxes: Mailbox[] }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
@@ -56,7 +58,7 @@ function AccountSection({ account, mailboxes }: { account: Account; mailboxes: M
       >
         <View style={[styles.accountDot, { backgroundColor: accountColor(account.color) }]} />
         <Typography variant="h4" numberOfLines={1} style={styles.flex}>
-          {account.displayName}
+          {name}
         </Typography>
         <Chevron size={20} color={colors.textSecondary} />
       </Pressable>
@@ -93,6 +95,7 @@ export default function MailboxesScreen() {
   const { colors } = useTheme();
   const accounts = useAccounts();
   const mailboxes = useMailboxes();
+  const accountNames = useSettingsStore((state) => state.accountNames);
   const syncLabel = useSyncLabel(accounts.map((account) => account.id));
   const [query, setQuery] = useState('');
   const [searchActive, setSearchActive] = useState(false);
@@ -141,12 +144,17 @@ export default function MailboxesScreen() {
           {accounts.map((account) => {
             const inbox = inboxes.find((mailbox) => mailbox.accountId === account.id);
             return inbox ? (
-              <MailboxRow key={inbox.id} mailbox={inbox} title={account.displayName} accent={accountColor(account.color)} />
+              <MailboxRow key={inbox.id} mailbox={inbox} title={accountName(account, accountNames)} accent={accountColor(account.color)} />
             ) : null;
           })}
         </FormSection>
         {accounts.map((account) => (
-          <AccountSection key={account.id} account={account} mailboxes={mailboxesByAccount.get(account.id) ?? []} />
+          <AccountSection
+            key={account.id}
+            account={account}
+            name={accountName(account, accountNames)}
+            mailboxes={mailboxesByAccount.get(account.id) ?? []}
+          />
         ))}
       </ScrollView>
     );

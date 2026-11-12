@@ -7,6 +7,11 @@ import { getInitialLanguage, type AppLanguage } from '@/utils/i18n';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
+function withText(texts: Record<string, string>, accountId: string, text: string): Record<string, string> {
+  const { [accountId]: _previous, ...others } = texts;
+  return text.trim() ? { ...others, [accountId]: text } : others;
+}
+
 interface SettingsState {
   themePreference: ThemePreference;
   language: AppLanguage;
@@ -16,6 +21,7 @@ interface SettingsState {
   contactPictures: boolean;
   defaultAccountId: string | null;
   signatures: Record<string, string>;
+  accountNames: Record<string, string>;
   notificationsEnabled: boolean;
   silencedAccountIds: string[];
   inboxFilter: InboxFilter;
@@ -26,6 +32,8 @@ interface SettingsState {
   setContactPictures: (enabled: boolean) => void;
   setDefaultAccountId: (accountId: string | null) => void;
   setSignature: (accountId: string, signature: string) => void;
+  setAccountName: (accountId: string, name: string) => void;
+  forgetAccount: (accountId: string) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setAccountNotified: (accountId: string, notified: boolean) => void;
   setInboxFilter: (filter: InboxFilter) => void;
@@ -42,6 +50,7 @@ export const useSettingsStore = create<SettingsState>()(
       contactPictures: true,
       defaultAccountId: null,
       signatures: {},
+      accountNames: {},
       notificationsEnabled: true,
       silencedAccountIds: [],
       inboxFilter: 'primary',
@@ -59,11 +68,14 @@ export const useSettingsStore = create<SettingsState>()(
             ? silencedAccountIds.filter((silenced) => silenced !== accountId)
             : [...new Set([...silencedAccountIds, accountId])],
         })),
-      setSignature: (accountId, signature) =>
-        set(({ signatures }) => {
-          const { [accountId]: _previous, ...others } = signatures;
-          return { signatures: signature.trim() ? { ...others, [accountId]: signature } : others };
-        }),
+      setSignature: (accountId, signature) => set(({ signatures }) => ({ signatures: withText(signatures, accountId, signature) })),
+      setAccountName: (accountId, name) => set(({ accountNames }) => ({ accountNames: withText(accountNames, accountId, name) })),
+      forgetAccount: (accountId) =>
+        set(({ signatures, accountNames, silencedAccountIds }) => ({
+          signatures: withText(signatures, accountId, ''),
+          accountNames: withText(accountNames, accountId, ''),
+          silencedAccountIds: silencedAccountIds.filter((silenced) => silenced !== accountId),
+        })),
     }),
     {
       name: 'settings-store',
@@ -77,6 +89,7 @@ export const useSettingsStore = create<SettingsState>()(
         contactPictures,
         defaultAccountId,
         signatures,
+        accountNames,
         notificationsEnabled,
         silencedAccountIds,
         inboxFilter,
@@ -89,6 +102,7 @@ export const useSettingsStore = create<SettingsState>()(
         contactPictures,
         defaultAccountId,
         signatures,
+        accountNames,
         notificationsEnabled,
         silencedAccountIds,
         inboxFilter,

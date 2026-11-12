@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Bell } from 'lucide-react-native';
 
 import { useAccounts } from '@/core/hooks';
+import { accountName } from '@/features/accounts/accountName';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { requestNotificationPermission } from '@/services/notifications';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -16,6 +17,7 @@ export default function NotificationSettingsScreen() {
   const accounts = useAccounts();
   const notificationsEnabled = useSettingsStore((state) => state.notificationsEnabled);
   const silencedAccountIds = useSettingsStore((state) => state.silencedAccountIds);
+  const accountNames = useSettingsStore((state) => state.accountNames);
   const setNotificationsEnabled = useSettingsStore((state) => state.setNotificationsEnabled);
   const setAccountNotified = useSettingsStore((state) => state.setAccountNotified);
 
@@ -51,13 +53,13 @@ export default function NotificationSettingsScreen() {
           {accounts.map((account) => (
             <ListRow
               key={account.id}
-              title={account.displayName}
+              title={accountName(account, accountNames)}
               leading={<View style={[styles.accountDot, { backgroundColor: accountColor(account.color) }]} />}
               trailing={
                 <Toggle
                   value={!silencedAccountIds.includes(account.id)}
                   onValueChange={(notified) => setAccountNotified(account.id, notified)}
-                  accessibilityLabel={account.displayName}
+                  accessibilityLabel={accountName(account, accountNames)}
                 />
               }
             />

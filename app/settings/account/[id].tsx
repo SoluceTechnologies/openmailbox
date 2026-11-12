@@ -9,6 +9,7 @@ import { useAccounts } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
 import { queryClient, queryKeys } from '@/core/queryClient';
 import { deleteSecret, saveSecret } from '@/core/secrets';
+import { accountName } from '@/features/accounts/accountName';
 import { describeCoreError } from '@/features/accounts/coreErrors';
 import { ProviderMark } from '@/features/accounts/components/ProviderMark';
 import { providerForAccount, providerName } from '@/features/accounts/providers';
@@ -35,6 +36,8 @@ export default function AccountSettingsScreen() {
   const [password, setPassword] = useState('');
   const signature = useSettingsStore((state) => state.signatures[id] ?? '');
   const setSignature = useSettingsStore((state) => state.setSignature);
+  const accountNames = useSettingsStore((state) => state.accountNames);
+  const setAccountName = useSettingsStore((state) => state.setAccountName);
   const [updating, setUpdating] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ text: string; failed: boolean } | null>(null);
 
@@ -70,8 +73,7 @@ export default function AccountSettingsScreen() {
         onPress: async () => {
           await mailCore().removeAccount(account.id);
           await deleteSecret(account.id);
-          setSignature(account.id, '');
-          useSettingsStore.getState().setAccountNotified(account.id, true);
+          useSettingsStore.getState().forgetAccount(account.id);
           await queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
           goBack();
         },
@@ -79,16 +81,27 @@ export default function AccountSettingsScreen() {
     ]);
 
   return (
-    <SettingsPage title={account.displayName}>
-      <FormSection footer={syncFailure ? `${syncLabel} · ${syncFailure}` : (syncLabel ?? undefined)}>
+    <SettingsPage title={accountName(account, accountNames)}>
+      <FormSection footer={t('accounts.namesHint')}>
         <FormField
-          label={t('accounts.setup.name')}
+          label={t('accounts.accountName')}
+          value={accountNames[account.id] ?? ''}
+          placeholder={account.email}
+          onChangeText={(text) => setAccountName(account.id, text)}
+          returnKeyType="done"
+        />
+        <FormField
+          label={t('accounts.senderName')}
           value={displayName}
+          placeholder={t('accounts.setup.namePlaceholder')}
           onChangeText={setDisplayName}
           onBlur={saveName}
           onSubmitEditing={saveName}
           returnKeyType="done"
         />
+      </FormSection>
+
+      <FormSection footer={syncFailure ? `${syncLabel} · ${syncFailure}` : (syncLabel ?? undefined)}>
         <FormField
           label={t('accounts.setup.email')}
           value={account.email}

@@ -23,7 +23,7 @@ describe('settings', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useSettingsStore.setState({ language: 'en', loadRemoteImages: false, contactPictures: true });
+    useSettingsStore.setState({ language: 'en', loadRemoteImages: false, contactPictures: true, accountNames: { 'account-1': 'Work' } });
     useSyncStore.setState({ statuses: {}, authRequired: {} });
     queryClient.setQueryData(queryKeys.accounts, [
       makeAccount({ imap: { host: 'imap.gmail.com', port: 993, security: Security.Tls } }),
@@ -40,9 +40,10 @@ describe('settings', () => {
     expect(screen.getByRole('button', { name: 'Accounts' })).toHaveTextContent(/2/);
   });
 
-  it('lists accounts with their provider, without repeating an address used as the name', () => {
+  it('lists accounts by name with their provider, without repeating an address used as the name', () => {
     renderWithProviders(<AccountsSettingsScreen />);
-    expect(screen.getByText('Alice Martin')).toBeOnTheScreen();
+    expect(screen.getByText('Work')).toBeOnTheScreen();
+    expect(screen.queryByText('Alice Martin')).toBeNull();
     expect(screen.getByText('Google · alice@example.com')).toBeOnTheScreen();
     // A server the app does not know is named after its domain.
     expect(screen.getByText('example.com')).toBeOnTheScreen();
@@ -51,7 +52,7 @@ describe('settings', () => {
 
   it('opens an account and the add account flow', () => {
     renderWithProviders(<AccountsSettingsScreen />);
-    fireEvent.press(screen.getByRole('button', { name: 'Alice Martin' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Work' }));
     fireEvent.press(screen.getByRole('button', { name: 'Add Account' }));
     expect(mockRouter.push.mock.calls).toEqual([['/settings/account/account-1'], ['/accounts/add']]);
   });
@@ -84,11 +85,11 @@ describe('settings', () => {
 
     it('turns new mail notifications off, then off for one account', () => {
       renderWithProviders(<NotificationSettingsScreen />);
-      fireEvent(screen.getByRole('switch', { name: 'Alice Martin' }), 'valueChange', false);
+      fireEvent(screen.getByRole('switch', { name: 'Work' }), 'valueChange', false);
       expect(useSettingsStore.getState().silencedAccountIds).toEqual(['account-1']);
       fireEvent(screen.getByRole('switch', { name: i18n.t('settings.notifyNewMail') }), 'valueChange', false);
       expect(useSettingsStore.getState().notificationsEnabled).toBe(false);
-      expect(screen.queryByRole('switch', { name: 'Alice Martin' })).toBeNull();
+      expect(screen.queryByRole('switch', { name: 'Work' })).toBeNull();
     });
 
     it('explains how to allow notifications when the system refuses them', async () => {

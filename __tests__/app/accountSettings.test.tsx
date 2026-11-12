@@ -35,9 +35,21 @@ describe('account settings', () => {
     expect(screen.getByText('smtp.example.com:465 · SSL/TLS')).toBeOnTheScreen();
   });
 
-  it('renames the account when the name field is left', () => {
+  it('names the account in the app apart from the name recipients see', () => {
+    useSettingsStore.setState({ accountNames: {} });
     renderWithProviders(<AccountSettingsScreen />);
-    const name = screen.getByLabelText('Name');
+    const name = screen.getByLabelText('Account Name');
+    expect(name).toHaveProp('placeholder', 'alice@example.com');
+    expect(screen.getAllByText('alice@example.com').length).toBeGreaterThan(0);
+    fireEvent.changeText(name, 'Work');
+    expect(useSettingsStore.getState().accountNames['account-1']).toBe('Work');
+    expect(screen.getByText('Work')).toBeOnTheScreen();
+    expect(core.renameAccount).not.toHaveBeenCalled();
+  });
+
+  it('changes the sender name when its field is left', () => {
+    renderWithProviders(<AccountSettingsScreen />);
+    const name = screen.getByLabelText('Sender Name');
     fireEvent.changeText(name, '  Alice D.  ');
     fireEvent(name, 'blur');
     expect(core.renameAccount).toHaveBeenCalledWith('account-1', 'Alice D.');
@@ -74,6 +86,7 @@ describe('account settings', () => {
   it('removes the account and its password after confirmation', async () => {
     useSettingsStore.getState().setSignature('account-1', 'Charles');
     useSettingsStore.getState().setAccountNotified('account-1', false);
+    useSettingsStore.getState().setAccountName('account-1', 'Work');
     const alert = jest.spyOn(Alert, 'alert');
     renderWithProviders(<AccountSettingsScreen />);
     fireEvent.press(screen.getByRole('button', { name: 'Remove Account' }));
@@ -87,5 +100,6 @@ describe('account settings', () => {
     expect(await readSecret('account-1')).toBeNull();
     expect(useSettingsStore.getState().signatures['account-1']).toBeUndefined();
     expect(useSettingsStore.getState().silencedAccountIds).not.toContain('account-1');
+    expect(useSettingsStore.getState().accountNames['account-1']).toBeUndefined();
   });
 });

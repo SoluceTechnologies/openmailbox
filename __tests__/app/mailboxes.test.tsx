@@ -3,6 +3,7 @@ import { MailboxRole } from '@openmailbox/mail-core';
 
 import MailboxesScreen from '../../app/index';
 import { queryClient, queryKeys } from '@/core/queryClient';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import i18n from '@/utils/i18n';
 
@@ -27,6 +28,7 @@ describe('mailboxes', () => {
     jest.clearAllMocks();
     queryClient.clear();
     useSyncStore.setState({ statuses: {}, authRequired: {} });
+    useSettingsStore.setState({ accountNames: { 'account-2': 'Personal' } });
     queryClient.setQueryData(queryKeys.accounts, [ALICE, BOB]);
     queryClient.setQueryData(queryKeys.mailboxes, [
       makeMailbox({ unreadCount: 3 }),
@@ -56,6 +58,13 @@ describe('mailboxes', () => {
 
     fireEvent.press(screen.getAllByRole('button', { expanded: true })[0]);
     expect(screen.queryByRole('button', { name: 'Clients' })).toBeNull();
+  });
+
+  it('names each account by its account name, else its address, never the sender name', () => {
+    renderWithProviders(<MailboxesScreen />);
+    expect(screen.getAllByText('alice@example.com')).toHaveLength(2);
+    expect(screen.getAllByText('Personal')).toHaveLength(2);
+    expect(screen.queryByText('Bob')).toBeNull();
   });
 
   it('warns when an account needs its password again', () => {
