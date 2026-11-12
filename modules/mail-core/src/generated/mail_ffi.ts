@@ -614,6 +614,7 @@ export type Mailbox = {
     accountId: string,
     name: string,
     depth: number,
+    parentId?: string,
     role?: MailboxRole,
     selectable: boolean,
     totalCount: number,
@@ -645,6 +646,7 @@ const FfiConverterTypeMailbox = (() => {
                 accountId: FfiConverterString.readFromCursor(c), 
                 name: FfiConverterString.readFromCursor(c), 
                 depth: FfiConverterUInt32.readFromCursor(c), 
+                parentId: FfiConverterOptionalString.readFromCursor(c), 
                 role: FfiConverterOptionalTypeMailboxRole.readFromCursor(c), 
                 selectable: FfiConverterBool.readFromCursor(c), 
                 totalCount: FfiConverterUInt32.readFromCursor(c), 
@@ -656,6 +658,7 @@ const FfiConverterTypeMailbox = (() => {
             FfiConverterString.writeIntoCursor(value.accountId, c);
             FfiConverterString.writeIntoCursor(value.name, c);
             FfiConverterUInt32.writeIntoCursor(value.depth, c);
+            FfiConverterOptionalString.writeIntoCursor(value.parentId, c);
             FfiConverterOptionalTypeMailboxRole.writeIntoCursor(value.role, c);
             FfiConverterBool.writeIntoCursor(value.selectable, c);
             FfiConverterUInt32.writeIntoCursor(value.totalCount, c);
@@ -666,6 +669,7 @@ const FfiConverterTypeMailbox = (() => {
              FfiConverterString.allocationSize(value.accountId) +
              FfiConverterString.allocationSize(value.name) +
              FfiConverterUInt32.allocationSize(value.depth) +
+             FfiConverterOptionalString.allocationSize(value.parentId) +
              FfiConverterOptionalTypeMailboxRole.allocationSize(value.role) +
              FfiConverterBool.allocationSize(value.selectable) +
              FfiConverterUInt32.allocationSize(value.totalCount) +

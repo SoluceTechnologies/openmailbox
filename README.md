@@ -62,11 +62,14 @@ search, menus and long-press previews, in light and dark mode.
   &nbsp;
   <img src="https://img.shields.io/badge/App%20Store-Coming%20soon-lightgrey?logo=apple&logoColor=white&style=for-the-badge" alt="App Store: coming soon" height="28" />
   &nbsp;
-  <img src="https://img.shields.io/badge/Google%20Play-Coming%20soon-lightgrey?logo=googleplay&logoColor=white&style=for-the-badge" alt="Google Play: coming soon" height="28" />
+  <a href="https://play.google.com/store/apps/details?id=com.soluce.openmailbox">
+    <img src="https://img.shields.io/badge/Google%20Play-Download-414141?logo=googleplay&logoColor=white&style=for-the-badge" alt="Get it on Google Play" height="28" />
+  </a>
 </p>
 
-- **Android**: the APK is attached to the [latest release](https://github.com/SoluceTechnologies/openmailbox/releases/latest).
-- **iOS** and **Google Play**: coming soon.
+- **Android**: on [Google Play](https://play.google.com/store/apps/details?id=com.soluce.openmailbox), or the APK
+  attached to the [latest release](https://github.com/SoluceTechnologies/openmailbox/releases/latest).
+- **iOS**: coming soon.
 
 Want early access? Beta builds are available, reach out at
 [contact@soluce-technologies.com](mailto:contact@soluce-technologies.com).

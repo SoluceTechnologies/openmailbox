@@ -15,6 +15,9 @@ jest.mock('expo-file-system', () => ({
     }
     textSync() {
       if (this.mockUri.endsWith('broken.svg')) throw new Error('gone');
+      if (this.mockUri.endsWith('veepee.svg')) {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 85 85"><path fill="#EC008C" d="M58.6,37.6c-0.3-3-1-5.8-2.1-8.3&#xA;&#x9;&#x9;s3.9,10,0.5,20.3&#10;&#9;z"/></svg>';
+      }
       return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1" fill="#0a66c2"/></svg>';
     }
   },
@@ -75,5 +78,13 @@ describe('ContactAvatar', () => {
     cachedAvatarMock.mockReturnValue('file:///cache/avatars/broken.svg');
     rerender(<ContactAvatar email="news@broken.example" name="Broken" />);
     expect(screen.getByText('B')).toBeOnTheScreen();
+  });
+
+  it('draws logos whose paths break lines with character references', () => {
+    cachedAvatarMock.mockReturnValue('file:///cache/avatars/veepee.svg');
+    renderWithProviders(<ContactAvatar email="news@veepee.example" name="Veepee" />);
+    const paths = screen.UNSAFE_root.findAll((node) => typeof node.props.d === 'string');
+    expect(paths.length).toBeGreaterThan(0);
+    for (const path of paths) expect(path.props.d).toBe('M58.6,37.6c-0.3-3-1-5.8-2.1-8.3   s3.9,10,0.5,20.3  z');
   });
 });

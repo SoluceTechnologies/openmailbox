@@ -8,12 +8,13 @@ import { Inbox } from 'lucide-react-native';
 import { MailboxRole, type ThreadSummary } from '@openmailbox/mail-core';
 
 import { BottomBar } from '@/components/BottomBar';
-import { useAccounts, useMailboxes, useThreads } from '@/core/hooks';
+import { useAccounts, useCategoriesWithNewMail, useMailboxes, useThreads } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
+import { accountName } from '@/features/accounts/accountName';
 import { CategoryBar } from '@/features/categories/CategoryBar';
 import { CategoryPicker } from '@/features/categories/CategoryPicker';
-import { categoryOf } from '@/features/categories/categories';
+import { categoryOf, filterOf } from '@/features/categories/categories';
 import { MailboxPicker } from '@/features/mailboxes/components/MailboxPicker';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { SearchResults } from '@/features/search/SearchResults';
@@ -29,7 +30,7 @@ import { accountColor } from '@/theme';
 import { EmptyState, IconButton, ScreenHeader, Spinner, Typography, ViewContainer } from '@/ui/components';
 import { SegmentedPicker } from '@/ui/SegmentedPicker';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { LIQUID_GLASS, NATIVE_CHROME, translucentHeader } from '@/ui/nativeChrome';
 import { haptic } from '@/utils/haptics';
 import { goBack } from '@/utils/navigation';
 
@@ -77,7 +78,15 @@ export default function MailboxScreen() {
   const categorized = unified || mailbox?.role === MailboxRole.Inbox;
   const inboxFilter = useSettingsStore((state) => state.inboxFilter);
   const setInboxFilter = useSettingsStore((state) => state.setInboxFilter);
+  const accountNames = useSettingsStore((state) => state.accountNames);
   const threads = useThreads(scope, unreadOnly, categorized ? categoryOf(inboxFilter) : undefined);
+  const categoriesWithNewMail = useCategoriesWithNewMail(scope, categorized);
+  const markCategorySeen = useSettingsStore((state) => state.markCategorySeen);
+  const newestShown = threads.isPlaceholderData ? undefined : threads.data?.[0]?.lastReceivedAt;
+
+  useEffect(() => {
+    if (categorized && inboxFilter !== 'all' && newestShown !== undefined) markCategorySeen(inboxFilter, newestShown);
+  }, [categorized, inboxFilter, newestShown, markCategorySeen]);
 
   const account = accounts.find((candidate) => candidate.id === mailbox?.accountId);
   const accountIds = useMemo(
@@ -137,7 +146,7 @@ export default function MailboxScreen() {
   const title = unified ? t('mailboxes.allInboxes') : mailbox ? mailboxName(mailbox, t) : '';
   const subtitle = selection.active
     ? t('threads.selectedCount', { count: selection.selected.size })
-    : [unified ? null : account?.displayName, unreadCount > 0 ? t('threads.unreadCount', { count: unreadCount }) : null, syncLabel]
+    : [unified || !account ? null : accountName(account, accountNames), unreadCount > 0 ? t('threads.unreadCount', { count: unreadCount }) : null, syncLabel]
     .filter(Boolean)
     .join(' · ');
   const data = threads.data ?? [];
@@ -176,7 +185,7 @@ export default function MailboxScreen() {
           ) : null}
           {categorized ? (
             <View style={styles.categories}>
-              <CategoryBar value={inboxFilter} onChange={setInboxFilter} />
+              <CategoryBar value={inboxFilter} withNewMail={categoriesWithNewMail.map(filterOf)} onChange={setInboxFilter} />
             </View>
           ) : null}
           <View style={styles.filters}>
@@ -252,7 +261,7 @@ export default function MailboxScreen() {
             headerShown: true,
             title,
             headerLargeTitle: true,
-            headerTransparent: true,
+            ...translucentHeader(colors.background),
             headerShadowVisible: false,
             headerLargeTitleShadowVisible: false,
             headerBackButtonDisplayMode: 'minimal',
@@ -260,6 +269,9 @@ export default function MailboxScreen() {
           }}
         />
         <Stack.Toolbar placement="right">
+          {LIQUID_GLASS || selection.active ? null : (
+            <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={compose} />
+          )}
           <Stack.Toolbar.Button onPress={selection.active ? selection.end : selection.start} disabled={!selection.active && data.length === 0}>
             {selection.active ? t('threads.selectDone') : t('threads.select')}
           </Stack.Toolbar.Button>
@@ -304,11 +316,13 @@ export default function MailboxScreen() {
                 setSearchActive(false);
               }}
             />
-            <Stack.Toolbar placement="bottom">
-              <Stack.Toolbar.SearchBarSlot />
-              <Stack.Toolbar.Spacer />
-              <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={compose} />
-            </Stack.Toolbar>
+            {LIQUID_GLASS ? (
+              <Stack.Toolbar placement="bottom">
+                <Stack.Toolbar.SearchBarSlot />
+                <Stack.Toolbar.Spacer />
+                <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={compose} />
+              </Stack.Toolbar>
+            ) : null}
           </>
         )}
       </>

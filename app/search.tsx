@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
+import { Stack, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { SearchResults } from '@/features/search/SearchResults';
-import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { NATIVE_CHROME, translucentHeader } from '@/ui/nativeChrome';
 import { ScreenHeader, TextField, ViewContainer } from '@/ui/components';
 import { goBack } from '@/utils/navigation';
 
 export default function SearchScreen() {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const [query, setQuery] = useState('');
 
   if (NATIVE_CHROME) {
@@ -18,7 +19,7 @@ export default function SearchScreen() {
       <ViewContainer>
         <SearchResults query={query} />
         <Stack.Screen
-          options={{ headerShown: true, title: t('search.title'), headerTransparent: true, headerBackButtonDisplayMode: 'minimal' }}
+          options={{ headerShown: true, title: t('search.title'), ...translucentHeader(colors.background), headerBackButtonDisplayMode: 'minimal' }}
         />
         <Stack.SearchBar
           placeholder={t('search.placeholder')}

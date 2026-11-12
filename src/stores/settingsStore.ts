@@ -7,6 +7,11 @@ import { getInitialLanguage, type AppLanguage } from '@/utils/i18n';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
+function withText(texts: Record<string, string>, accountId: string, text: string): Record<string, string> {
+  const { [accountId]: _previous, ...others } = texts;
+  return text.trim() ? { ...others, [accountId]: text } : others;
+}
+
 interface SettingsState {
   themePreference: ThemePreference;
   language: AppLanguage;
@@ -16,9 +21,13 @@ interface SettingsState {
   contactPictures: boolean;
   defaultAccountId: string | null;
   signatures: Record<string, string>;
+  accountNames: Record<string, string>;
   notificationsEnabled: boolean;
   silencedAccountIds: string[];
   inboxFilter: InboxFilter;
+  collapsedIds: string[];
+  accountOrder: string[];
+  categorySeenAt: Partial<Record<InboxFilter, number>>;
   setThemePreference: (preference: ThemePreference) => void;
   setLanguage: (language: AppLanguage) => void;
   setHapticsEnabled: (enabled: boolean) => void;
@@ -26,9 +35,14 @@ interface SettingsState {
   setContactPictures: (enabled: boolean) => void;
   setDefaultAccountId: (accountId: string | null) => void;
   setSignature: (accountId: string, signature: string) => void;
+  setAccountName: (accountId: string, name: string) => void;
+  forgetAccount: (accountId: string) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setAccountNotified: (accountId: string, notified: boolean) => void;
   setInboxFilter: (filter: InboxFilter) => void;
+  toggleCollapsed: (id: string) => void;
+  setAccountOrder: (accountIds: string[]) => void;
+  markCategorySeen: (filter: InboxFilter, receivedAt: number) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -42,9 +56,13 @@ export const useSettingsStore = create<SettingsState>()(
       contactPictures: true,
       defaultAccountId: null,
       signatures: {},
+      accountNames: {},
       notificationsEnabled: true,
       silencedAccountIds: [],
       inboxFilter: 'primary',
+      collapsedIds: [],
+      accountOrder: [],
+      categorySeenAt: {},
       setThemePreference: (themePreference) => set({ themePreference }),
       setLanguage: (language) => set({ language }),
       setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
@@ -53,17 +71,31 @@ export const useSettingsStore = create<SettingsState>()(
       setDefaultAccountId: (defaultAccountId) => set({ defaultAccountId }),
       setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
       setInboxFilter: (inboxFilter) => set({ inboxFilter }),
+      toggleCollapsed: (id) =>
+        set(({ collapsedIds }) => ({
+          collapsedIds: collapsedIds.includes(id) ? collapsedIds.filter((collapsed) => collapsed !== id) : [...collapsedIds, id],
+        })),
       setAccountNotified: (accountId, notified) =>
         set(({ silencedAccountIds }) => ({
           silencedAccountIds: notified
             ? silencedAccountIds.filter((silenced) => silenced !== accountId)
             : [...new Set([...silencedAccountIds, accountId])],
         })),
-      setSignature: (accountId, signature) =>
-        set(({ signatures }) => {
-          const { [accountId]: _previous, ...others } = signatures;
-          return { signatures: signature.trim() ? { ...others, [accountId]: signature } : others };
-        }),
+      setSignature: (accountId, signature) => set(({ signatures }) => ({ signatures: withText(signatures, accountId, signature) })),
+      setAccountOrder: (accountOrder) => set({ accountOrder }),
+      markCategorySeen: (filter, receivedAt) =>
+        set(({ categorySeenAt }) =>
+          receivedAt > (categorySeenAt[filter] ?? 0) ? { categorySeenAt: { ...categorySeenAt, [filter]: receivedAt } } : {},
+        ),
+      setAccountName: (accountId, name) => set(({ accountNames }) => ({ accountNames: withText(accountNames, accountId, name) })),
+      forgetAccount: (accountId) =>
+        set(({ signatures, accountNames, silencedAccountIds, collapsedIds, accountOrder }) => ({
+          signatures: withText(signatures, accountId, ''),
+          accountNames: withText(accountNames, accountId, ''),
+          silencedAccountIds: silencedAccountIds.filter((silenced) => silenced !== accountId),
+          collapsedIds: collapsedIds.filter((collapsed) => collapsed !== accountId),
+          accountOrder: accountOrder.filter((ordered) => ordered !== accountId),
+        })),
     }),
     {
       name: 'settings-store',
@@ -77,9 +109,13 @@ export const useSettingsStore = create<SettingsState>()(
         contactPictures,
         defaultAccountId,
         signatures,
+        accountNames,
         notificationsEnabled,
         silencedAccountIds,
         inboxFilter,
+        collapsedIds,
+        accountOrder,
+        categorySeenAt,
       }) => ({
         themePreference,
         language,
@@ -89,9 +125,13 @@ export const useSettingsStore = create<SettingsState>()(
         contactPictures,
         defaultAccountId,
         signatures,
+        accountNames,
         notificationsEnabled,
         silencedAccountIds,
         inboxFilter,
+        collapsedIds,
+        accountOrder,
+        categorySeenAt,
       }),
     },
   ),

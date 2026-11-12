@@ -6,11 +6,12 @@ import { useTheme } from 'expo-router';
 import Typography from './Typography';
 
 const svgs = new Map<string, string | null>();
+const ENCODED_WHITESPACE = /&#(?:x0*(?:9|a|d|20)|0*(?:9|10|13|32));/gi;
 
 function svgAt(uri: string): string | null {
   if (!svgs.has(uri)) {
     try {
-      svgs.set(uri, new File(uri).textSync());
+      svgs.set(uri, new File(uri).textSync().replace(ENCODED_WHITESPACE, ' '));
     } catch {
       svgs.set(uri, null);
     }

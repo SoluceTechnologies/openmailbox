@@ -21,4 +21,10 @@ describe('category bar', () => {
     fireEvent.press(screen.getByRole('tab', { name: 'Primary' }));
     expect(onChange).toHaveBeenCalledTimes(1);
   });
+
+  it('marks the categories that received new mail', () => {
+    renderWithProviders(<CategoryBar value="primary" withNewMail={['updates']} onChange={jest.fn()} />);
+    expect(screen.getByRole('tab', { name: 'Updates' })).toHaveAccessibilityValue({ text: 'New mail' });
+    expect(screen.getByRole('tab', { name: 'Promotions' })).not.toHaveAccessibilityValue({ text: 'New mail' });
+  });
 });

@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { infiniteQueryOptions, keepPreviousData, useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-query';
 import { ThreadScope, type Account, type Category, type Mailbox, type ThreadPage } from '@openmailbox/mail-core';
 
+import { CATEGORIES, filterOf } from '@/features/categories/categories';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 
 import { mailCore } from './mailCore';
@@ -11,9 +14,21 @@ const SEARCH_LIMIT = 100;
 const EMPTY_ACCOUNTS: Account[] = [];
 const EMPTY_MAILBOXES: Mailbox[] = [];
 const EMPTY_IDS: string[] = [];
+const EMPTY_CATEGORIES: Category[] = [];
+
+export function sortAccounts(accounts: Account[], order: string[]): Account[] {
+  if (order.length === 0) return accounts;
+  const rank = (account: Account) => {
+    const index = order.indexOf(account.id);
+    return index === -1 ? order.length : index;
+  };
+  return [...accounts].sort((first, second) => rank(first) - rank(second));
+}
 
 export function useAccounts(): Account[] {
-  return useQuery({ queryKey: queryKeys.accounts, queryFn: () => mailCore().listAccounts() }).data ?? EMPTY_ACCOUNTS;
+  const accounts = useQuery({ queryKey: queryKeys.accounts, queryFn: () => mailCore().listAccounts() }).data ?? EMPTY_ACCOUNTS;
+  const order = useSettingsStore((state) => state.accountOrder);
+  return useMemo(() => sortAccounts(accounts, order), [accounts, order]);
 }
 
 export const mailboxesQuery = { queryKey: queryKeys.mailboxes, queryFn: () => mailCore().listMailboxes(undefined) };
@@ -45,6 +60,25 @@ export function useThreads(scope: string, unreadOnly: boolean, category?: Catego
     // rather than flashing a spinner.
     placeholderData: keepPreviousData,
   });
+}
+
+export function useCategoriesWithNewMail(scope: string, enabled: boolean): Category[] {
+  const seenAt = useSettingsStore((state) => state.categorySeenAt);
+  const newest = useQuery({
+    queryKey: queryKeys.newestUnread(scope),
+    queryFn: () =>
+      Promise.all(
+        CATEGORIES.map(async (category) => {
+          const page = await mailCore().listThreads(threadScope(scope), true, category, undefined, 1);
+          return page.threads[0]?.lastReceivedAt ?? 0;
+        }),
+      ),
+    enabled,
+  }).data;
+  return useMemo(
+    () => (newest ? CATEGORIES.filter((category, index) => newest[index] > (seenAt[filterOf(category)] ?? 0)) : EMPTY_CATEGORIES),
+    [newest, seenAt],
+  );
 }
 
 export function useThreadEmails(threadId: string, mailboxId: string | undefined, enabled = true) {

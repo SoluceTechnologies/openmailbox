@@ -10,7 +10,8 @@ function invalidateMailboxes(mailboxIds: Set<string>): void {
   queryClient.invalidateQueries({ queryKey: queryKeys.mailboxes });
   queryClient.invalidateQueries({
     predicate: ({ queryKey }) =>
-      queryKey[0] === 'threads' && (queryKey[1] === UNIFIED_SCOPE || mailboxIds.has(String(queryKey[1]))),
+      (queryKey[0] === 'threads' || queryKey[0] === 'newestUnread') &&
+      (queryKey[1] === UNIFIED_SCOPE || mailboxIds.has(String(queryKey[1]))),
   });
   queryClient.invalidateQueries({ queryKey: ['thread'] });
   queryClient.invalidateQueries({ queryKey: ['search'] });

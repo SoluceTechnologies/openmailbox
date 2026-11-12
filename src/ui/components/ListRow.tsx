@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type AccessibilityActionEvent, type AccessibilityActionInfo } from 'react-native';
 import { useTheme } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 
@@ -16,11 +16,14 @@ interface ListRowProps {
   disabled?: boolean;
   onPress?: () => void;
   accessibilityLabel?: string;
+  accessibilityActions?: AccessibilityActionInfo[];
+  onAccessibilityAction?: (event: AccessibilityActionEvent) => void;
   testID?: string;
 }
 
 function ListRow({
-  title, subtitle, leading, detail, trailing, chevron = true, destructive, disabled, onPress, accessibilityLabel, testID,
+  title, subtitle, leading, detail, trailing, chevron = true, destructive, disabled, onPress, accessibilityLabel, accessibilityActions,
+  onAccessibilityAction, testID,
 }: ListRowProps) {
   const { colors } = useTheme();
   const showDetail = detail !== undefined && detail !== '' && detail !== 0;
@@ -44,7 +47,7 @@ function ListRow({
         ) : null}
       </View>
       {showDetail ? (
-        <Typography variant="body1" weight="400" color={colors.textSecondary} style={styles.detail}>
+        <Typography variant="body1" weight="400" numberOfLines={1} color={colors.textSecondary} style={styles.detail}>
           {String(detail)}
         </Typography>
       ) : null}
@@ -65,6 +68,8 @@ function ListRow({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityActions={accessibilityActions}
+      onAccessibilityAction={onAccessibilityAction}
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}
     >
@@ -78,7 +83,7 @@ const styles = StyleSheet.create({
   leading: { minWidth: 26, alignItems: 'center' },
   text: { flex: 1, gap: 2 },
   title: { fontSize: 16 },
-  detail: { fontSize: 16 },
+  detail: { fontSize: 16, flexShrink: 1, maxWidth: '55%' },
 });
 
 export default React.memo(ListRow);

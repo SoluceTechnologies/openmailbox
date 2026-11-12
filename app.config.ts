@@ -66,6 +66,26 @@ const config: ExpoConfig = {
       },
     ],
     [
+      'expo-sharing',
+      {
+        ios: {
+          enabled: true,
+          activationRule: {
+            supportsText: true,
+            supportsWebUrlWithMaxCount: 1,
+            supportsImageWithMaxCount: 10,
+            supportsMovieWithMaxCount: 10,
+            supportsFileWithMaxCount: 10,
+          },
+        },
+        android: {
+          enabled: true,
+          singleShareMimeTypes: ['*/*'],
+          multipleShareMimeTypes: ['*/*'],
+        },
+      },
+    ],
+    [
       'expo-splash-screen',
       {
         backgroundColor: '#ffffff',

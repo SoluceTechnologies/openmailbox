@@ -1,7 +1,7 @@
 import { Folder, Inbox, Send } from 'lucide-react-native';
 import { MailboxRole } from '@openmailbox/mail-core';
 
-import { mailboxBadge, mailboxIcon, mailboxName } from '@/features/mailboxes/mailboxPresentation';
+import { mailboxBadge, mailboxIcon, mailboxName, visibleFolders } from '@/features/mailboxes/mailboxPresentation';
 import i18n from '@/utils/i18n';
 
 import { makeMailbox } from '../../helpers/fixtures';
@@ -26,5 +26,22 @@ describe('mailbox presentation', () => {
     expect(mailboxBadge(makeMailbox({ role: MailboxRole.Drafts, totalCount: 2, unreadCount: 0 }))).toBe(2);
     expect(mailboxBadge(makeMailbox({ role: MailboxRole.Sent, unreadCount: 7 }))).toBe(0);
     expect(mailboxBadge(makeMailbox({ role: MailboxRole.Trash, unreadCount: 7 }))).toBe(0);
+  });
+
+  it('hides the subfolders of a collapsed folder at any depth, wherever the list puts them', () => {
+    const folders = [
+      makeMailbox({ id: 'inbox' }),
+      makeMailbox({ id: 'sent', role: MailboxRole.Sent, depth: 1, parentId: 'inbox' }),
+      makeMailbox({ id: 'junk', role: MailboxRole.Junk, depth: 2, parentId: 'spam' }),
+      makeMailbox({ id: 'projects', role: undefined, depth: 0 }),
+      makeMailbox({ id: '2025', role: undefined, depth: 1, parentId: 'projects' }),
+      makeMailbox({ id: 'q1', role: undefined, depth: 2, parentId: '2025' }),
+      makeMailbox({ id: 'spam', role: undefined, depth: 1, parentId: 'inbox' }),
+    ];
+    const rows = (collapsedIds: string[]) => visibleFolders(folders, collapsedIds).map(({ mailbox, parent }) => `${mailbox.id}${parent ? '+' : ''}`);
+    expect(rows([])).toEqual(['inbox+', 'sent', 'junk', 'projects+', '2025+', 'q1', 'spam+']);
+    expect(rows(['sent', 'spam'])).toEqual(['inbox+', 'sent', 'projects+', '2025+', 'q1', 'spam+']);
+    expect(rows(['projects'])).toEqual(['inbox+', 'sent', 'junk', 'projects+', 'spam+']);
+    expect(rows(['inbox'])).toEqual(['inbox+', 'projects+', '2025+', 'q1']);
   });
 });

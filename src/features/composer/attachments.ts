@@ -8,7 +8,7 @@ export const MAX_ATTACHMENTS_BYTES = 26_214_400;
 
 export type ComposerAttachment = OutgoingAttachment & { size: number };
 
-function pathOf(uri: string): string {
+export function pathOf(uri: string): string {
   return decodeURIComponent(uri.replace(/^file:\/\//, ''));
 }
 

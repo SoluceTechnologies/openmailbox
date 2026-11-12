@@ -9,25 +9,44 @@ import { MailboxRole, type Account, type Mailbox } from '@openmailbox/mail-core'
 import { BottomBar } from '@/components/BottomBar';
 import { useAccounts, useMailboxes } from '@/core/hooks';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
-import { mailboxBadge, mailboxIcon, mailboxName } from '@/features/mailboxes/mailboxPresentation';
+import { accountName } from '@/features/accounts/accountName';
+import { mailboxBadge, mailboxIcon, mailboxName, visibleFolders } from '@/features/mailboxes/mailboxPresentation';
 import { SearchResults } from '@/features/search/SearchResults';
 import { useSyncLabel } from '@/features/sync/useSyncLabel';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { accountColor } from '@/theme';
 import { FormSection, IconButton, ListRow, Typography, ViewContainer } from '@/ui/components';
-import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { LIQUID_GLASS, NATIVE_CHROME, translucentHeader } from '@/ui/nativeChrome';
 
 let unifiedInboxOpened = false;
 
-function MailboxRow({ mailbox, title, accent }: { mailbox: Mailbox; title: string; accent?: string }) {
+interface MailboxRowProps {
+  mailbox: Mailbox;
+  title: string;
+  accent?: string;
+  expanded?: boolean;
+  onToggle?: () => void;
+}
+
+function MailboxRow({ mailbox, title, accent, expanded, onToggle }: MailboxRowProps) {
   const router = useRouter();
   const { colors } = useTheme();
   const Icon = mailboxIcon(mailbox);
+  const Chevron = expanded ? ChevronDown : ChevronRight;
   return (
     <ListRow
       title={title}
       disabled={!mailbox.selectable}
       detail={mailbox.selectable ? mailboxBadge(mailbox) : undefined}
+      chevron={!onToggle}
+      trailing={
+        onToggle ? (
+          <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ expanded }} hitSlop={12} onPress={onToggle}>
+            <Chevron size={18} color={colors.textSecondary} />
+          </Pressable>
+        ) : undefined
+      }
       onPress={mailbox.selectable ? () => router.push(`/mailbox/${mailbox.id}`) : undefined}
       leading={
         <View style={{ paddingLeft: Math.min(mailbox.depth, 3) * 18 }}>
@@ -38,12 +57,15 @@ function MailboxRow({ mailbox, title, accent }: { mailbox: Mailbox; title: strin
   );
 }
 
-function AccountSection({ account, mailboxes }: { account: Account; mailboxes: Mailbox[] }) {
+function AccountSection({ account, name, mailboxes }: { account: Account; name: string; mailboxes: Mailbox[] }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsedIds = useSettingsStore((state) => state.collapsedIds);
+  const toggleCollapsed = useSettingsStore((state) => state.toggleCollapsed);
+  const folders = useMemo(() => visibleFolders(mailboxes, collapsedIds), [mailboxes, collapsedIds]);
   const authRequired = useSyncStore((state) => state.authRequired[account.id] === true);
+  const collapsed = collapsedIds.includes(account.id);
   const Chevron = collapsed ? ChevronRight : ChevronDown;
 
   return (
@@ -51,12 +73,12 @@ function AccountSection({ account, mailboxes }: { account: Account; mailboxes: M
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: !collapsed }}
-        onPress={() => setCollapsed((value) => !value)}
+        onPress={() => toggleCollapsed(account.id)}
         style={styles.sectionHeader}
       >
         <View style={[styles.accountDot, { backgroundColor: accountColor(account.color) }]} />
         <Typography variant="h4" numberOfLines={1} style={styles.flex}>
-          {account.displayName}
+          {name}
         </Typography>
         <Chevron size={20} color={colors.textSecondary} />
       </Pressable>
@@ -78,8 +100,14 @@ function AccountSection({ account, mailboxes }: { account: Account; mailboxes: M
         </Typography>
       ) : (
         <FormSection>
-          {mailboxes.map((mailbox) => (
-            <MailboxRow key={mailbox.id} mailbox={mailbox} title={mailboxName(mailbox, t)} />
+          {folders.map(({ mailbox, parent }) => (
+            <MailboxRow
+              key={mailbox.id}
+              mailbox={mailbox}
+              title={mailboxName(mailbox, t)}
+              expanded={parent ? !collapsedIds.includes(mailbox.id) : undefined}
+              onToggle={parent ? () => toggleCollapsed(mailbox.id) : undefined}
+            />
           ))}
         </FormSection>
       )}
@@ -93,6 +121,7 @@ export default function MailboxesScreen() {
   const { colors } = useTheme();
   const accounts = useAccounts();
   const mailboxes = useMailboxes();
+  const accountNames = useSettingsStore((state) => state.accountNames);
   const syncLabel = useSyncLabel(accounts.map((account) => account.id));
   const [query, setQuery] = useState('');
   const [searchActive, setSearchActive] = useState(false);
@@ -141,12 +170,17 @@ export default function MailboxesScreen() {
           {accounts.map((account) => {
             const inbox = inboxes.find((mailbox) => mailbox.accountId === account.id);
             return inbox ? (
-              <MailboxRow key={inbox.id} mailbox={inbox} title={account.displayName} accent={accountColor(account.color)} />
+              <MailboxRow key={inbox.id} mailbox={inbox} title={accountName(account, accountNames)} accent={accountColor(account.color)} />
             ) : null;
           })}
         </FormSection>
         {accounts.map((account) => (
-          <AccountSection key={account.id} account={account} mailboxes={mailboxesByAccount.get(account.id) ?? []} />
+          <AccountSection
+            key={account.id}
+            account={account}
+            name={accountName(account, accountNames)}
+            mailboxes={mailboxesByAccount.get(account.id) ?? []}
+          />
         ))}
       </ScrollView>
     );
@@ -156,7 +190,13 @@ export default function MailboxesScreen() {
       <>
         {list}
         <Stack.Screen
-          options={{ headerShown: true, title: t('mailboxes.title'), headerLargeTitle: true, headerTransparent: true, headerShadowVisible: false }}
+          options={{
+            headerShown: true,
+            title: t('mailboxes.title'),
+            headerLargeTitle: true,
+            ...translucentHeader(colors.groupedBackground),
+            headerShadowVisible: false,
+          }}
         />
         <Stack.SearchBar
           placeholder={t('search.placeholder')}
@@ -169,13 +209,18 @@ export default function MailboxesScreen() {
           }}
         />
         <Stack.Toolbar placement="right">
+          {LIQUID_GLASS ? null : (
+            <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={() => router.push('/compose')} />
+          )}
           <Stack.Toolbar.Button icon="gearshape" accessibilityLabel={t('settings.title')} onPress={() => router.push('/settings')} />
         </Stack.Toolbar>
-        <Stack.Toolbar placement="bottom">
-          <Stack.Toolbar.SearchBarSlot />
-          <Stack.Toolbar.Spacer />
-          <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={() => router.push('/compose')} />
-        </Stack.Toolbar>
+        {LIQUID_GLASS ? (
+          <Stack.Toolbar placement="bottom">
+            <Stack.Toolbar.SearchBarSlot />
+            <Stack.Toolbar.Spacer />
+            <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={() => router.push('/compose')} />
+          </Stack.Toolbar>
+        ) : null}
       </>
     );
   }
