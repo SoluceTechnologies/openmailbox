@@ -29,3 +29,4 @@ export { default as FormField } from './FormField';
 export { default as SegmentedControl } from './SegmentedControl';
 export type { SegmentedOption } from './SegmentedControl';
 export { default as ListRow } from './ListRow';
+export { default as ReorderableList, moveItem } from './ReorderableList';

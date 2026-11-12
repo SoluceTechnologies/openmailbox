@@ -28,7 +28,7 @@ describe('mailboxes', () => {
     jest.clearAllMocks();
     queryClient.clear();
     useSyncStore.setState({ statuses: {}, authRequired: {} });
-    useSettingsStore.setState({ accountNames: { 'account-2': 'Personal' }, collapsedIds: [] });
+    useSettingsStore.setState({ accountNames: { 'account-2': 'Personal' }, collapsedIds: [], accountOrder: [] });
     queryClient.setQueryData(queryKeys.accounts, [ALICE, BOB]);
     queryClient.setQueryData(queryKeys.mailboxes, [
       makeMailbox({ unreadCount: 3 }),
@@ -79,6 +79,13 @@ describe('mailboxes', () => {
     expect(screen.getAllByText('alice@example.com')).toHaveLength(2);
     expect(screen.getAllByText('Personal')).toHaveLength(2);
     expect(screen.queryByText('Bob')).toBeNull();
+  });
+
+  it('lists accounts in the order chosen in Settings', () => {
+    useSettingsStore.setState({ accountOrder: ['account-2', 'account-1'] });
+    renderWithProviders(<MailboxesScreen />);
+    const names = screen.getAllByText(/^(Personal|alice@example\.com)$/).map((text) => text.props.children);
+    expect(names).toEqual(['Personal', 'alice@example.com', 'Personal', 'alice@example.com']);
   });
 
   it('warns when an account needs its password again', () => {

@@ -26,6 +26,7 @@ interface SettingsState {
   silencedAccountIds: string[];
   inboxFilter: InboxFilter;
   collapsedIds: string[];
+  accountOrder: string[];
   setThemePreference: (preference: ThemePreference) => void;
   setLanguage: (language: AppLanguage) => void;
   setHapticsEnabled: (enabled: boolean) => void;
@@ -39,6 +40,7 @@ interface SettingsState {
   setAccountNotified: (accountId: string, notified: boolean) => void;
   setInboxFilter: (filter: InboxFilter) => void;
   toggleCollapsed: (id: string) => void;
+  setAccountOrder: (accountIds: string[]) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -57,6 +59,7 @@ export const useSettingsStore = create<SettingsState>()(
       silencedAccountIds: [],
       inboxFilter: 'primary',
       collapsedIds: [],
+      accountOrder: [],
       setThemePreference: (themePreference) => set({ themePreference }),
       setLanguage: (language) => set({ language }),
       setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
@@ -76,13 +79,15 @@ export const useSettingsStore = create<SettingsState>()(
             : [...new Set([...silencedAccountIds, accountId])],
         })),
       setSignature: (accountId, signature) => set(({ signatures }) => ({ signatures: withText(signatures, accountId, signature) })),
+      setAccountOrder: (accountOrder) => set({ accountOrder }),
       setAccountName: (accountId, name) => set(({ accountNames }) => ({ accountNames: withText(accountNames, accountId, name) })),
       forgetAccount: (accountId) =>
-        set(({ signatures, accountNames, silencedAccountIds, collapsedIds }) => ({
+        set(({ signatures, accountNames, silencedAccountIds, collapsedIds, accountOrder }) => ({
           signatures: withText(signatures, accountId, ''),
           accountNames: withText(accountNames, accountId, ''),
           silencedAccountIds: silencedAccountIds.filter((silenced) => silenced !== accountId),
           collapsedIds: collapsedIds.filter((collapsed) => collapsed !== accountId),
+          accountOrder: accountOrder.filter((ordered) => ordered !== accountId),
         })),
     }),
     {
@@ -102,6 +107,7 @@ export const useSettingsStore = create<SettingsState>()(
         silencedAccountIds,
         inboxFilter,
         collapsedIds,
+        accountOrder,
       }) => ({
         themePreference,
         language,
@@ -116,6 +122,7 @@ export const useSettingsStore = create<SettingsState>()(
         silencedAccountIds,
         inboxFilter,
         collapsedIds,
+        accountOrder,
       }),
     },
   ),

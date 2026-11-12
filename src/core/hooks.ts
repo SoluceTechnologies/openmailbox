@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { infiniteQueryOptions, keepPreviousData, useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-query';
 import { ThreadScope, type Account, type Category, type Mailbox, type ThreadPage } from '@openmailbox/mail-core';
 
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 
 import { mailCore } from './mailCore';
@@ -12,8 +14,19 @@ const EMPTY_ACCOUNTS: Account[] = [];
 const EMPTY_MAILBOXES: Mailbox[] = [];
 const EMPTY_IDS: string[] = [];
 
+export function sortAccounts(accounts: Account[], order: string[]): Account[] {
+  if (order.length === 0) return accounts;
+  const rank = (account: Account) => {
+    const index = order.indexOf(account.id);
+    return index === -1 ? order.length : index;
+  };
+  return [...accounts].sort((first, second) => rank(first) - rank(second));
+}
+
 export function useAccounts(): Account[] {
-  return useQuery({ queryKey: queryKeys.accounts, queryFn: () => mailCore().listAccounts() }).data ?? EMPTY_ACCOUNTS;
+  const accounts = useQuery({ queryKey: queryKeys.accounts, queryFn: () => mailCore().listAccounts() }).data ?? EMPTY_ACCOUNTS;
+  const order = useSettingsStore((state) => state.accountOrder);
+  return useMemo(() => sortAccounts(accounts, order), [accounts, order]);
 }
 
 export const mailboxesQuery = { queryKey: queryKeys.mailboxes, queryFn: () => mailCore().listMailboxes(undefined) };

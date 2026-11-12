@@ -23,7 +23,7 @@ describe('settings', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useSettingsStore.setState({ language: 'en', loadRemoteImages: false, contactPictures: true, accountNames: { 'account-1': 'Work' } });
+    useSettingsStore.setState({ language: 'en', loadRemoteImages: false, contactPictures: true, accountNames: { 'account-1': 'Work' }, accountOrder: [] });
     useSyncStore.setState({ statuses: {}, authRequired: {} });
     queryClient.setQueryData(queryKeys.accounts, [
       makeAccount({ imap: { host: 'imap.gmail.com', port: 993, security: Security.Tls } }),
@@ -48,6 +48,16 @@ describe('settings', () => {
     // A server the app does not know is named after its domain.
     expect(screen.getByText('example.com')).toBeOnTheScreen();
     expect(screen.getAllByText('bob@example.com')).toHaveLength(1);
+  });
+
+  it('moves an account with the accessibility actions, which reorders it everywhere', () => {
+    renderWithProviders(<AccountsSettingsScreen />);
+    expect(screen.getByText(i18n.t('accounts.reorderHint'))).toBeOnTheScreen();
+    const work = screen.getByRole('button', { name: 'Work' });
+    expect(work.props.accessibilityActions).toEqual([{ name: 'moveDown', label: 'Move Down' }]);
+    fireEvent(work, 'accessibilityAction', { nativeEvent: { actionName: 'moveDown' } });
+    expect(useSettingsStore.getState().accountOrder).toEqual(['account-2', 'account-1']);
+    expect(screen.getAllByRole('button').map((button) => button.props.accessibilityLabel)).toEqual(['Back', 'bob@example.com', 'Work', 'Add Account']);
   });
 
   it('opens an account and the add account flow', () => {
