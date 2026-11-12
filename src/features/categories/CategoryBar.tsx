@@ -66,16 +66,16 @@ function IconLayer({ filter, color, shown, lit, visible }: IconLayerProps) {
 interface CategoryChipProps {
   filter: InboxFilter;
   selected: boolean;
-  unread: boolean;
+  newMail: boolean;
   flexible: boolean;
   labelWidth: number | undefined;
   motion: boolean;
   onPress: () => void;
 }
 
-function CategoryChip({ filter, selected, unread, flexible, labelWidth, motion, onPress }: CategoryChipProps) {
+function CategoryChip({ filter, selected, newMail, flexible, labelWidth, motion, onPress }: CategoryChipProps) {
   const { t } = useTranslation();
-  const { dark, colors } = useTheme();
+  const { dark } = useTheme();
   const idle = IDLE[dark ? 'dark' : 'light'];
   const tint = PRESENTATION[filter].tint[dark ? 'dark' : 'light'];
   const label = t(PRESENTATION[filter].label);
@@ -117,15 +117,15 @@ function CategoryChip({ filter, selected, unread, flexible, labelWidth, motion, 
         accessibilityRole="tab"
         accessibilityLabel={label}
         accessibilityState={{ selected }}
-        accessibilityValue={unread ? { text: t('threads.unread') } : undefined}
+        accessibilityValue={newMail ? { text: t('categories.newMail') } : undefined}
         onPress={onPress}
         style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
       >
         <View style={styles.icon}>
           <IconLayer filter={filter} color={idle.icon} shown={shown} lit={false} visible={!selected} />
           <IconLayer filter={filter} color="#ffffff" shown={shown} lit visible={selected} />
-          {unread ? (
-            <Animated.View style={[styles.dot, { backgroundColor: colors.primary, borderColor: idle.background }, { opacity: selected ? 0 : 1 }, dot]} />
+          {newMail ? (
+            <Animated.View style={[styles.dot, { backgroundColor: idle.icon, borderColor: idle.background }, { opacity: selected ? 0 : 1 }, dot]} />
           ) : null}
         </View>
         {measured || selected ? (
@@ -146,11 +146,11 @@ function CategoryChip({ filter, selected, unread, flexible, labelWidth, motion, 
 
 interface CategoryBarProps {
   value: InboxFilter;
-  unread?: InboxFilter[];
+  withNewMail?: InboxFilter[];
   onChange: (filter: InboxFilter) => void;
 }
 
-export function CategoryBar({ value, unread = [], onChange }: CategoryBarProps) {
+export function CategoryBar({ value, withNewMail = [], onChange }: CategoryBarProps) {
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const motion = !useSettingsStore((state) => state.reduceMotion);
@@ -187,7 +187,7 @@ export function CategoryBar({ value, unread = [], onChange }: CategoryBarProps) 
             key={filter}
             filter={filter}
             selected={filter === value}
-            unread={unread.includes(filter)}
+            newMail={withNewMail.includes(filter)}
             flexible={filter !== 'all'}
             labelWidth={measured ? labelWidths[filter] : undefined}
             motion={motion}

@@ -73,6 +73,7 @@
     "all": "Tutta la posta",
     "filter": "Categoria",
     "moveSender": "Sposta la posta di {{sender}}",
+    "newMail": "Nuovi messaggi",
     "primary": "Principale",
     "promotions": "Promozioni",
     "transactions": "Transazioni",

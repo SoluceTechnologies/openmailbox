@@ -27,6 +27,7 @@ interface SettingsState {
   inboxFilter: InboxFilter;
   collapsedIds: string[];
   accountOrder: string[];
+  categorySeenAt: Partial<Record<InboxFilter, number>>;
   setThemePreference: (preference: ThemePreference) => void;
   setLanguage: (language: AppLanguage) => void;
   setHapticsEnabled: (enabled: boolean) => void;
@@ -41,6 +42,7 @@ interface SettingsState {
   setInboxFilter: (filter: InboxFilter) => void;
   toggleCollapsed: (id: string) => void;
   setAccountOrder: (accountIds: string[]) => void;
+  markCategorySeen: (filter: InboxFilter, receivedAt: number) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -60,6 +62,7 @@ export const useSettingsStore = create<SettingsState>()(
       inboxFilter: 'primary',
       collapsedIds: [],
       accountOrder: [],
+      categorySeenAt: {},
       setThemePreference: (themePreference) => set({ themePreference }),
       setLanguage: (language) => set({ language }),
       setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
@@ -80,6 +83,10 @@ export const useSettingsStore = create<SettingsState>()(
         })),
       setSignature: (accountId, signature) => set(({ signatures }) => ({ signatures: withText(signatures, accountId, signature) })),
       setAccountOrder: (accountOrder) => set({ accountOrder }),
+      markCategorySeen: (filter, receivedAt) =>
+        set(({ categorySeenAt }) =>
+          receivedAt > (categorySeenAt[filter] ?? 0) ? { categorySeenAt: { ...categorySeenAt, [filter]: receivedAt } } : {},
+        ),
       setAccountName: (accountId, name) => set(({ accountNames }) => ({ accountNames: withText(accountNames, accountId, name) })),
       forgetAccount: (accountId) =>
         set(({ signatures, accountNames, silencedAccountIds, collapsedIds, accountOrder }) => ({
@@ -108,6 +115,7 @@ export const useSettingsStore = create<SettingsState>()(
         inboxFilter,
         collapsedIds,
         accountOrder,
+        categorySeenAt,
       }) => ({
         themePreference,
         language,
@@ -123,6 +131,7 @@ export const useSettingsStore = create<SettingsState>()(
         inboxFilter,
         collapsedIds,
         accountOrder,
+        categorySeenAt,
       }),
     },
   ),

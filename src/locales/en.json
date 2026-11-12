@@ -73,6 +73,7 @@
     "all": "All Mail",
     "filter": "Category",
     "moveSender": "Move Mail from {{sender}}",
+    "newMail": "New mail",
     "primary": "Primary",
     "promotions": "Promotions",
     "transactions": "Transactions",

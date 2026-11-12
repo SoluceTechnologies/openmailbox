@@ -19,7 +19,7 @@ export const queryKeys = {
   accounts: ['accounts'] as const,
   mailboxes: ['mailboxes'] as const,
   threads: (scope: string, unreadOnly: boolean, category?: Category) => ['threads', scope, unreadOnly, category ?? null] as const,
-  unreadCategories: (scope: string) => ['unreadCategories', scope] as const,
+  newestUnread: (scope: string) => ['newestUnread', scope] as const,
   thread: (threadId: string, mailboxId: string | undefined) => ['thread', threadId, mailboxId ?? null] as const,
   body: (emailId: string) => ['body', emailId] as const,
   search: (query: string, mailboxIds: string[]) => ['search', query, mailboxIds.join(',')] as const,

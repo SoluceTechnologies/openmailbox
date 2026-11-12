@@ -36,7 +36,7 @@ describe('thread list', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockParams = { id: 'unified' };
-    useSettingsStore.setState({ inboxFilter: 'primary' });
+    useSettingsStore.setState({ inboxFilter: 'primary', categorySeenAt: {} });
     queryClient.clear();
     queryClient.setQueryData(queryKeys.accounts, [makeAccount()]);
     queryClient.setQueryData(queryKeys.mailboxes, [makeMailbox({ unreadCount: 1 })]);
@@ -59,14 +59,32 @@ describe('thread list', () => {
     expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), true, Category.Primary, undefined, 50);
   });
 
-  it('marks the inbox categories that hold unread mail', async () => {
+  it('marks the categories that received unread mail since their list was last shown', async () => {
+    const newUpdate = makeThread({ threadId: 'thread-update', lastReceivedAt: NOW });
+    const oldPromotion = makeThread({ threadId: 'thread-promotion', lastReceivedAt: NOW - 60_000 });
+    useSettingsStore.setState({ categorySeenAt: { updates: NOW - 120_000, promotions: NOW - 60_000 } });
     core.listThreads.mockImplementation(async (_scope, unreadOnly, category, _cursor, limit) => ({
-      threads: limit === 1 ? (category === Category.Updates ? [UNREAD] : []) : unreadOnly ? [UNREAD] : [UNREAD, READ],
+      threads:
+        limit === 1
+          ? category === Category.Updates
+            ? [newUpdate]
+            : category === Category.Promotions
+              ? [oldPromotion]
+              : []
+          : category === Category.Updates
+            ? [newUpdate]
+            : unreadOnly
+              ? [UNREAD]
+              : [UNREAD, READ],
     }));
     renderWithProviders(<MailboxScreen />);
-    await waitFor(() => expect(screen.getByRole('tab', { name: 'Updates' })).toHaveAccessibilityValue({ text: 'Unread' }));
-    expect(screen.getByRole('tab', { name: 'Promotions' })).not.toHaveAccessibilityValue({ text: 'Unread' });
-    expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), true, Category.Transactions, undefined, 1);
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Updates' })).toHaveAccessibilityValue({ text: 'New mail' }));
+    expect(screen.getByRole('tab', { name: 'Promotions' })).not.toHaveAccessibilityValue({ text: 'New mail' });
+
+    fireEvent.press(screen.getByRole('tab', { name: 'Updates' }));
+    await waitFor(() => expect(useSettingsStore.getState().categorySeenAt.updates).toBe(NOW));
+    fireEvent.press(screen.getByRole('tab', { name: 'Primary' }));
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Updates' })).not.toHaveAccessibilityValue({ text: 'New mail' }));
   });
 
   it('shows one inbox category at a time and remembers the choice', async () => {

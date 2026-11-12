@@ -73,6 +73,7 @@
     "all": "Alle mail",
     "filter": "Categorie",
     "moveSender": "Mail van {{sender}} verplaatsen",
+    "newMail": "Nieuwe berichten",
     "primary": "Primair",
     "promotions": "Promoties",
     "transactions": "Transacties",

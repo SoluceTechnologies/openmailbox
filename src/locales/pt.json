@@ -73,6 +73,7 @@
     "all": "Todos os e-mails",
     "filter": "Categoria",
     "moveSender": "Mover os e-mails de {{sender}}",
+    "newMail": "Novas mensagens",
     "primary": "Principal",
     "promotions": "Promoções",
     "transactions": "Transações",

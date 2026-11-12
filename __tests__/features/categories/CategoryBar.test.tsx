@@ -22,10 +22,9 @@ describe('category bar', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it('marks the categories that hold unread mail', () => {
-    renderWithProviders(<CategoryBar value="primary" unread={['primary', 'updates']} onChange={jest.fn()} />);
-    expect(screen.getByRole('tab', { name: 'Updates' })).toHaveAccessibilityValue({ text: 'Unread' });
-    expect(screen.getByRole('tab', { name: 'Primary' })).toHaveAccessibilityValue({ text: 'Unread' });
-    expect(screen.getByRole('tab', { name: 'Promotions' })).not.toHaveAccessibilityValue({ text: 'Unread' });
+  it('marks the categories that received new mail', () => {
+    renderWithProviders(<CategoryBar value="primary" withNewMail={['updates']} onChange={jest.fn()} />);
+    expect(screen.getByRole('tab', { name: 'Updates' })).toHaveAccessibilityValue({ text: 'New mail' });
+    expect(screen.getByRole('tab', { name: 'Promotions' })).not.toHaveAccessibilityValue({ text: 'New mail' });
   });
 });

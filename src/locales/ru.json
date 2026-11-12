@@ -73,6 +73,7 @@
     "all": "Все письма",
     "filter": "Категория",
     "moveSender": "Переместить письма от {{sender}}",
+    "newMail": "Новые письма",
     "primary": "Основные",
     "promotions": "Акции",
     "transactions": "Транзакции",

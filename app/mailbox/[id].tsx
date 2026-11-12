@@ -8,7 +8,7 @@ import { Inbox } from 'lucide-react-native';
 import { MailboxRole, type ThreadSummary } from '@openmailbox/mail-core';
 
 import { BottomBar } from '@/components/BottomBar';
-import { useAccounts, useMailboxes, useThreads, useUnreadCategories } from '@/core/hooks';
+import { useAccounts, useCategoriesWithNewMail, useMailboxes, useThreads } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
 import { accountName } from '@/features/accounts/accountName';
@@ -80,7 +80,13 @@ export default function MailboxScreen() {
   const setInboxFilter = useSettingsStore((state) => state.setInboxFilter);
   const accountNames = useSettingsStore((state) => state.accountNames);
   const threads = useThreads(scope, unreadOnly, categorized ? categoryOf(inboxFilter) : undefined);
-  const unreadCategories = useUnreadCategories(scope, categorized);
+  const categoriesWithNewMail = useCategoriesWithNewMail(scope, categorized);
+  const markCategorySeen = useSettingsStore((state) => state.markCategorySeen);
+  const newestShown = threads.isPlaceholderData ? undefined : threads.data?.[0]?.lastReceivedAt;
+
+  useEffect(() => {
+    if (categorized && inboxFilter !== 'all' && newestShown !== undefined) markCategorySeen(inboxFilter, newestShown);
+  }, [categorized, inboxFilter, newestShown, markCategorySeen]);
 
   const account = accounts.find((candidate) => candidate.id === mailbox?.accountId);
   const accountIds = useMemo(
@@ -179,7 +185,7 @@ export default function MailboxScreen() {
           ) : null}
           {categorized ? (
             <View style={styles.categories}>
-              <CategoryBar value={inboxFilter} unread={unreadCategories.map(filterOf)} onChange={setInboxFilter} />
+              <CategoryBar value={inboxFilter} withNewMail={categoriesWithNewMail.map(filterOf)} onChange={setInboxFilter} />
             </View>
           ) : null}
           <View style={styles.filters}>

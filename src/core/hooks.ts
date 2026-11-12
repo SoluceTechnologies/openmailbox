@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { infiniteQueryOptions, keepPreviousData, useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-query';
 import { ThreadScope, type Account, type Category, type Mailbox, type ThreadPage } from '@openmailbox/mail-core';
 
-import { CATEGORIES } from '@/features/categories/categories';
+import { CATEGORIES, filterOf } from '@/features/categories/categories';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 
@@ -62,16 +62,22 @@ export function useThreads(scope: string, unreadOnly: boolean, category?: Catego
   });
 }
 
-export function useUnreadCategories(scope: string, enabled: boolean): Category[] {
-  return (
-    useQuery({
-      queryKey: queryKeys.unreadCategories(scope),
-      queryFn: async () => {
-        const pages = await Promise.all(CATEGORIES.map((category) => mailCore().listThreads(threadScope(scope), true, category, undefined, 1)));
-        return CATEGORIES.filter((_, index) => pages[index].threads.length > 0);
-      },
-      enabled,
-    }).data ?? EMPTY_CATEGORIES
+export function useCategoriesWithNewMail(scope: string, enabled: boolean): Category[] {
+  const seenAt = useSettingsStore((state) => state.categorySeenAt);
+  const newest = useQuery({
+    queryKey: queryKeys.newestUnread(scope),
+    queryFn: () =>
+      Promise.all(
+        CATEGORIES.map(async (category) => {
+          const page = await mailCore().listThreads(threadScope(scope), true, category, undefined, 1);
+          return page.threads[0]?.lastReceivedAt ?? 0;
+        }),
+      ),
+    enabled,
+  }).data;
+  return useMemo(
+    () => (newest ? CATEGORIES.filter((category, index) => newest[index] > (seenAt[filterOf(category)] ?? 0)) : EMPTY_CATEGORIES),
+    [newest, seenAt],
   );
 }
 
