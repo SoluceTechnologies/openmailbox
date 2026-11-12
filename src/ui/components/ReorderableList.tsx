@@ -84,9 +84,12 @@ function Row({ index, active, translation, heights, onMove, render }: RowProps) 
       <Animated.View
         style={[{ backgroundColor: colors.item }, style]}
         onLayout={(event) => {
-          const next = [...heights.value];
-          next[index] = event.nativeEvent.layout.height;
-          heights.value = next;
+          const height = event.nativeEvent.layout.height;
+          heights.modify((list) => {
+            'worklet';
+            list[index] = height;
+            return list;
+          });
         }}
       >
         {index > 0 ? <View style={[styles.separator, { backgroundColor: colors.border }]} /> : null}
