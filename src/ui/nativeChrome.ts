@@ -5,7 +5,8 @@ export const NATIVE_CHROME = Platform.OS === 'ios';
 
 export const LIQUID_GLASS = NATIVE_CHROME && isLiquidGlassAvailable();
 
-export const TRANSLUCENT_HEADER = {
+export const translucentHeader = (backgroundColor: string) => ({
   headerTransparent: true,
-  headerBlurEffect: LIQUID_GLASS ? undefined : 'systemChromeMaterial',
-} as const;
+  headerBlurEffect: LIQUID_GLASS ? undefined : ('systemChromeMaterial' as const),
+  headerLargeStyle: LIQUID_GLASS ? undefined : { backgroundColor },
+});

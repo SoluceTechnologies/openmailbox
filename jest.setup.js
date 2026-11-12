@@ -147,7 +147,7 @@ jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
 });
 
 // iOS chrome (native headers, toolbars, menus) needs a navigator; the tests cover the shared UI.
-jest.mock('@/ui/nativeChrome', () => ({ NATIVE_CHROME: false, LIQUID_GLASS: false, TRANSLUCENT_HEADER: {} }));
+jest.mock('@/ui/nativeChrome', () => ({ NATIVE_CHROME: false, LIQUID_GLASS: false, translucentHeader: () => ({}) }));
 jest.mock('@expo/ui/swift-ui', () => ({}));
 
 afterAll(() => {

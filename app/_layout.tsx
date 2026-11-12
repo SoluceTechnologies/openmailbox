@@ -14,7 +14,7 @@ import { composeTitleKey, type ComposeMode } from '@/features/composer/prefill';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useLanguageSync } from '@/hooks/useLanguageSync';
 import { useSyncOnReconnect } from '@/hooks/useSyncOnReconnect';
-import { NATIVE_CHROME, TRANSLUCENT_HEADER } from '@/ui/nativeChrome';
+import { NATIVE_CHROME, translucentHeader } from '@/ui/nativeChrome';
 
 function ThemedStatusBar() {
   const { dark } = useTheme();
@@ -24,14 +24,19 @@ function ThemedStatusBar() {
 function Navigator() {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const modalHeader = (title: string) => ({ presentation: 'modal' as const, headerShown: NATIVE_CHROME, ...TRANSLUCENT_HEADER, title });
+  const modalHeader = (title: string, background = colors.background) => ({
+    presentation: 'modal' as const,
+    headerShown: NATIVE_CHROME,
+    ...translucentHeader(background),
+    title,
+  });
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen
         name="compose"
         options={({ route }) => modalHeader(t(composeTitleKey((route.params as { mode?: ComposeMode } | undefined)?.mode)))}
       />
-      <Stack.Screen name="accounts/add" options={modalHeader(t('accounts.setup.chooseProvider'))} />
+      <Stack.Screen name="accounts/add" options={modalHeader(t('accounts.setup.chooseProvider'), colors.groupedBackground)} />
       <Stack.Screen name="attachment" options={({ route }) => modalHeader((route.params as { name?: string } | undefined)?.name ?? '')} />
     </Stack>
   );

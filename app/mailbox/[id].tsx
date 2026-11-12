@@ -30,7 +30,7 @@ import { accountColor } from '@/theme';
 import { EmptyState, IconButton, ScreenHeader, Spinner, Typography, ViewContainer } from '@/ui/components';
 import { SegmentedPicker } from '@/ui/SegmentedPicker';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { LIQUID_GLASS, NATIVE_CHROME, TRANSLUCENT_HEADER } from '@/ui/nativeChrome';
+import { LIQUID_GLASS, NATIVE_CHROME, translucentHeader } from '@/ui/nativeChrome';
 import { haptic } from '@/utils/haptics';
 import { goBack } from '@/utils/navigation';
 
@@ -254,7 +254,7 @@ export default function MailboxScreen() {
             headerShown: true,
             title,
             headerLargeTitle: true,
-            ...TRANSLUCENT_HEADER,
+            ...translucentHeader(colors.background),
             headerShadowVisible: false,
             headerLargeTitleShadowVisible: false,
             headerBackButtonDisplayMode: 'minimal',

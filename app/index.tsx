@@ -17,7 +17,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { accountColor } from '@/theme';
 import { FormSection, IconButton, ListRow, Typography, ViewContainer } from '@/ui/components';
-import { LIQUID_GLASS, NATIVE_CHROME, TRANSLUCENT_HEADER } from '@/ui/nativeChrome';
+import { LIQUID_GLASS, NATIVE_CHROME, translucentHeader } from '@/ui/nativeChrome';
 
 let unifiedInboxOpened = false;
 
@@ -190,7 +190,13 @@ export default function MailboxesScreen() {
       <>
         {list}
         <Stack.Screen
-          options={{ headerShown: true, title: t('mailboxes.title'), headerLargeTitle: true, ...TRANSLUCENT_HEADER, headerShadowVisible: false }}
+          options={{
+            headerShown: true,
+            title: t('mailboxes.title'),
+            headerLargeTitle: true,
+            ...translucentHeader(colors.groupedBackground),
+            headerShadowVisible: false,
+          }}
         />
         <Stack.SearchBar
           placeholder={t('search.placeholder')}
