@@ -66,15 +66,16 @@ function IconLayer({ filter, color, shown, lit, visible }: IconLayerProps) {
 interface CategoryChipProps {
   filter: InboxFilter;
   selected: boolean;
+  unread: boolean;
   flexible: boolean;
   labelWidth: number | undefined;
   motion: boolean;
   onPress: () => void;
 }
 
-function CategoryChip({ filter, selected, flexible, labelWidth, motion, onPress }: CategoryChipProps) {
+function CategoryChip({ filter, selected, unread, flexible, labelWidth, motion, onPress }: CategoryChipProps) {
   const { t } = useTranslation();
-  const { dark } = useTheme();
+  const { dark, colors } = useTheme();
   const idle = IDLE[dark ? 'dark' : 'light'];
   const tint = PRESENTATION[filter].tint[dark ? 'dark' : 'light'];
   const label = t(PRESENTATION[filter].label);
@@ -104,6 +105,7 @@ function CategoryChip({ filter, selected, flexible, labelWidth, motion, onPress 
     const open = Math.max(progress.value, 0);
     return { width: nameWidth * open, marginLeft: LABEL_GAP * Math.min(open, 1), opacity: shown.value };
   });
+  const dot = useAnimatedStyle(() => ({ opacity: 1 - shown.value }));
   const sizing = measured || !selected ? (flexible ? styles.shared : styles.fixed) : styles.own;
   const settledSize = !measured ? null : flexible ? { minWidth: selected ? expanded : COLLAPSED_MIN } : { width: selected ? expanded : ALL_WIDTH };
   const settledName = selected ? { width: nameWidth, marginLeft: LABEL_GAP, opacity: 1 } : { width: 0, marginLeft: 0, opacity: 0 };
@@ -115,12 +117,16 @@ function CategoryChip({ filter, selected, flexible, labelWidth, motion, onPress 
         accessibilityRole="tab"
         accessibilityLabel={label}
         accessibilityState={{ selected }}
+        accessibilityValue={unread ? { text: t('threads.unread') } : undefined}
         onPress={onPress}
         style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
       >
         <View style={styles.icon}>
           <IconLayer filter={filter} color={idle.icon} shown={shown} lit={false} visible={!selected} />
           <IconLayer filter={filter} color="#ffffff" shown={shown} lit visible={selected} />
+          {unread ? (
+            <Animated.View style={[styles.dot, { backgroundColor: colors.primary, borderColor: idle.background }, { opacity: selected ? 0 : 1 }, dot]} />
+          ) : null}
         </View>
         {measured || selected ? (
           <Animated.View
@@ -140,10 +146,11 @@ function CategoryChip({ filter, selected, flexible, labelWidth, motion, onPress 
 
 interface CategoryBarProps {
   value: InboxFilter;
+  unread?: InboxFilter[];
   onChange: (filter: InboxFilter) => void;
 }
 
-export function CategoryBar({ value, onChange }: CategoryBarProps) {
+export function CategoryBar({ value, unread = [], onChange }: CategoryBarProps) {
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const motion = !useSettingsStore((state) => state.reduceMotion);
@@ -180,6 +187,7 @@ export function CategoryBar({ value, onChange }: CategoryBarProps) {
             key={filter}
             filter={filter}
             selected={filter === value}
+            unread={unread.includes(filter)}
             flexible={filter !== 'all'}
             labelWidth={measured ? labelWidths[filter] : undefined}
             motion={motion}
@@ -220,6 +228,7 @@ const styles = StyleSheet.create({
   pressable: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: PADDING },
   pressed: { opacity: 0.7 },
   icon: { width: ICON_BOX, height: ICON_BOX },
+  dot: { position: 'absolute', top: -3, right: -4, width: 10, height: 10, borderRadius: 5, borderWidth: 1.5 },
   center: { alignItems: 'center', justifyContent: 'center' },
   name: { overflow: 'hidden' },
   nameShown: { marginLeft: LABEL_GAP, flexShrink: 1 },

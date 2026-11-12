@@ -8,13 +8,13 @@ import { Inbox } from 'lucide-react-native';
 import { MailboxRole, type ThreadSummary } from '@openmailbox/mail-core';
 
 import { BottomBar } from '@/components/BottomBar';
-import { useAccounts, useMailboxes, useThreads } from '@/core/hooks';
+import { useAccounts, useMailboxes, useThreads, useUnreadCategories } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
 import { accountName } from '@/features/accounts/accountName';
 import { CategoryBar } from '@/features/categories/CategoryBar';
 import { CategoryPicker } from '@/features/categories/CategoryPicker';
-import { categoryOf } from '@/features/categories/categories';
+import { categoryOf, filterOf } from '@/features/categories/categories';
 import { MailboxPicker } from '@/features/mailboxes/components/MailboxPicker';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { SearchResults } from '@/features/search/SearchResults';
@@ -80,6 +80,7 @@ export default function MailboxScreen() {
   const setInboxFilter = useSettingsStore((state) => state.setInboxFilter);
   const accountNames = useSettingsStore((state) => state.accountNames);
   const threads = useThreads(scope, unreadOnly, categorized ? categoryOf(inboxFilter) : undefined);
+  const unreadCategories = useUnreadCategories(scope, categorized);
 
   const account = accounts.find((candidate) => candidate.id === mailbox?.accountId);
   const accountIds = useMemo(
@@ -178,7 +179,7 @@ export default function MailboxScreen() {
           ) : null}
           {categorized ? (
             <View style={styles.categories}>
-              <CategoryBar value={inboxFilter} onChange={setInboxFilter} />
+              <CategoryBar value={inboxFilter} unread={unreadCategories.map(filterOf)} onChange={setInboxFilter} />
             </View>
           ) : null}
           <View style={styles.filters}>

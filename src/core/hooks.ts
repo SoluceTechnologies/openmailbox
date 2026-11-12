@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { infiniteQueryOptions, keepPreviousData, useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-query';
 import { ThreadScope, type Account, type Category, type Mailbox, type ThreadPage } from '@openmailbox/mail-core';
 
+import { CATEGORIES } from '@/features/categories/categories';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 
@@ -13,6 +14,7 @@ const SEARCH_LIMIT = 100;
 const EMPTY_ACCOUNTS: Account[] = [];
 const EMPTY_MAILBOXES: Mailbox[] = [];
 const EMPTY_IDS: string[] = [];
+const EMPTY_CATEGORIES: Category[] = [];
 
 export function sortAccounts(accounts: Account[], order: string[]): Account[] {
   if (order.length === 0) return accounts;
@@ -58,6 +60,19 @@ export function useThreads(scope: string, unreadOnly: boolean, category?: Catego
     // rather than flashing a spinner.
     placeholderData: keepPreviousData,
   });
+}
+
+export function useUnreadCategories(scope: string, enabled: boolean): Category[] {
+  return (
+    useQuery({
+      queryKey: queryKeys.unreadCategories(scope),
+      queryFn: async () => {
+        const pages = await Promise.all(CATEGORIES.map((category) => mailCore().listThreads(threadScope(scope), true, category, undefined, 1)));
+        return CATEGORIES.filter((_, index) => pages[index].threads.length > 0);
+      },
+      enabled,
+    }).data ?? EMPTY_CATEGORIES
+  );
 }
 
 export function useThreadEmails(threadId: string, mailboxId: string | undefined, enabled = true) {

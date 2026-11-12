@@ -56,20 +56,30 @@ describe('thread list', () => {
     await screen.findByText('Facture disponible');
     fireEvent.press(screen.getByRole('tab', { name: 'Unread' }));
     await waitFor(() => expect(screen.queryByText('Facture disponible')).toBeNull());
-    expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), true, Category.Primary, undefined, 50);
+    expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), true, Category.Primary, undefined, 50);
+  });
+
+  it('marks the inbox categories that hold unread mail', async () => {
+    core.listThreads.mockImplementation(async (_scope, unreadOnly, category, _cursor, limit) => ({
+      threads: limit === 1 ? (category === Category.Updates ? [UNREAD] : []) : unreadOnly ? [UNREAD] : [UNREAD, READ],
+    }));
+    renderWithProviders(<MailboxScreen />);
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Updates' })).toHaveAccessibilityValue({ text: 'Unread' }));
+    expect(screen.getByRole('tab', { name: 'Promotions' })).not.toHaveAccessibilityValue({ text: 'Unread' });
+    expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), true, Category.Transactions, undefined, 1);
   });
 
   it('shows one inbox category at a time and remembers the choice', async () => {
     renderWithProviders(<MailboxScreen />);
     await screen.findByText('Facture disponible');
-    expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, Category.Primary, undefined, 50);
+    expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), false, Category.Primary, undefined, 50);
     fireEvent.press(screen.getByRole('tab', { name: 'Promotions' }));
     await waitFor(() =>
-      expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, Category.Promotions, undefined, 50),
+      expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), false, Category.Promotions, undefined, 50),
     );
     expect(useSettingsStore.getState().inboxFilter).toBe('promotions');
     fireEvent.press(screen.getByRole('tab', { name: 'All Mail' }));
-    await waitFor(() => expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, undefined, undefined, 50));
+    await waitFor(() => expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), false, undefined, undefined, 50));
   });
 
   it('lists every thread of other folders, without categories', async () => {
@@ -78,7 +88,7 @@ describe('thread list', () => {
     renderWithProviders(<MailboxScreen />);
     await screen.findByText('Facture disponible');
     expect(screen.queryByRole('tab', { name: 'Promotions' })).toBeNull();
-    expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), false, undefined, undefined, 50);
+    expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), false, undefined, undefined, 50);
   });
 
   it('opens a thread in the mailbox it was listed from', async () => {
