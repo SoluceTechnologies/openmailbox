@@ -32,6 +32,22 @@ export function mailboxName(mailbox: Mailbox, t: TFunction): string {
   return mailbox.role === undefined ? mailbox.name : t(ROLE_LABELS[mailbox.role]);
 }
 
+export interface FolderRow {
+  mailbox: Mailbox;
+  parent: boolean;
+}
+
+export function visibleFolders(mailboxes: Mailbox[], collapsedIds: string[]): FolderRow[] {
+  const rows: FolderRow[] = [];
+  let hiddenBelow = Infinity;
+  mailboxes.forEach((mailbox, index) => {
+    if (mailbox.depth > hiddenBelow) return;
+    hiddenBelow = collapsedIds.includes(mailbox.id) ? mailbox.depth : Infinity;
+    rows.push({ mailbox, parent: (mailboxes[index + 1]?.depth ?? 0) > mailbox.depth });
+  });
+  return rows;
+}
+
 export function mailboxBadge(mailbox: Mailbox): number {
   if (mailbox.role === MailboxRole.Drafts) return mailbox.totalCount;
   if (mailbox.role === MailboxRole.Sent || mailbox.role === MailboxRole.Trash || mailbox.role === MailboxRole.All) return 0;

@@ -28,7 +28,7 @@ describe('mailboxes', () => {
     jest.clearAllMocks();
     queryClient.clear();
     useSyncStore.setState({ statuses: {}, authRequired: {} });
-    useSettingsStore.setState({ accountNames: { 'account-2': 'Personal' } });
+    useSettingsStore.setState({ accountNames: { 'account-2': 'Personal' }, collapsedIds: [] });
     queryClient.setQueryData(queryKeys.accounts, [ALICE, BOB]);
     queryClient.setQueryData(queryKeys.mailboxes, [
       makeMailbox({ unreadCount: 3 }),
@@ -58,6 +58,20 @@ describe('mailboxes', () => {
 
     fireEvent.press(screen.getAllByRole('button', { expanded: true })[0]);
     expect(screen.queryByRole('button', { name: 'Clients' })).toBeNull();
+    expect(useSettingsStore.getState().collapsedIds).toEqual(['account-1']);
+  });
+
+  it('folds a folder over its subfolders and keeps it folded', () => {
+    const { unmount } = renderWithProviders(<MailboxesScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Archive', expanded: true }));
+    expect(screen.queryByRole('button', { name: 'Clients' })).toBeNull();
+    unmount();
+
+    renderWithProviders(<MailboxesScreen />);
+    expect(screen.getByRole('button', { name: 'Archive', expanded: false })).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Clients' })).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Archive', expanded: false }));
+    expect(screen.getByRole('button', { name: 'Clients' })).toBeOnTheScreen();
   });
 
   it('names each account by its account name, else its address, never the sender name', () => {

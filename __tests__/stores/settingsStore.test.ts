@@ -10,7 +10,15 @@ describe('settings store', () => {
     useSettingsStore.getState().setThemePreference('dark');
     useSettingsStore.getState().setLanguage('oc');
     useSettingsStore.getState().setLoadRemoteImages(true);
+    useSettingsStore.getState().setAccountName('account-1', 'Work');
+    useSettingsStore.getState().toggleCollapsed('account-1');
     const saved = JSON.parse(storage.getString('settings-store') ?? '{}');
-    expect(saved.state).toMatchObject({ themePreference: 'dark', language: 'oc', loadRemoteImages: true });
+    expect(saved.state).toMatchObject({
+      themePreference: 'dark',
+      language: 'oc',
+      loadRemoteImages: true,
+      accountNames: { 'account-1': 'Work' },
+      collapsedIds: ['account-1'],
+    });
   });
 });

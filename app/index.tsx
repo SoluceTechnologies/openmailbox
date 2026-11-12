@@ -10,7 +10,7 @@ import { BottomBar } from '@/components/BottomBar';
 import { useAccounts, useMailboxes } from '@/core/hooks';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
 import { accountName } from '@/features/accounts/accountName';
-import { mailboxBadge, mailboxIcon, mailboxName } from '@/features/mailboxes/mailboxPresentation';
+import { mailboxBadge, mailboxIcon, mailboxName, visibleFolders } from '@/features/mailboxes/mailboxPresentation';
 import { SearchResults } from '@/features/search/SearchResults';
 import { useSyncLabel } from '@/features/sync/useSyncLabel';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -21,15 +21,32 @@ import { LIQUID_GLASS, NATIVE_CHROME, TRANSLUCENT_HEADER } from '@/ui/nativeChro
 
 let unifiedInboxOpened = false;
 
-function MailboxRow({ mailbox, title, accent }: { mailbox: Mailbox; title: string; accent?: string }) {
+interface MailboxRowProps {
+  mailbox: Mailbox;
+  title: string;
+  accent?: string;
+  expanded?: boolean;
+  onToggle?: () => void;
+}
+
+function MailboxRow({ mailbox, title, accent, expanded, onToggle }: MailboxRowProps) {
   const router = useRouter();
   const { colors } = useTheme();
   const Icon = mailboxIcon(mailbox);
+  const Chevron = expanded ? ChevronDown : ChevronRight;
   return (
     <ListRow
       title={title}
       disabled={!mailbox.selectable}
       detail={mailbox.selectable ? mailboxBadge(mailbox) : undefined}
+      chevron={!onToggle}
+      trailing={
+        onToggle ? (
+          <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ expanded }} hitSlop={12} onPress={onToggle}>
+            <Chevron size={18} color={colors.textSecondary} />
+          </Pressable>
+        ) : undefined
+      }
       onPress={mailbox.selectable ? () => router.push(`/mailbox/${mailbox.id}`) : undefined}
       leading={
         <View style={{ paddingLeft: Math.min(mailbox.depth, 3) * 18 }}>
@@ -44,8 +61,11 @@ function AccountSection({ account, name, mailboxes }: { account: Account; name: 
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsedIds = useSettingsStore((state) => state.collapsedIds);
+  const toggleCollapsed = useSettingsStore((state) => state.toggleCollapsed);
+  const folders = useMemo(() => visibleFolders(mailboxes, collapsedIds), [mailboxes, collapsedIds]);
   const authRequired = useSyncStore((state) => state.authRequired[account.id] === true);
+  const collapsed = collapsedIds.includes(account.id);
   const Chevron = collapsed ? ChevronRight : ChevronDown;
 
   return (
@@ -53,7 +73,7 @@ function AccountSection({ account, name, mailboxes }: { account: Account; name: 
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: !collapsed }}
-        onPress={() => setCollapsed((value) => !value)}
+        onPress={() => toggleCollapsed(account.id)}
         style={styles.sectionHeader}
       >
         <View style={[styles.accountDot, { backgroundColor: accountColor(account.color) }]} />
@@ -80,8 +100,14 @@ function AccountSection({ account, name, mailboxes }: { account: Account; name: 
         </Typography>
       ) : (
         <FormSection>
-          {mailboxes.map((mailbox) => (
-            <MailboxRow key={mailbox.id} mailbox={mailbox} title={mailboxName(mailbox, t)} />
+          {folders.map(({ mailbox, parent }) => (
+            <MailboxRow
+              key={mailbox.id}
+              mailbox={mailbox}
+              title={mailboxName(mailbox, t)}
+              expanded={parent ? !collapsedIds.includes(mailbox.id) : undefined}
+              onToggle={parent ? () => toggleCollapsed(mailbox.id) : undefined}
+            />
           ))}
         </FormSection>
       )}

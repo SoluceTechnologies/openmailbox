@@ -25,6 +25,7 @@ interface SettingsState {
   notificationsEnabled: boolean;
   silencedAccountIds: string[];
   inboxFilter: InboxFilter;
+  collapsedIds: string[];
   setThemePreference: (preference: ThemePreference) => void;
   setLanguage: (language: AppLanguage) => void;
   setHapticsEnabled: (enabled: boolean) => void;
@@ -37,6 +38,7 @@ interface SettingsState {
   setNotificationsEnabled: (enabled: boolean) => void;
   setAccountNotified: (accountId: string, notified: boolean) => void;
   setInboxFilter: (filter: InboxFilter) => void;
+  toggleCollapsed: (id: string) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -54,6 +56,7 @@ export const useSettingsStore = create<SettingsState>()(
       notificationsEnabled: true,
       silencedAccountIds: [],
       inboxFilter: 'primary',
+      collapsedIds: [],
       setThemePreference: (themePreference) => set({ themePreference }),
       setLanguage: (language) => set({ language }),
       setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
@@ -62,6 +65,10 @@ export const useSettingsStore = create<SettingsState>()(
       setDefaultAccountId: (defaultAccountId) => set({ defaultAccountId }),
       setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
       setInboxFilter: (inboxFilter) => set({ inboxFilter }),
+      toggleCollapsed: (id) =>
+        set(({ collapsedIds }) => ({
+          collapsedIds: collapsedIds.includes(id) ? collapsedIds.filter((collapsed) => collapsed !== id) : [...collapsedIds, id],
+        })),
       setAccountNotified: (accountId, notified) =>
         set(({ silencedAccountIds }) => ({
           silencedAccountIds: notified
@@ -71,10 +78,11 @@ export const useSettingsStore = create<SettingsState>()(
       setSignature: (accountId, signature) => set(({ signatures }) => ({ signatures: withText(signatures, accountId, signature) })),
       setAccountName: (accountId, name) => set(({ accountNames }) => ({ accountNames: withText(accountNames, accountId, name) })),
       forgetAccount: (accountId) =>
-        set(({ signatures, accountNames, silencedAccountIds }) => ({
+        set(({ signatures, accountNames, silencedAccountIds, collapsedIds }) => ({
           signatures: withText(signatures, accountId, ''),
           accountNames: withText(accountNames, accountId, ''),
           silencedAccountIds: silencedAccountIds.filter((silenced) => silenced !== accountId),
+          collapsedIds: collapsedIds.filter((collapsed) => collapsed !== accountId),
         })),
     }),
     {
@@ -93,6 +101,7 @@ export const useSettingsStore = create<SettingsState>()(
         notificationsEnabled,
         silencedAccountIds,
         inboxFilter,
+        collapsedIds,
       }) => ({
         themePreference,
         language,
@@ -106,6 +115,7 @@ export const useSettingsStore = create<SettingsState>()(
         notificationsEnabled,
         silencedAccountIds,
         inboxFilter,
+        collapsedIds,
       }),
     },
   ),
