@@ -47,7 +47,7 @@ function ListRow({
         ) : null}
       </View>
       {showDetail ? (
-        <Typography variant="body1" weight="400" color={colors.textSecondary} style={styles.detail}>
+        <Typography variant="body1" weight="400" numberOfLines={1} color={colors.textSecondary} style={styles.detail}>
           {String(detail)}
         </Typography>
       ) : null}
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   leading: { minWidth: 26, alignItems: 'center' },
   text: { flex: 1, gap: 2 },
   title: { fontSize: 16 },
-  detail: { fontSize: 16 },
+  detail: { fontSize: 16, flexShrink: 1, maxWidth: '55%' },
 });
 
 export default React.memo(ListRow);

@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Plus, TriangleAlert } from 'lucide-react-native';
+import { ChevronsUpDown, Plus, TriangleAlert } from 'lucide-react-native';
 
 import { useAccounts } from '@/core/hooks';
 import { accountName } from '@/features/accounts/accountName';
@@ -10,7 +10,7 @@ import { providerForAccount, providerName } from '@/features/accounts/providers'
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
-import { FormSection, ListRow, ReorderableList, moveItem } from '@/ui/components';
+import { FormSection, ListRow, ReorderableList, Select, moveItem } from '@/ui/components';
 
 export default function AccountsSettingsScreen() {
   const { t } = useTranslation();
@@ -20,6 +20,9 @@ export default function AccountsSettingsScreen() {
   const authRequired = useSyncStore((state) => state.authRequired);
   const accountNames = useSettingsStore((state) => state.accountNames);
   const setAccountOrder = useSettingsStore((state) => state.setAccountOrder);
+  const storedDefaultId = useSettingsStore((state) => state.defaultAccountId);
+  const setDefaultAccountId = useSettingsStore((state) => state.setDefaultAccountId);
+  const defaultAccount = accounts.find((account) => account.id === storedDefaultId) ?? accounts[0];
 
   const move = (from: number, to: number) => setAccountOrder(moveItem(accounts, from, to).map((account) => account.id));
 
@@ -57,6 +60,31 @@ export default function AccountsSettingsScreen() {
         ) : null}
         <ListRow title={t('accounts.add')} leading={<Plus size={22} color={colors.primary} />} onPress={() => router.push('/accounts/add')} />
       </FormSection>
+      {defaultAccount && accounts.length > 1 ? (
+        <FormSection footer={t('accounts.defaultAccountHint')}>
+          <Select<string>
+            value={defaultAccount.id}
+            onChange={setDefaultAccountId}
+            accessibilityLabel={t('accounts.defaultAccount')}
+            options={accounts.map((account) => {
+              const name = accountName(account, accountNames);
+              return {
+                value: account.id,
+                label: name,
+                description: name === account.email ? undefined : account.email,
+                leading: (size: number) => <ProviderMark brand={providerForAccount(account)?.provider.brand} size={size} />,
+              };
+            })}
+            trigger={
+              <ListRow
+                title={t('accounts.defaultAccount')}
+                detail={accountName(defaultAccount, accountNames)}
+                trailing={<ChevronsUpDown size={16} color={colors.textTertiary} />}
+              />
+            }
+          />
+        </FormSection>
+      ) : null}
     </SettingsPage>
   );
 }

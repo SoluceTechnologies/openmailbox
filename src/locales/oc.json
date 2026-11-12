@@ -18,6 +18,8 @@
     "passwordUpdated": "Senhal mes a jorn.",
     "reconnectRequired": "Lo servidor a refusat lo senhal. Picatz-lo tornamai per reprendre la sincronizacion.",
     "reorderHint": "Tenètz quichat un compte puèi fasètz-lo lisar per cambiar l’òrdre dels comptes dins Bóstias de letras.",
+    "defaultAccount": "Compte per defaut",
+    "defaultAccountHint": "Los messatges novèls redigits dempuèi Totas las bóstias o partejats dempuèi una autra aplicacion son mandats dempuèi aqueste compte.",
     "senderName": "Expeditor",
     "remove": "Suprimir lo compte",
     "removeMessage": "Los messatges de {{email}} seràn suprimits d'aqueste aparelh. Res es pas suprimit sul servidor.",

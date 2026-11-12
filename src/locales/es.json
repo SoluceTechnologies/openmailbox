@@ -18,6 +18,8 @@
     "passwordUpdated": "Contraseña actualizada.",
     "reconnectRequired": "El servidor ha rechazado la contraseña. Vuelve a introducirla para reanudar la sincronización.",
     "reorderHint": "Mantén pulsada una cuenta y arrástrala para cambiar el orden de las cuentas en Buzones.",
+    "defaultAccount": "Cuenta predeterminada",
+    "defaultAccountHint": "Los mensajes nuevos redactados desde Todas las bandejas o compartidos desde otra app se envían desde esta cuenta.",
     "senderName": "Remitente",
     "remove": "Eliminar cuenta",
     "removeMessage": "Los mensajes de {{email}} se eliminarán de este dispositivo. No se borra nada en el servidor.",

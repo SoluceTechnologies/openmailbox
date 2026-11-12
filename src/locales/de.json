@@ -18,6 +18,8 @@
     "passwordUpdated": "Passwort aktualisiert.",
     "reconnectRequired": "Der Server hat das Passwort abgelehnt. Gib es erneut ein, um die Synchronisierung fortzusetzen.",
     "reorderHint": "Halte einen Account gedrückt und ziehe ihn, um die Reihenfolge der Accounts in Postfächer zu ändern.",
+    "defaultAccount": "Standardaccount",
+    "defaultAccountHint": "Neue E-Mails, die in „Alle Eingänge“ verfasst oder aus einer anderen App geteilt werden, werden von diesem Account gesendet.",
     "senderName": "Absender",
     "remove": "Account entfernen",
     "removeMessage": "Die Nachrichten von {{email}} werden von diesem Gerät entfernt. Auf dem Server wird nichts gelöscht.",

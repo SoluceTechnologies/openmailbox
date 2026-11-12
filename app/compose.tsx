@@ -54,7 +54,6 @@ export default function ComposeScreen() {
   const { colors } = useTheme();
   const accounts = useAccounts();
   const defaultAccountId = useSettingsStore((state) => state.defaultAccountId);
-  const setDefaultAccountId = useSettingsStore((state) => state.setDefaultAccountId);
   const showToast = useUndoStore((state) => state.show);
   const threadEmails = useThreadEmails(params.threadId ?? '', params.mailboxId || undefined, !!params.threadId);
   const original = threadEmails.data?.find((email) => email.id === params.emailId);
@@ -212,7 +211,6 @@ export default function ComposeScreen() {
         inReplyToEmailId: mode === 'reply' || mode === 'replyAll' ? params.emailId : undefined,
         attachments: attachments.map(({ path, filename, mimeType }) => ({ path, filename, mimeType })),
       });
-      setDefaultAccountId(accountId);
       goBack();
       showToast({ label: t('compose.messageSent'), moves: [] });
     } catch (error) {

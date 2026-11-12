@@ -18,6 +18,8 @@
     "passwordUpdated": "Palavra-passe atualizada.",
     "reconnectRequired": "O servidor recusou a palavra-passe. Introduza-a novamente para retomar a sincronização.",
     "reorderHint": "Mantenha premida uma conta e arraste-a para mudar a ordem das contas em Caixas de correio.",
+    "defaultAccount": "Conta predefinida",
+    "defaultAccountHint": "As novas mensagens escritas em Todas as caixas ou partilhadas a partir de outra app são enviadas a partir desta conta.",
     "senderName": "Remetente",
     "remove": "Remover conta",
     "removeMessage": "As mensagens de {{email}} serão removidas deste dispositivo. Nada é apagado no servidor.",

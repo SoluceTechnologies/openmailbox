@@ -18,6 +18,8 @@
     "passwordUpdated": "Mot de passe mis à jour.",
     "reconnectRequired": "Le serveur a refusé le mot de passe. Saisissez-le à nouveau pour reprendre la synchronisation.",
     "reorderHint": "Maintenez le doigt sur un compte, puis faites-le glisser pour changer l’ordre des comptes dans Boîtes aux lettres.",
+    "defaultAccount": "Compte par défaut",
+    "defaultAccountHint": "Les nouveaux messages rédigés depuis Toutes les boîtes ou partagés depuis une autre app sont envoyés depuis ce compte.",
     "senderName": "Expéditeur",
     "remove": "Supprimer le compte",
     "removeMessage": "Les messages de {{email}} seront supprimés de cet appareil. Rien n'est supprimé sur le serveur.",
