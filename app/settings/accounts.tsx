@@ -1,3 +1,4 @@
+import { StyleSheet, View } from 'react-native';
 import { useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Plus, TriangleAlert } from 'lucide-react-native';
@@ -30,13 +31,18 @@ export default function AccountsSettingsScreen() {
             items={accounts}
             keyOf={(account) => account.id}
             onMove={move}
-            renderItem={(account, index) => {
+            renderItem={(account, index, handle) => {
               const name = accountName(account, accountNames);
               return (
                 <ListRow
                   title={name}
                   subtitle={[providerName(account), name === account.email ? null : account.email].filter(Boolean).join(' · ')}
-                  leading={<ProviderMark brand={providerForAccount(account)?.provider.brand} size={34} />}
+                  leading={
+                    <View style={styles.leading}>
+                      {accounts.length > 1 ? handle : null}
+                      <ProviderMark brand={providerForAccount(account)?.provider.brand} size={34} />
+                    </View>
+                  }
                   trailing={authRequired[account.id] ? <TriangleAlert size={18} color={colors.warning} /> : undefined}
                   accessibilityActions={[
                     ...(index > 0 ? [{ name: 'moveUp', label: t('accounts.moveUp') }] : []),
@@ -54,3 +60,7 @@ export default function AccountsSettingsScreen() {
     </SettingsPage>
   );
 }
+
+const styles = StyleSheet.create({
+  leading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+});

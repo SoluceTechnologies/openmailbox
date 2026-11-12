@@ -1,9 +1,10 @@
 import { useLayoutEffect, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+import { GripVertical } from 'lucide-react-native';
 
 import { haptic } from '@/utils/haptics';
 
@@ -43,29 +44,31 @@ interface RowProps {
   translation: SharedValue<number>;
   heights: SharedValue<number[]>;
   onMove: (from: number, to: number) => void;
-  children: ReactNode;
+  render: (handle: ReactNode) => ReactNode;
 }
 
-function Row({ index, active, translation, heights, onMove, children }: RowProps) {
+function Row({ index, active, translation, heights, onMove, render }: RowProps) {
   const { colors } = useTheme();
 
-  const pan = Gesture.Pan()
-    .activateAfterLongPress(HOLD_MS)
-    .onStart(() => {
-      active.value = index;
-      translation.value = 0;
-      scheduleOnRN(haptic);
-    })
-    .onUpdate((event) => {
-      translation.value = event.translationY;
-    })
-    .onEnd(() => {
-      const to = dropIndex(heights.value, index, translation.value);
-      translation.value = withTiming(slotOffset(heights.value, index, to), { duration: SHIFT_MS }, () => {
-        if (to === index) active.value = -1;
-        else scheduleOnRN(onMove, index, to);
+  const drag = (pan: PanGesture) =>
+    pan
+      .onStart(() => {
+        active.value = index;
+        translation.value = 0;
+        scheduleOnRN(haptic);
+      })
+      .onUpdate((event) => {
+        translation.value = event.translationY;
+      })
+      .onEnd(() => {
+        const to = dropIndex(heights.value, index, translation.value);
+        translation.value = withTiming(slotOffset(heights.value, index, to), { duration: SHIFT_MS }, () => {
+          if (to === index) active.value = -1;
+          else scheduleOnRN(onMove, index, to);
+        });
       });
-    });
+  const hold = drag(Gesture.Pan().activateAfterLongPress(HOLD_MS));
+  const grab = drag(Gesture.Pan().activeOffsetY([-4, 4]));
 
   const style = useAnimatedStyle(() => {
     if (active.value === -1) return { zIndex: 0, transform: [{ translateY: 0 }] };
@@ -77,7 +80,7 @@ function Row({ index, active, translation, heights, onMove, children }: RowProps
   });
 
   return (
-    <GestureDetector gesture={pan}>
+    <GestureDetector gesture={hold}>
       <Animated.View
         style={[{ backgroundColor: colors.item }, style]}
         onLayout={(event) => {
@@ -87,7 +90,13 @@ function Row({ index, active, translation, heights, onMove, children }: RowProps
         }}
       >
         {index > 0 ? <View style={[styles.separator, { backgroundColor: colors.border }]} /> : null}
-        {children}
+        {render(
+          <GestureDetector gesture={grab}>
+            <View hitSlop={12} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <GripVertical size={18} color={colors.textTertiary} />
+            </View>
+          </GestureDetector>,
+        )}
       </Animated.View>
     </GestureDetector>
   );
@@ -96,7 +105,7 @@ function Row({ index, active, translation, heights, onMove, children }: RowProps
 interface ReorderableListProps<T> {
   items: T[];
   keyOf: (item: T) => string;
-  renderItem: (item: T, index: number) => ReactNode;
+  renderItem: (item: T, index: number, handle: ReactNode) => ReactNode;
   onMove: (from: number, to: number) => void;
 }
 
@@ -114,9 +123,15 @@ function ReorderableList<T>({ items, keyOf, renderItem, onMove }: ReorderableLis
   return (
     <View>
       {items.map((item, index) => (
-        <Row key={keyOf(item)} index={index} active={active} translation={translation} heights={heights} onMove={onMove}>
-          {renderItem(item, index)}
-        </Row>
+        <Row
+          key={keyOf(item)}
+          index={index}
+          active={active}
+          translation={translation}
+          heights={heights}
+          onMove={onMove}
+          render={(handle) => renderItem(item, index, handle)}
+        />
       ))}
     </View>
   );
