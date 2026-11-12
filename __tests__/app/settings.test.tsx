@@ -3,7 +3,10 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 import * as Notifications from 'expo-notifications';
 import { Security } from '@openmailbox/mail-core';
 
+import AccountsSettingsScreen from '../../app/settings/accounts';
 import SettingsScreen from '../../app/settings/index';
+import NotificationSettingsScreen from '../../app/settings/notifications';
+import ReadingSettingsScreen from '../../app/settings/reading';
 import { queryClient, queryKeys } from '@/core/queryClient';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
@@ -28,9 +31,17 @@ describe('settings', () => {
     ]);
   });
 
-  it('lists accounts with their provider, without repeating an address used as the name', () => {
-    useSettingsStore.setState({ notificationsEnabled: false });
+  it('opens a page for each category', () => {
     renderWithProviders(<SettingsScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Accounts' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Notifications' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Reading' }));
+    expect(mockRouter.push.mock.calls).toEqual([['/settings/accounts'], ['/settings/notifications'], ['/settings/reading']]);
+    expect(screen.getByRole('button', { name: 'Accounts' })).toHaveTextContent(/2/);
+  });
+
+  it('lists accounts with their provider, without repeating an address used as the name', () => {
+    renderWithProviders(<AccountsSettingsScreen />);
     expect(screen.getByText('Alice Martin')).toBeOnTheScreen();
     expect(screen.getByText('Google · alice@example.com')).toBeOnTheScreen();
     // A server the app does not know is named after its domain.
@@ -39,14 +50,14 @@ describe('settings', () => {
   });
 
   it('opens an account and the add account flow', () => {
-    renderWithProviders(<SettingsScreen />);
+    renderWithProviders(<AccountsSettingsScreen />);
     fireEvent.press(screen.getByRole('button', { name: 'Alice Martin' }));
     fireEvent.press(screen.getByRole('button', { name: 'Add Account' }));
     expect(mockRouter.push.mock.calls).toEqual([['/settings/account/account-1'], ['/accounts/add']]);
   });
 
   it('blocks remote images until switched on', () => {
-    renderWithProviders(<SettingsScreen />);
+    renderWithProviders(<ReadingSettingsScreen />);
     const toggle = screen.getByRole('switch', { name: i18n.t('settings.loadRemoteImages') });
     expect(toggle).not.toBeChecked();
     fireEvent(toggle, 'valueChange', true);
@@ -54,7 +65,7 @@ describe('settings', () => {
   });
 
   it('shows contact pictures until switched off', () => {
-    renderWithProviders(<SettingsScreen />);
+    renderWithProviders(<ReadingSettingsScreen />);
     const toggle = screen.getByRole('switch', { name: 'Contact Pictures' });
     expect(toggle).toBeChecked();
     fireEvent(toggle, 'valueChange', false);
@@ -72,7 +83,7 @@ describe('settings', () => {
     beforeEach(() => useSettingsStore.setState({ notificationsEnabled: true, silencedAccountIds: [] }));
 
     it('turns new mail notifications off, then off for one account', () => {
-      renderWithProviders(<SettingsScreen />);
+      renderWithProviders(<NotificationSettingsScreen />);
       fireEvent(screen.getByRole('switch', { name: 'Alice Martin' }), 'valueChange', false);
       expect(useSettingsStore.getState().silencedAccountIds).toEqual(['account-1']);
       fireEvent(screen.getByRole('switch', { name: i18n.t('settings.notifyNewMail') }), 'valueChange', false);
@@ -84,7 +95,7 @@ describe('settings', () => {
       useSettingsStore.setState({ notificationsEnabled: false });
       (Notifications.requestPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: false });
       const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-      renderWithProviders(<SettingsScreen />);
+      renderWithProviders(<NotificationSettingsScreen />);
       await act(async () => fireEvent(screen.getByRole('switch', { name: i18n.t('settings.notifyNewMail') }), 'valueChange', true));
       expect(alert).toHaveBeenCalledWith(i18n.t('settings.notifications'), i18n.t('settings.notificationsDenied'), expect.any(Array));
       expect(useSettingsStore.getState().notificationsEnabled).toBe(false);
