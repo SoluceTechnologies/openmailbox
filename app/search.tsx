@@ -5,7 +5,7 @@ import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { SearchResults } from '@/features/search/SearchResults';
-import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { NATIVE_CHROME, TRANSLUCENT_HEADER } from '@/ui/nativeChrome';
 import { ScreenHeader, TextField, ViewContainer } from '@/ui/components';
 import { goBack } from '@/utils/navigation';
 
@@ -18,7 +18,7 @@ export default function SearchScreen() {
       <ViewContainer>
         <SearchResults query={query} />
         <Stack.Screen
-          options={{ headerShown: true, title: t('search.title'), headerTransparent: true, headerBackButtonDisplayMode: 'minimal' }}
+          options={{ headerShown: true, title: t('search.title'), ...TRANSLUCENT_HEADER, headerBackButtonDisplayMode: 'minimal' }}
         />
         <Stack.SearchBar
           placeholder={t('search.placeholder')}

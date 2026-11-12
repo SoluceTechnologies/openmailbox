@@ -14,7 +14,7 @@ import { composeTitleKey, type ComposeMode } from '@/features/composer/prefill';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useLanguageSync } from '@/hooks/useLanguageSync';
 import { useSyncOnReconnect } from '@/hooks/useSyncOnReconnect';
-import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { NATIVE_CHROME, TRANSLUCENT_HEADER } from '@/ui/nativeChrome';
 
 function ThemedStatusBar() {
   const { dark } = useTheme();
@@ -24,7 +24,7 @@ function ThemedStatusBar() {
 function Navigator() {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const modalHeader = (title: string) => ({ presentation: 'modal' as const, headerShown: NATIVE_CHROME, headerTransparent: true, title });
+  const modalHeader = (title: string) => ({ presentation: 'modal' as const, headerShown: NATIVE_CHROME, ...TRANSLUCENT_HEADER, title });
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen

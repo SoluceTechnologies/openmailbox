@@ -29,7 +29,7 @@ import { accountColor } from '@/theme';
 import { EmptyState, IconButton, ScreenHeader, Spinner, Typography, ViewContainer } from '@/ui/components';
 import { SegmentedPicker } from '@/ui/SegmentedPicker';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { LIQUID_GLASS, NATIVE_CHROME, TRANSLUCENT_HEADER } from '@/ui/nativeChrome';
 import { haptic } from '@/utils/haptics';
 import { goBack } from '@/utils/navigation';
 
@@ -252,7 +252,7 @@ export default function MailboxScreen() {
             headerShown: true,
             title,
             headerLargeTitle: true,
-            headerTransparent: true,
+            ...TRANSLUCENT_HEADER,
             headerShadowVisible: false,
             headerLargeTitleShadowVisible: false,
             headerBackButtonDisplayMode: 'minimal',
@@ -260,6 +260,9 @@ export default function MailboxScreen() {
           }}
         />
         <Stack.Toolbar placement="right">
+          {LIQUID_GLASS || selection.active ? null : (
+            <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={compose} />
+          )}
           <Stack.Toolbar.Button onPress={selection.active ? selection.end : selection.start} disabled={!selection.active && data.length === 0}>
             {selection.active ? t('threads.selectDone') : t('threads.select')}
           </Stack.Toolbar.Button>
@@ -304,11 +307,13 @@ export default function MailboxScreen() {
                 setSearchActive(false);
               }}
             />
-            <Stack.Toolbar placement="bottom">
-              <Stack.Toolbar.SearchBarSlot />
-              <Stack.Toolbar.Spacer />
-              <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={compose} />
-            </Stack.Toolbar>
+            {LIQUID_GLASS ? (
+              <Stack.Toolbar placement="bottom">
+                <Stack.Toolbar.SearchBarSlot />
+                <Stack.Toolbar.Spacer />
+                <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={compose} />
+              </Stack.Toolbar>
+            ) : null}
           </>
         )}
       </>

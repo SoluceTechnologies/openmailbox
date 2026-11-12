@@ -15,7 +15,7 @@ import { useSyncLabel } from '@/features/sync/useSyncLabel';
 import { useSyncStore } from '@/stores/syncStore';
 import { accountColor } from '@/theme';
 import { FormSection, IconButton, ListRow, Typography, ViewContainer } from '@/ui/components';
-import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { LIQUID_GLASS, NATIVE_CHROME, TRANSLUCENT_HEADER } from '@/ui/nativeChrome';
 
 let unifiedInboxOpened = false;
 
@@ -156,7 +156,7 @@ export default function MailboxesScreen() {
       <>
         {list}
         <Stack.Screen
-          options={{ headerShown: true, title: t('mailboxes.title'), headerLargeTitle: true, headerTransparent: true, headerShadowVisible: false }}
+          options={{ headerShown: true, title: t('mailboxes.title'), headerLargeTitle: true, ...TRANSLUCENT_HEADER, headerShadowVisible: false }}
         />
         <Stack.SearchBar
           placeholder={t('search.placeholder')}
@@ -169,13 +169,18 @@ export default function MailboxesScreen() {
           }}
         />
         <Stack.Toolbar placement="right">
+          {LIQUID_GLASS ? null : (
+            <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={() => router.push('/compose')} />
+          )}
           <Stack.Toolbar.Button icon="gearshape" accessibilityLabel={t('settings.title')} onPress={() => router.push('/settings')} />
         </Stack.Toolbar>
-        <Stack.Toolbar placement="bottom">
-          <Stack.Toolbar.SearchBarSlot />
-          <Stack.Toolbar.Spacer />
-          <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={() => router.push('/compose')} />
-        </Stack.Toolbar>
+        {LIQUID_GLASS ? (
+          <Stack.Toolbar placement="bottom">
+            <Stack.Toolbar.SearchBarSlot />
+            <Stack.Toolbar.Spacer />
+            <Stack.Toolbar.Button icon="square.and.pencil" accessibilityLabel={t('compose.newMessage')} onPress={() => router.push('/compose')} />
+          </Stack.Toolbar>
+        ) : null}
       </>
     );
   }

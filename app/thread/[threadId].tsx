@@ -20,7 +20,7 @@ import { ThreadActionSheet } from '@/features/threads/components/ThreadActionShe
 import { THREAD_ACTION_PRESENTATION, type ThreadActionId } from '@/features/threads/threadActions';
 import { useThreadActions } from '@/features/threads/useThreadActions';
 import { ActionList, EmptyState, IconButton, ScreenHeader, Sheet, Typography, ViewContainer } from '@/ui/components';
-import { NATIVE_CHROME } from '@/ui/nativeChrome';
+import { NATIVE_CHROME, TRANSLUCENT_HEADER } from '@/ui/nativeChrome';
 import { haptic } from '@/utils/haptics';
 import { goBack } from '@/utils/navigation';
 
@@ -243,7 +243,7 @@ export default function ThreadScreen() {
       <CategoryPicker sender={categorizing?.latest.from[0]} onClose={() => setCategorizing(null)} />
       {NATIVE_CHROME && !isPreview ? (
         <>
-          <Stack.Screen options={{ headerShown: true, title: '', headerTransparent: true, headerBackButtonDisplayMode: 'minimal' }} />
+          <Stack.Screen options={{ headerShown: true, title: '', ...TRANSLUCENT_HEADER, headerBackButtonDisplayMode: 'minimal' }} />
           <Stack.Toolbar placement="bottom">
             <Stack.Toolbar.Button icon="trash" accessibilityLabel={t('threads.delete')} disabled={!thread} onPress={() => thread && onAction('delete', thread)} />
             <Stack.Toolbar.Button icon="folder" accessibilityLabel={t('threads.move')} disabled={!thread} onPress={() => thread && setMoving(thread)} />
