@@ -13,6 +13,7 @@ import { canAdd, forwardedAttachments, pickAttachments, type ComposerAttachment 
 import { AttachmentList } from '@/features/composer/components/AttachmentList';
 import { RecipientField } from '@/features/composer/components/RecipientField';
 import { composeTitleKey, prefill, quoteHtml, textToHtml, type ComposeMode } from '@/features/composer/prefill';
+import { readSharedContent } from '@/features/composer/shared';
 import { HtmlBody } from '@/features/reader/components/HtmlBody';
 import { replaceSignature, withSignature } from '@/features/composer/signature';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -26,7 +27,15 @@ import { goBack } from '@/utils/navigation';
 const snapshot = (...fields: string[]) => fields.map((field) => field.trim()).join('\u0000');
 const fieldName = (label: string) => label.replace(/\s*:$/, '');
 
-type ComposeParams = { mode?: ComposeMode; emailId?: string; threadId?: string; mailboxId?: string; accountId?: string; to?: string };
+type ComposeParams = {
+  mode?: ComposeMode;
+  emailId?: string;
+  threadId?: string;
+  mailboxId?: string;
+  accountId?: string;
+  to?: string;
+  shared?: string;
+};
 
 function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   const { colors } = useTheme();
@@ -109,6 +118,22 @@ export default function ComposeScreen() {
         .finally(() => setForwarding(false));
     }
   }, [prefilled, original, originalBody.isLoading, originalBody.data, accounts, mode, t, params.emailId]);
+
+  useEffect(() => {
+    if (!params.shared) return;
+    readSharedContent()
+      .then((shared) => {
+        if (shared.text) setBody((current) => shared.text + current);
+        if (shared.failed) Alert.alert(t('compose.sharedFilesFailed'));
+        if (shared.attachments.length === 0) return;
+        if (!canAdd([], shared.attachments)) {
+          Alert.alert(t('compose.attachmentsTooLarge'));
+          return;
+        }
+        setAttachments(shared.attachments);
+      })
+      .catch(() => Alert.alert(t('compose.sharedFilesFailed')));
+  }, [params.shared, t]);
 
   useEffect(() => {
     if (!prefilled || (mode !== 'reply' && mode !== 'replyAll')) return;

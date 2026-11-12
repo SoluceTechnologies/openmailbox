@@ -107,6 +107,7 @@
     "replyAll": "Reply All",
     "send": "Send",
     "sendFailed": "The message couldn't be sent",
+    "sharedFilesFailed": "Some shared files couldn't be attached.",
     "messageSent": "Message sent",
     "subject": "Subject:",
     "to": "To:",

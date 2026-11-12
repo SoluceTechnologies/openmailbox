@@ -107,6 +107,7 @@
     "replyAll": "Responder a todos",
     "send": "Enviar",
     "sendFailed": "No se ha podido enviar el mensaje",
+    "sharedFilesFailed": "No se han podido adjuntar algunos archivos compartidos.",
     "messageSent": "Mensaje enviado",
     "subject": "Asunto:",
     "to": "Para:",

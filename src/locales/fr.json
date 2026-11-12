@@ -107,6 +107,7 @@
     "replyAll": "Répondre à tous",
     "send": "Envoyer",
     "sendFailed": "Le message n'a pas pu être envoyé",
+    "sharedFilesFailed": "Certains fichiers partagés n'ont pas pu être joints.",
     "messageSent": "Message envoyé",
     "subject": "Objet :",
     "to": "À :",
