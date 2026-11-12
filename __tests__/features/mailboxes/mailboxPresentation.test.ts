@@ -28,18 +28,20 @@ describe('mailbox presentation', () => {
     expect(mailboxBadge(makeMailbox({ role: MailboxRole.Trash, unreadCount: 7 }))).toBe(0);
   });
 
-  it('hides the subfolders of a collapsed folder, at any depth', () => {
+  it('hides the subfolders of a collapsed folder at any depth, wherever the list puts them', () => {
     const folders = [
       makeMailbox({ id: 'inbox' }),
+      makeMailbox({ id: 'sent', role: MailboxRole.Sent, depth: 1, parentId: 'inbox' }),
+      makeMailbox({ id: 'junk', role: MailboxRole.Junk, depth: 2, parentId: 'spam' }),
       makeMailbox({ id: 'projects', role: undefined, depth: 0 }),
-      makeMailbox({ id: '2025', role: undefined, depth: 1 }),
-      makeMailbox({ id: 'q1', role: undefined, depth: 2 }),
-      makeMailbox({ id: '2026', role: undefined, depth: 1 }),
-      makeMailbox({ id: 'clients', role: undefined, depth: 0 }),
+      makeMailbox({ id: '2025', role: undefined, depth: 1, parentId: 'projects' }),
+      makeMailbox({ id: 'q1', role: undefined, depth: 2, parentId: '2025' }),
+      makeMailbox({ id: 'spam', role: undefined, depth: 1, parentId: 'inbox' }),
     ];
     const rows = (collapsedIds: string[]) => visibleFolders(folders, collapsedIds).map(({ mailbox, parent }) => `${mailbox.id}${parent ? '+' : ''}`);
-    expect(rows([])).toEqual(['inbox', 'projects+', '2025+', 'q1', '2026', 'clients']);
-    expect(rows(['2025'])).toEqual(['inbox', 'projects+', '2025+', '2026', 'clients']);
-    expect(rows(['projects', '2025'])).toEqual(['inbox', 'projects+', 'clients']);
+    expect(rows([])).toEqual(['inbox+', 'sent', 'junk', 'projects+', '2025+', 'q1', 'spam+']);
+    expect(rows(['sent', 'spam'])).toEqual(['inbox+', 'sent', 'projects+', '2025+', 'q1', 'spam+']);
+    expect(rows(['projects'])).toEqual(['inbox+', 'sent', 'junk', 'projects+', 'spam+']);
+    expect(rows(['inbox'])).toEqual(['inbox+', 'projects+', '2025+', 'q1']);
   });
 });

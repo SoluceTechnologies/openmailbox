@@ -33,7 +33,7 @@ describe('mailboxes', () => {
     queryClient.setQueryData(queryKeys.mailboxes, [
       makeMailbox({ unreadCount: 3 }),
       makeMailbox({ id: 'alice-archive', name: 'Archive', role: MailboxRole.Archive, unreadCount: 0 }),
-      makeMailbox({ id: 'alice-clients', name: 'Clients', role: undefined, depth: 1, unreadCount: 2 }),
+      makeMailbox({ id: 'alice-clients', name: 'Clients', role: undefined, depth: 1, parentId: 'alice-archive', unreadCount: 2 }),
       makeMailbox({ id: 'bob-inbox', accountId: 'account-2', unreadCount: 4 }),
     ]);
   });

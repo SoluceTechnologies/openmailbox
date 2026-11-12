@@ -38,14 +38,13 @@ export interface FolderRow {
 }
 
 export function visibleFolders(mailboxes: Mailbox[], collapsedIds: string[]): FolderRow[] {
-  const rows: FolderRow[] = [];
-  let hiddenBelow = Infinity;
-  mailboxes.forEach((mailbox, index) => {
-    if (mailbox.depth > hiddenBelow) return;
-    hiddenBelow = collapsedIds.includes(mailbox.id) ? mailbox.depth : Infinity;
-    rows.push({ mailbox, parent: (mailboxes[index + 1]?.depth ?? 0) > mailbox.depth });
-  });
-  return rows;
+  const byId = new Map(mailboxes.map((mailbox) => [mailbox.id, mailbox]));
+  const parentIds = new Set(mailboxes.flatMap((mailbox) => (mailbox.parentId ? [mailbox.parentId] : [])));
+  const folded = (mailbox: Mailbox): boolean => {
+    const parent = mailbox.parentId ? byId.get(mailbox.parentId) : undefined;
+    return parent !== undefined && (collapsedIds.includes(parent.id) || folded(parent));
+  };
+  return mailboxes.filter((mailbox) => !folded(mailbox)).map((mailbox) => ({ mailbox, parent: parentIds.has(mailbox.id) }));
 }
 
 export function mailboxBadge(mailbox: Mailbox): number {

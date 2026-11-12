@@ -138,6 +138,7 @@ pub struct Mailbox {
     pub remote_name: String,
     pub name: String,
     pub depth: u32,
+    pub parent_id: Option<i64>,
     pub role: Option<MailboxRole>,
     pub selectable: bool,
     pub total_count: u32,

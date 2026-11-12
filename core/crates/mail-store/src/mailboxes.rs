@@ -3,7 +3,12 @@ use rusqlite::{OptionalExtension, Row, params};
 
 use crate::{StorageResult, Store};
 
-const MAILBOX_COLUMNS: &str = "m.id, m.account_id, m.remote_name, m.name, m.depth, m.role, m.selectable, m.total_count, m.unread_count";
+const MAILBOX_COLUMNS: &str = "m.id, m.account_id, m.remote_name, m.name, m.depth, m.role, m.selectable, m.total_count, m.unread_count, \
+     (SELECT p.id FROM mailbox p WHERE p.account_id = m.account_id AND p.depth + 1 = m.depth \
+        AND length(m.remote_name) > length(p.remote_name) + 1 \
+        AND substr(m.remote_name, 1, length(p.remote_name)) = p.remote_name \
+        AND substr(m.remote_name, length(p.remote_name) + 1, 1) NOT GLOB '[A-Za-z0-9]' \
+      ORDER BY length(p.remote_name) DESC LIMIT 1)";
 
 const ROLE_ORDER: &str = "CASE m.role WHEN 'inbox' THEN 0 WHEN 'drafts' THEN 1 WHEN 'sent' THEN 2 \
      WHEN 'archive' THEN 3 WHEN 'junk' THEN 4 WHEN 'trash' THEN 5 ELSE 6 END";
@@ -24,6 +29,7 @@ fn mailbox_from_row(row: &Row) -> rusqlite::Result<Mailbox> {
         remote_name: row.get(2)?,
         name: row.get(3)?,
         depth: row.get(4)?,
+        parent_id: row.get(9)?,
         role: row
             .get::<_, Option<String>>(5)?
             .as_deref()
@@ -203,6 +209,61 @@ mod tests {
             role,
             selectable: true,
         }
+    }
+
+    fn nested(remote_name: &str, depth: u32, role: Option<MailboxRole>) -> RemoteMailbox {
+        RemoteMailbox {
+            remote_name: remote_name.into(),
+            name: remote_name.rsplit(['.', '/']).next().unwrap().into(),
+            depth,
+            role,
+            selectable: true,
+        }
+    }
+
+    #[test]
+    fn list_mailboxes_gives_each_subfolder_its_parent() {
+        let (store, _directory) = test_support::store();
+        store
+            .insert_account(&test_support::account("alice"))
+            .unwrap();
+        store
+            .replace_mailboxes(
+                "alice",
+                &[
+                    nested("INBOX", 0, Some(MailboxRole::Inbox)),
+                    nested("INBOX.Sent", 1, Some(MailboxRole::Sent)),
+                    nested("INBOX.Spam", 1, None),
+                    nested("INBOX.Spam.Junk", 2, Some(MailboxRole::Junk)),
+                    nested("INBOX.Sentinel", 1, None),
+                    nested("Projects", 0, None),
+                    nested("Projects/2026", 1, None),
+                    nested("Pro/Orphan", 1, None),
+                ],
+            )
+            .unwrap();
+
+        let mailboxes = store.list_mailboxes(Some("alice")).unwrap();
+        let id_of = |name: &str| {
+            mailboxes
+                .iter()
+                .find(|mailbox| mailbox.remote_name == name)
+                .unwrap()
+                .id
+        };
+        let parent_of = |name: &str| {
+            mailboxes
+                .iter()
+                .find(|mailbox| mailbox.remote_name == name)
+                .unwrap()
+                .parent_id
+        };
+        assert_eq!(parent_of("INBOX"), None);
+        assert_eq!(parent_of("INBOX.Sent"), Some(id_of("INBOX")));
+        assert_eq!(parent_of("INBOX.Spam.Junk"), Some(id_of("INBOX.Spam")));
+        assert_eq!(parent_of("INBOX.Sentinel"), Some(id_of("INBOX")));
+        assert_eq!(parent_of("Projects/2026"), Some(id_of("Projects")));
+        assert_eq!(parent_of("Pro/Orphan"), None);
     }
 
     #[test]
