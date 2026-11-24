@@ -6,7 +6,7 @@ use crate::{StorageResult, Store};
 const ACCOUNT_COLOR_COUNT: u32 = 12;
 
 const ACCOUNT_COLUMNS: &str = "id, email, display_name, username, imap_host, imap_port, imap_security, \
-     smtp_host, smtp_port, smtp_security, color, created_at, authentication, oauth_server";
+     smtp_host, smtp_port, smtp_security, color, created_at, authentication, oauth_server, smtp_username";
 
 fn account_from_row(row: &Row) -> rusqlite::Result<Account> {
     Ok(Account {
@@ -14,6 +14,7 @@ fn account_from_row(row: &Row) -> rusqlite::Result<Account> {
         email: row.get(1)?,
         display_name: row.get(2)?,
         username: row.get(3)?,
+        smtp_username: row.get(14)?,
         imap: ServerEndpoint {
             host: row.get(4)?,
             port: row.get(5)?,
@@ -87,7 +88,7 @@ impl Store {
         self.write(|transaction| {
             transaction
                 .execute(
-                    &format!("INSERT INTO account ({ACCOUNT_COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)"),
+                    &format!("INSERT INTO account ({ACCOUNT_COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)"),
                     params![
                         account.id,
                         account.email,
@@ -106,6 +107,7 @@ impl Store {
                             .oauth_server
                             .as_ref()
                             .and_then(|server| serde_json::to_string(server).ok()),
+                        account.smtp_username,
                     ],
                 )
                 .storage()?;

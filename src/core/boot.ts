@@ -8,7 +8,7 @@ import { CoreEventListener } from './events';
 import { EMPTY_THREAD_FILTER, mailboxesQuery, threadsQuery } from './hooks';
 import { mailCore } from './mailCore';
 import { queryClient, queryKeys, UNIFIED_SCOPE } from './queryClient';
-import { readSecret } from './secrets';
+import { readSecret, smtpSecretId } from './secrets';
 
 let booted: Promise<void> | null = null;
 
@@ -27,7 +27,11 @@ async function start(): Promise<void> {
   }
   await Promise.all(
     accounts.map(async (account) => {
-      const secret = await readSecret(account.id);
+      const [secret, smtpSecret] = await Promise.all([
+        readSecret(account.id),
+        account.smtpUsername ? readSecret(smtpSecretId(account.id)) : null,
+      ]);
+      if (smtpSecret) core.unlockSmtp(account.id, smtpSecret);
       if (secret) core.unlockAccount(account.id, secret);
       else useSyncStore.getState().setAuthRequired(account.id, true);
     }),

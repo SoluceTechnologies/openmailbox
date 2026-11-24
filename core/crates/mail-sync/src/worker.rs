@@ -58,6 +58,7 @@ pub type Heartbeat = Arc<AtomicI64>;
 pub struct Worker {
     pub account: Account,
     pub secret: Secret,
+    pub smtp_secret: Secret,
     pub tokens: TokenCache,
     pub store: Arc<Store>,
     pub events: Events,
@@ -74,6 +75,7 @@ impl Worker {
     pub fn new(
         account: Account,
         secret: Secret,
+        smtp_secret: Secret,
         tokens: TokenCache,
         store: Arc<Store>,
         events: Events,
@@ -83,6 +85,7 @@ impl Worker {
         Worker {
             account,
             secret,
+            smtp_secret,
             tokens,
             store,
             events,
@@ -248,6 +251,18 @@ impl Worker {
 
     async fn credential(&self) -> Result<Credential> {
         credentials::credential(&self.account, &self.secret, &self.tokens, &self.events).await
+    }
+
+    async fn smtp_credential(&self) -> Result<Credential> {
+        let smtp_secret = self
+            .smtp_secret
+            .read()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .clone();
+        match smtp_secret {
+            Some(secret) => Ok(Credential::Password(secret)),
+            None => self.credential().await,
+        }
     }
 
     fn has_secret(&self) -> bool {
@@ -794,10 +809,10 @@ impl Worker {
                 envelope_from,
                 recipients,
             } => {
-                let credential = self.credential().await?;
+                let credential = self.smtp_credential().await?;
                 let sent = proto_smtp::send(
                     &self.account.smtp,
-                    &self.account.username,
+                    self.account.outgoing_username(),
                     &credential,
                     envelope_from,
                     recipients,

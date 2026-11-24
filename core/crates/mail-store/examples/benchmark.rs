@@ -57,6 +57,7 @@ fn account(id: &str) -> Account {
         email: format!("{id}@example.com"),
         display_name: id.into(),
         username: id.into(),
+        smtp_username: None,
         imap: endpoint.clone(),
         smtp: endpoint,
         color: 0,

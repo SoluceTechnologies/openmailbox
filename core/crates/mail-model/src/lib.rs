@@ -104,6 +104,7 @@ pub struct ServerConfig {
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
     pub username: String,
+    pub smtp_username: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -111,6 +112,7 @@ pub struct AccountConfig {
     pub email: String,
     pub display_name: String,
     pub username: String,
+    pub smtp_username: Option<String>,
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
 }
@@ -121,6 +123,7 @@ pub struct Account {
     pub email: String,
     pub display_name: String,
     pub username: String,
+    pub smtp_username: Option<String>,
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
     pub color: u32,
@@ -130,6 +133,10 @@ pub struct Account {
 }
 
 impl Account {
+    pub fn outgoing_username(&self) -> &str {
+        self.smtp_username.as_deref().unwrap_or(&self.username)
+    }
+
     pub fn is_gmail(&self) -> bool {
         self.imap.host.ends_with("gmail.com") || self.imap.host.ends_with("googlemail.com")
     }

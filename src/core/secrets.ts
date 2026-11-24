@@ -4,6 +4,8 @@ const OPTIONS: SecureStore.SecureStoreOptions = { keychainAccessible: SecureStor
 
 const keyOf = (accountId: string) => `account-secret-${accountId}`;
 
+export const smtpSecretId = (accountId: string) => `${accountId}-smtp`;
+
 export function saveSecret(accountId: string, secret: string): Promise<void> {
   return SecureStore.setItemAsync(keyOf(accountId), secret, OPTIONS);
 }

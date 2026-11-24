@@ -20,4 +20,16 @@ fn autoconfig_prefers_implicit_tls_and_expands_username() {
         }
     );
     assert_eq!(config.username, "jane");
+    assert_eq!(config.smtp_username, None);
+}
+
+#[test]
+fn autoconfig_keeps_a_distinct_outgoing_username() {
+    let xml = r#"<clientConfig version="1.1"><emailProvider id="example.org">
+            <incomingServer type="imap"><hostname>imap.example.org</hostname><port>993</port><socketType>SSL</socketType><username>%EMAILLOCALPART%</username></incomingServer>
+            <outgoingServer type="smtp"><hostname>smtp.example.org</hostname><port>465</port><socketType>SSL</socketType><username>%EMAILADDRESS%</username></outgoingServer>
+        </emailProvider></clientConfig>"#;
+    let config = parse_autoconfig(xml, "jane@example.org", "jane", "example.org").unwrap();
+    assert_eq!(config.username, "jane");
+    assert_eq!(config.smtp_username.as_deref(), Some("jane@example.org"));
 }

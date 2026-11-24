@@ -34,6 +34,21 @@ fn an_account_keeps_its_oauth_server() {
 }
 
 #[test]
+fn an_account_keeps_its_outgoing_username() {
+    let (store, directory) = store();
+    let mut separate = account("s");
+    separate.smtp_username = Some("s-smtp".into());
+    store.insert_account(&separate).unwrap();
+    store.insert_account(&account("p")).unwrap();
+    assert_eq!(
+        store.account("s").unwrap().smtp_username.as_deref(),
+        Some("s-smtp")
+    );
+    assert_eq!(store.account("p").unwrap().smtp_username, None);
+    std::fs::remove_dir_all(directory).ok();
+}
+
+#[test]
 fn an_account_keeps_how_it_signs_in() {
     let (store, directory) = store();
     let mut microsoft = account("m");

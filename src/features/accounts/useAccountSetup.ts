@@ -4,7 +4,7 @@ import { CoreError, Security, type Account, type ServerConfig } from '@openmailb
 
 import { mailCore } from '@/core/mailCore';
 import { queryClient, queryKeys } from '@/core/queryClient';
-import { saveSecret } from '@/core/secrets';
+import { saveSecret, smtpSecretId } from '@/core/secrets';
 import { isEmail } from '@/utils/addresses';
 
 import { describeCoreError } from './coreErrors';
@@ -31,6 +31,7 @@ export function useAccountSetup(provider: MailProvider, onDone: (account: Accoun
   const { t } = useTranslation();
   const [email, setEmail] = useState(provider.account?.email ?? '');
   const [password, setPassword] = useState(provider.account?.password ?? '');
+  const [smtpPassword, setSmtpPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [servers, setServers] = useState<ServerConfig | null>(provider.servers ?? null);
   const [manual, setManual] = useState(provider.identifier === 'local' || !!provider.editableServers);
@@ -88,17 +89,23 @@ export function useAccountSetup(provider: MailProvider, onDone: (account: Accoun
         setServers(configuration);
       }
       setPhase('connecting');
+      const username = configuration.username || email;
+      const separate = !!configuration.smtpUsername || smtpPassword.length > 0;
+      const smtpSecret = smtpPassword || undefined;
       const account = await mailCore().addAccount(
         {
           email,
           displayName: displayName.trim() || email,
-          username: configuration.username || email,
+          username,
+          smtpUsername: separate ? configuration.smtpUsername || username : undefined,
           imap: configuration.imap,
           smtp: configuration.smtp,
         },
         password,
+        smtpSecret,
       );
       await saveSecret(account.id, password);
+      if (smtpSecret) await saveSecret(smtpSecretId(account.id), smtpSecret);
       queryClient.setQueryData(queryKeys.accounts, await mailCore().listAccounts());
       onDone(account);
     } catch (failure) {
@@ -115,6 +122,7 @@ export function useAccountSetup(provider: MailProvider, onDone: (account: Accoun
   return {
     email,
     password,
+    smtpPassword,
     displayName,
     oauth,
     canUseOAuth: oauth !== null && !probing && isEmail(email),
@@ -126,6 +134,7 @@ export function useAccountSetup(provider: MailProvider, onDone: (account: Accoun
     canSubmit: isEmail(email) && password.length > 0 && phase === 'idle' && (!manual || servers !== null),
     setEmail: updateEmail,
     setPassword,
+    setSmtpPassword,
     setDisplayName,
     setServers,
     showManualSettings,

@@ -73,6 +73,7 @@ pub async fn discover(email: &str) -> Result<ServerConfig> {
             imap: endpoint(provider.imap),
             smtp: endpoint(provider.smtp),
             username: email.to_owned(),
+            smtp_username: None,
         });
     }
     let urls = [
@@ -102,6 +103,7 @@ pub async fn discover(email: &str) -> Result<ServerConfig> {
             security: Security::Tls,
         },
         username: email.to_owned(),
+        smtp_username: None,
     })
 }
 
@@ -136,28 +138,34 @@ fn parse_autoconfig(
                     "STARTTLS" => Security::StartTls,
                     _ => return None,
                 };
-                let username = text("username").unwrap_or("%EMAILADDRESS%");
                 Some((
                     ServerEndpoint {
                         host: text("hostname")?.to_owned(),
                         port: text("port")?.parse().ok()?,
                         security,
                     },
-                    username.to_owned(),
+                    text("username").map(str::to_owned),
                 ))
             })
             .min_by_key(|(endpoint, _)| endpoint.security != Security::Tls)
     };
-    let (imap, username_template) = server("incomingServer", "imap")?;
-    let (smtp, _) = server("outgoingServer", "smtp")?;
-    let username = username_template
-        .replace("%EMAILADDRESS%", email)
-        .replace("%EMAILLOCALPART%", local_part)
-        .replace("%EMAILDOMAIN%", domain);
+    let expand = |template: &str| {
+        template
+            .replace("%EMAILADDRESS%", email)
+            .replace("%EMAILLOCALPART%", local_part)
+            .replace("%EMAILDOMAIN%", domain)
+    };
+    let (imap, imap_username) = server("incomingServer", "imap")?;
+    let (smtp, smtp_username) = server("outgoingServer", "smtp")?;
+    let username = expand(imap_username.as_deref().unwrap_or("%EMAILADDRESS%"));
+    let smtp_username = smtp_username
+        .map(|template| expand(&template))
+        .filter(|smtp_username| *smtp_username != username);
     Some(ServerConfig {
         imap,
         smtp,
         username,
+        smtp_username,
     })
 }
 
