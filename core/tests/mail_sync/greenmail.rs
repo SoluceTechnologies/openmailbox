@@ -791,9 +791,15 @@ async fn sends_with_its_own_outgoing_credentials() {
         .unwrap();
     wait_on_server("INBOX", &token, true).await;
 
+    let servers = || ServerConfig {
+        imap: endpoint(3993),
+        smtp: endpoint(3465),
+        username: "alice@example.com".into(),
+        smtp_username: Some("bob@example.com".into()),
+    };
     assert!(matches!(
         engine
-            .update_smtp_password(&account.id, "wrong".into())
+            .update_servers(&account.id, servers(), None, Some("wrong".into()))
             .await,
         Err(mail_model::Error::Auth)
     ));
@@ -815,7 +821,7 @@ async fn sends_with_its_own_outgoing_credentials() {
             .any(|subject| subject.contains(&held))
     );
     engine
-        .update_smtp_password(&account.id, "secret".into())
+        .update_servers(&account.id, servers(), None, Some("secret".into()))
         .await
         .unwrap();
     wait_on_server("INBOX", &held, true).await;

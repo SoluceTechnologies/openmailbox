@@ -531,45 +531,6 @@ impl Engine {
         }
     }
 
-    pub async fn update_smtp_password(&self, account_id: &str, secret: String) -> Result<()> {
-        let account = self.store.account(account_id)?;
-        proto_smtp::verify(
-            &account.smtp,
-            account.outgoing_username(),
-            &Credential::Password(secret.clone()),
-        )
-        .await?;
-        self.unlock_smtp(account_id, secret);
-        self.dispatch(
-            account_id,
-            Command::Sync {
-                mailbox_ids: None,
-                force: true,
-            },
-        );
-        Ok(())
-    }
-
-    pub async fn update_password(&self, account_id: &str, secret: String) -> Result<()> {
-        let account = self.store.account(account_id)?;
-        let connection = proto_imap::connect(
-            &account.imap,
-            &account.username,
-            &Credential::Password(secret.clone()),
-        )
-        .await?;
-        connection.logout().await;
-        self.unlock_account(account_id, secret);
-        self.dispatch(
-            account_id,
-            Command::Sync {
-                mailbox_ids: None,
-                force: true,
-            },
-        );
-        Ok(())
-    }
-
     pub async fn update_servers(
         &self,
         account_id: &str,

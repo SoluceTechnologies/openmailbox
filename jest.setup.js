@@ -43,9 +43,7 @@ jest.mock('@/core/mailCore', () => {
     threadEmails: jest.fn(async () => []),
     unlockAccount: jest.fn(),
     unlockSmtp: jest.fn(),
-    updatePassword: jest.fn(async () => undefined),
     updateServers: jest.fn(async () => undefined),
-    updateSmtpPassword: jest.fn(async () => undefined),
   };
   return {
     mailCore: () => core,

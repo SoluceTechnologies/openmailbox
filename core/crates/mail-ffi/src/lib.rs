@@ -838,18 +838,6 @@ impl MailCore {
         self.engine.unlock_smtp(&account_id, secret);
     }
 
-    pub async fn update_smtp_password(&self, account_id: String, secret: String) -> CoreResult<()> {
-        self.asynchronous(async move |engine| {
-            engine.update_smtp_password(&account_id, secret).await
-        })
-        .await
-    }
-
-    pub async fn update_password(&self, account_id: String, secret: String) -> CoreResult<()> {
-        self.asynchronous(async move |engine| engine.update_password(&account_id, secret).await)
-            .await
-    }
-
     pub async fn update_servers(
         &self,
         account_id: String,
