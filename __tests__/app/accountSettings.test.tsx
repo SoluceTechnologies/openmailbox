@@ -37,6 +37,19 @@ describe('account settings', () => {
     expect(screen.getByText('smtp.example.com:465 · SSL/TLS')).toBeOnTheScreen();
   });
 
+  it('opens the server settings of a password account', () => {
+    renderWithProviders(<AccountSettingsScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Incoming Mail (IMAP)' }));
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/settings/servers', params: { accountId: 'account-1' } });
+  });
+
+  it('shows the servers of an OAuth account without editing them', () => {
+    queryClient.setQueryData(queryKeys.accounts, [makeAccount({ authentication: Authentication.Microsoft })]);
+    renderWithProviders(<AccountSettingsScreen />);
+    expect(screen.getByText('Incoming Mail (IMAP)')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Incoming Mail (IMAP)' })).toBeNull();
+  });
+
   it('names the account in the app apart from the name recipients see', () => {
     useSettingsStore.setState({ accountNames: {} });
     renderWithProviders(<AccountSettingsScreen />);

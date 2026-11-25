@@ -97,6 +97,9 @@ export default function AccountSettingsScreen() {
   };
 
   const oauth = account.authentication !== Authentication.Password;
+  const openServers = oauth
+    ? undefined
+    : () => router.push({ pathname: '/settings/servers', params: { accountId: account.id } });
   const passwordInactive = (!password && !smtpPassword) || updating;
   const provider = providerName(account);
 
@@ -155,10 +158,12 @@ export default function AccountSettingsScreen() {
           leading={<ProviderMark brand={providerForAccount(account)?.provider.brand} size={28} />}
           chevron={false}
         />
-        <ListRow title={t('accounts.setup.incoming')} subtitle={describeEndpoint(account.imap)} />
-        <ListRow title={t('accounts.setup.outgoing')} subtitle={describeEndpoint(account.smtp)} />
-        <ListRow title={t('accounts.setup.username')} subtitle={account.username} />
-        {account.smtpUsername ? <ListRow title={t('accounts.outgoingUsername')} subtitle={account.smtpUsername} /> : null}
+        <ListRow title={t('accounts.setup.incoming')} subtitle={describeEndpoint(account.imap)} onPress={openServers} />
+        <ListRow title={t('accounts.setup.outgoing')} subtitle={describeEndpoint(account.smtp)} onPress={openServers} />
+        <ListRow title={t('accounts.setup.username')} subtitle={account.username} onPress={openServers} />
+        {account.smtpUsername ? (
+          <ListRow title={t('accounts.outgoingUsername')} subtitle={account.smtpUsername} onPress={openServers} />
+        ) : null}
       </FormSection>
 
       <SignatureSection value={signature} footer={t('accounts.signatureHint')} onChange={(next) => setSignature(account.id, next)} />
