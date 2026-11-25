@@ -1,4 +1,4 @@
-use mail_model::Authentication;
+use mail_model::{Authentication, Security, ServerConfig, ServerEndpoint};
 
 use super::ACCOUNT_COLOR_COUNT;
 
@@ -110,5 +110,33 @@ fn an_account_keeps_the_color_chosen_for_it() {
         .set_account_color("a", ACCOUNT_COLOR_COUNT + 2)
         .unwrap();
     assert_eq!(store.account("a").unwrap().color, 2);
+    std::fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn an_account_takes_new_server_settings() {
+    let (store, directory) = store();
+    store.insert_account(&account("a")).unwrap();
+    let servers = ServerConfig {
+        imap: ServerEndpoint {
+            host: "mail.example.org".into(),
+            port: 143,
+            security: Security::StartTls,
+        },
+        smtp: ServerEndpoint {
+            host: "smtp.example.org".into(),
+            port: 587,
+            security: Security::StartTls,
+        },
+        username: "a@example.org".into(),
+        smtp_username: Some("a-smtp".into()),
+    };
+    store.update_servers("a", &servers).unwrap();
+    let stored = store.account("a").unwrap();
+    assert_eq!(stored.imap, servers.imap);
+    assert_eq!(stored.smtp, servers.smtp);
+    assert_eq!(stored.username, "a@example.org");
+    assert_eq!(stored.smtp_username.as_deref(), Some("a-smtp"));
+    assert_eq!(stored.email, "a@example.com");
     std::fs::remove_dir_all(directory).ok();
 }
