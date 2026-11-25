@@ -621,7 +621,11 @@ impl Engine {
         *held_secret
             .write()
             .unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(incoming);
-        if servers.smtp_username.is_none() || smtp_secret.is_some() {
+        if servers.smtp_username.is_none() {
+            *held_smtp_secret
+                .write()
+                .unwrap_or_else(|poisoned| poisoned.into_inner()) = None;
+        } else if smtp_secret.is_some() {
             *held_smtp_secret
                 .write()
                 .unwrap_or_else(|poisoned| poisoned.into_inner()) = smtp_secret;

@@ -915,5 +915,21 @@ async fn updates_the_servers_of_an_account_only_once_they_sign_in() {
         ))
         .unwrap();
     wait_on_server("INBOX", &token, true).await;
+
+    engine
+        .update_servers(&account.id, servers(3993, None), None, Some("wrong".into()))
+        .await
+        .unwrap();
+    assert_eq!(stored(&engine).smtp_username, None);
+    let shared = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(
+            &account.id,
+            format!("Shared {shared}"),
+            "Sent with the incoming sign-in",
+            None,
+        ))
+        .unwrap();
+    wait_on_server("INBOX", &shared, true).await;
     std::fs::remove_dir_all(directory).ok();
 }
