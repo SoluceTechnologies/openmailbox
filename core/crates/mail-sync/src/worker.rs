@@ -5,18 +5,18 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 
 use mail_model::{
-    Account, CoreEvent, Error, FetchedMessage, Mailbox, MailboxRole, RenderedBody, Result,
-    SyncErrorKind, SyncStatus, now_millis,
+    Account, Authentication, CoreEvent, Credential, Error, FetchedMessage, Mailbox, MailboxRole,
+    RenderedBody, Result, SyncErrorKind, SyncStatus, now_millis,
 };
 use mail_store::{MailboxSyncState, Store};
 use proto_imap::{ImapConnection, uid_set};
 use tokio::sync::{mpsc, oneshot};
 
+use crate::credentials::{self, TokenCache};
 use crate::events::Events;
 use crate::operations::{self, MAX_ATTEMPTS, Operation, Source};
 
 const FETCH_BATCH_SIZE: usize = 50;
-/// Batches of older inbox messages whose headers one sync checks again, so it stays quick.
 const RECLASSIFY_BATCHES: usize = 20;
 const CONNECTION_IDLE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const CONNECTION_CHECK_AFTER_MS: i64 = 30 * 1000;
@@ -53,20 +53,19 @@ pub enum Command {
 
 pub type Secret = Arc<RwLock<Option<String>>>;
 
-/// When the running command last made progress, in milliseconds; 0 while the worker waits.
 pub type Heartbeat = Arc<AtomicI64>;
 
 pub struct Worker {
     pub account: Account,
     pub secret: Secret,
+    pub smtp_secret: Secret,
+    pub tokens: TokenCache,
     pub store: Arc<Store>,
     pub events: Events,
     pub receiver: mpsc::UnboundedReceiver<Command>,
     heartbeat: Heartbeat,
     deferred: VecDeque<Command>,
     connection: Option<ImapConnection>,
-    /// When the kept connection was last used, in milliseconds of wall time, which goes on while
-    /// the phone sleeps.
     connection_used_at: i64,
     active_mailboxes: VecDeque<i64>,
     mailbox_list_refreshed_at: Option<Instant>,
@@ -76,6 +75,8 @@ impl Worker {
     pub fn new(
         account: Account,
         secret: Secret,
+        smtp_secret: Secret,
+        tokens: TokenCache,
         store: Arc<Store>,
         events: Events,
         receiver: mpsc::UnboundedReceiver<Command>,
@@ -84,6 +85,8 @@ impl Worker {
         Worker {
             account,
             secret,
+            smtp_secret,
+            tokens,
             store,
             events,
             receiver,
@@ -246,6 +249,22 @@ impl Worker {
         ))
     }
 
+    async fn credential(&self) -> Result<Credential> {
+        credentials::credential(&self.account, &self.secret, &self.tokens, &self.events).await
+    }
+
+    async fn smtp_credential(&self) -> Result<Credential> {
+        let smtp_secret = self
+            .smtp_secret
+            .read()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .clone();
+        match smtp_secret {
+            Some(secret) => Ok(Credential::Password(secret)),
+            None => self.credential().await,
+        }
+    }
+
     fn has_secret(&self) -> bool {
         self.secret
             .read()
@@ -260,20 +279,13 @@ impl Worker {
 
     async fn take_connection(&mut self) -> Result<ImapConnection> {
         if let Some(mut connection) = self.connection.take() {
-            // Servers and NATs drop idle connections without a word: one left aside a while is
-            // checked first, so the command that needs it does not fail on a dead socket.
             let idle = now_millis() - self.connection_used_at > CONNECTION_CHECK_AFTER_MS;
             if !idle || connection.noop().await.is_ok() {
                 return Ok(connection);
             }
         }
-        let secret = self
-            .secret
-            .read()
-            .unwrap_or_else(|poisoned| poisoned.into_inner())
-            .clone()
-            .ok_or(Error::Auth)?;
-        proto_imap::connect(&self.account.imap, &self.account.username, &secret).await
+        let credential = self.credential().await?;
+        proto_imap::connect(&self.account.imap, &self.account.username, &credential).await
     }
 
     fn forget_connection_on(&mut self, error: &Error) {
@@ -335,8 +347,6 @@ impl Worker {
         if force || stale_list {
             self.refresh_mailbox_list().await?;
         }
-        // The newest page of every mailbox comes first, so a new account shows its Sent mail
-        // without waiting for a month of inbox.
         let mut unfinished = Vec::new();
         let targets = self.targets(mailbox_ids)?;
         for mailbox in &targets {
@@ -350,7 +360,6 @@ impl Worker {
         for mailbox in unfinished {
             self.sync_mailbox(mailbox, force, None).await?;
         }
-        // After new mail, so it is not kept waiting.
         for mailbox in &targets {
             if mailbox.role == Some(MailboxRole::Inbox) {
                 self.reclassify_older_messages(mailbox).await?;
@@ -415,8 +424,6 @@ impl Worker {
         result
     }
 
-    /// Inbox messages stored before their sending headers were fetched get their category from
-    /// those headers, a few batches per sync.
     async fn reclassify_older_messages(&mut self, mailbox: &Mailbox) -> Result<()> {
         for _ in 0..RECLASSIFY_BATCHES {
             let uids = self
@@ -443,8 +450,6 @@ impl Worker {
         Ok(())
     }
 
-    /// With a `page`, fetches at most that many new messages, newest first, and returns false
-    /// when more are left for a later call without one.
     async fn sync_mailbox(
         &mut self,
         mailbox: &Mailbox,
@@ -502,7 +507,6 @@ impl Worker {
         }
         let local_uids: HashSet<u32> = self.store.local_uids(mailbox.id)?.into_iter().collect();
         if local_uids.is_empty() && selected.messages > 0 {
-            // A quiet mailbox (Sent, Archive) still shows its latest page, however old.
             let first_of_page = selected
                 .messages
                 .saturating_sub(FETCH_BATCH_SIZE as u32 - 1)
@@ -579,8 +583,6 @@ impl Worker {
             .map(|update| (update.uid, update.flags))
             .collect();
         let local_changes_pending = self.store.has_pending_operations(&self.account.id)?;
-        // New messages were announced batch by batch; the rest only when it changed something, as
-        // each announcement makes the app reload what it shows.
         let mut changed = !removed.is_empty();
         if !local_changes_pending {
             changed |= self.store.update_flags(mailbox.id, &updates)?;
@@ -711,8 +713,6 @@ impl Worker {
         Ok(())
     }
 
-    /// Fills in the UID of messages whose last move reached the server before their new
-    /// mailbox was synced, by looking them up by Message-ID. Messages no longer there are dropped.
     async fn locate_on_server(&mut self, sources: &[Source]) -> Result<Vec<Source>> {
         let mut located = Vec::with_capacity(sources.len());
         let mut claimed: HashSet<(i64, u32)> = sources
@@ -809,22 +809,36 @@ impl Worker {
                 envelope_from,
                 recipients,
             } => {
-                let secret = self
-                    .secret
-                    .read()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner())
-                    .clone()
-                    .ok_or(Error::Auth)?;
-                proto_smtp::send(
+                let credential = self.smtp_credential().await?;
+                let sent = proto_smtp::send(
                     &self.account.smtp,
-                    &self.account.username,
-                    &secret,
+                    self.account.outgoing_username(),
+                    &credential,
                     envelope_from,
                     recipients,
                     raw.as_bytes(),
                 )
-                .await?;
-                if !self.account.is_gmail() {
+                .await;
+                let filed_by_server = match sent {
+                    Ok(()) => self.account.is_gmail(),
+                    Err(error) if sends_through_graph(self.account.authentication, &error) => {
+                        let token = credentials::graph_token(
+                            &self.account,
+                            &self.secret,
+                            &self.tokens,
+                            &self.events,
+                        )
+                        .await?;
+                        mail_auth::graph::send_mail(
+                            &token,
+                            &mail_mime::with_bcc_header(raw.as_bytes(), recipients),
+                        )
+                        .await?;
+                        true
+                    }
+                    Err(error) => return Err(error),
+                };
+                if !filed_by_server {
                     operations::enqueue(
                         &self.store,
                         &self.account.id,
@@ -852,22 +866,23 @@ impl Worker {
 }
 
 fn fetched_message(summary: proto_imap::FetchedSummary) -> FetchedMessage {
+    let mut headers = mail_mime::parse_summary(&summary.header, &summary.text);
+    if let Some(preview) = &summary.preview {
+        headers.preview = mail_mime::server_preview(preview);
+    }
     FetchedMessage {
         uid: summary.uid,
         flags: summary.flags,
         internal_date: summary.internal_date,
         size: summary.size,
-        headers: mail_mime::parse_summary(&summary.header, &summary.text),
+        headers,
     }
 }
 
-/// A connection the server closed half-way answers a FETCH with nothing, then fails on the next
-/// write: what the user is waiting for gets one more try on a new connection.
 fn retry_on_new_connection<T>(result: &Result<T>) -> bool {
     matches!(result, Err(Error::NotFound | Error::Network(_)))
 }
 
-/// The newest of `found` that no other copy in the mailbox took yet, claimed for this copy.
 fn newest_unclaimed(
     mailbox_id: i64,
     found: Vec<u32>,
@@ -891,15 +906,11 @@ fn group_by_mailbox(sources: &[Source]) -> BTreeMap<i64, Vec<u32>> {
     groups
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn two_copies_of_a_message_take_different_uids() {
-        let mut claimed = HashSet::from([(1, 9)]);
-        assert_eq!(newest_unclaimed(1, vec![4, 9], &mut claimed), Some(4));
-        assert_eq!(newest_unclaimed(1, vec![4, 9], &mut claimed), None);
-        assert_eq!(newest_unclaimed(2, vec![4, 9], &mut claimed), Some(9));
-    }
+fn sends_through_graph(authentication: Authentication, error: &Error) -> bool {
+    authentication == Authentication::Microsoft
+        && matches!(error, Error::Server(message) if message.contains("5.7.139"))
 }
+
+#[cfg(test)]
+#[path = "../../../tests/mail_sync/worker.rs"]
+mod tests;

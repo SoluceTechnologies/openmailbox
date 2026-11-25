@@ -9,7 +9,7 @@ import type { BrandMark } from '../providers';
 
 const monogramScale = (letters: number) => (letters > 4 ? 0.22 : letters > 2 ? 0.3 : 0.44);
 
-export function ProviderMark({ brand, size = 32 }: { brand?: BrandMark; size?: number }) {
+export function ProviderMark({ brand, size = 32, bare = false }: { brand?: BrandMark; size?: number; bare?: boolean }) {
   const { colors } = useTheme();
   const tile = { width: size, height: size, borderRadius: size * 0.24 };
 
@@ -20,7 +20,16 @@ export function ProviderMark({ brand, size = 32 }: { brand?: BrandMark; size?: n
       </View>
     );
   }
-  const glyph = size * (brand.scale ?? 0.58);
+  const glyph = bare ? size : size * (brand.scale ?? 0.58);
+  if (bare && brand.shapes) {
+    return (
+      <Svg width={glyph} height={glyph} viewBox={brand.viewBox ?? '0 0 24 24'}>
+        {brand.shapes.map((shape) => (
+          <Path key={shape.d} d={shape.d} fill={shape.fill} />
+        ))}
+      </Svg>
+    );
+  }
   const light = brand.background.toLowerCase() === '#ffffff';
   return (
     <View

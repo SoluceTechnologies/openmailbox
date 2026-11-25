@@ -1,4 +1,6 @@
-import { formatFullDate, formatListDate, formatTime } from '@/utils/dates';
+import dayjs from 'dayjs';
+
+import { applyTimeFormat, formatFullDate, formatListDate, formatTime } from '@/utils/dates';
 import i18n from '@/utils/i18n';
 
 const NOW = new Date(2026, 10, 6, 15, 30);
@@ -30,5 +32,31 @@ describe('dates', () => {
   it('formats the full date and time for the reader', () => {
     expect(formatFullDate(new Date(2026, 10, 6, 9, 5).getTime())).toBe('November 6, 2026 9:05 AM');
     expect(formatTime(new Date(2026, 10, 6, 21, 42).getTime())).toBe('9:42 PM');
+  });
+
+  describe('time format', () => {
+    afterEach(() => {
+      dayjs.locale('en');
+      applyTimeFormat('system');
+    });
+
+    it('shows a 24-hour clock in English when asked', () => {
+      applyTimeFormat('24h');
+      expect(formatTime(new Date(2026, 10, 6, 21, 42).getTime())).toBe('21:42');
+      expect(formatFullDate(new Date(2026, 10, 6, 9, 5).getTime())).toBe('November 6, 2026 09:05');
+    });
+
+    it('shows a 12-hour clock in a 24-hour language and keeps its own wording', () => {
+      dayjs.locale('pt');
+      applyTimeFormat('12h');
+      expect(formatTime(new Date(2026, 10, 6, 21, 42).getTime())).toBe('9:42 PM');
+      expect(formatFullDate(new Date(2026, 10, 6, 21, 42).getTime())).toBe('6 de novembro de 2026 às 9:42 PM');
+    });
+
+    it('keeps the language format when it already uses the chosen clock', () => {
+      dayjs.locale('ru');
+      applyTimeFormat('24h');
+      expect(formatTime(new Date(2026, 10, 6, 9, 5).getTime())).toBe('9:05');
+    });
   });
 });

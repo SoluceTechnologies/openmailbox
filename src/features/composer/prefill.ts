@@ -1,6 +1,6 @@
 import type { EmailSummary } from '@openmailbox/mail-core';
 
-import { displayName, withoutAddresses, type MailAddress } from '@/utils/addresses';
+import { displayName, parseAddressList, withoutAddresses, type MailAddress } from '@/utils/addresses';
 import { splitLinks } from '@/utils/links';
 
 export type ComposeMode = 'new' | 'reply' | 'replyAll' | 'forward';
@@ -14,6 +14,35 @@ export interface ComposePrefill {
   cc: MailAddress[];
   subject: string;
   body: string;
+}
+
+export const MAILTO = /^mailto:/i;
+
+const decode = (value: string) => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+export function parseMailto(url: string): ComposePrefill & { bcc: MailAddress[] } {
+  const rest = url.replace(MAILTO, '');
+  const split = rest.indexOf('?');
+  const fields: Record<string, string[]> = { to: [decode(split === -1 ? rest : rest.slice(0, split))] };
+  for (const pair of split === -1 ? [] : rest.slice(split + 1).split('&')) {
+    const equals = pair.indexOf('=');
+    const name = decode(equals === -1 ? pair : pair.slice(0, equals)).toLowerCase();
+    (fields[name] ??= []).push(equals === -1 ? '' : decode(pair.slice(equals + 1)));
+  }
+  const addresses = (name: string) => parseAddressList((fields[name] ?? []).join(',')).addresses;
+  return {
+    to: addresses('to'),
+    cc: addresses('cc'),
+    bcc: addresses('bcc'),
+    subject: fields.subject?.[0] ?? '',
+    body: (fields.body?.[0] ?? '').replace(/\r\n?/g, '\n'),
+  };
 }
 
 interface QuoteLabels {
@@ -54,6 +83,13 @@ export function linkedHtml(text: string): string {
     .map(({ text: part, url }) => (url ? `<a href="${escapeHtml(url)}">${escapeHtml(part)}</a>` : escapeHtml(part)))
     .join('')
     .replace(/\n/g, '<br>');
+}
+
+export function linkedParagraphs(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => (line ? `<p>${linkedHtml(line)}</p>` : '<br>'))
+    .join('');
 }
 
 export function quoteHtml(mode: ComposeMode, quoteText: string, originalHtml: string): string {

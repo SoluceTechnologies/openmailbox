@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 
 use mail_model::{
     AccountConfig, Address, Category, Draft, Keyword, MailboxRole, OutgoingAttachment, Security,
-    ServerEndpoint, ThreadFilter, ThreadScope, ThreadSummary,
+    ServerConfig, ServerEndpoint, ThreadFilter, ThreadScope, ThreadSummary,
 };
 use mail_sync::{Destination, Engine};
 
@@ -47,9 +47,13 @@ async fn server_subjects() -> Vec<String> {
 }
 
 async fn server_subjects_in(mailbox: &str) -> Vec<String> {
-    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
-        .await
-        .unwrap();
+    let mut connection = proto_imap::connect(
+        &endpoint(3993),
+        "bob@example.com",
+        &mail_model::Credential::Password("secret".into()),
+    )
+    .await
+    .unwrap();
     connection.select(mailbox).await.unwrap();
     let uids = connection.search_since(0).await.unwrap();
     if uids.is_empty() {
@@ -66,9 +70,13 @@ async fn server_subjects_in(mailbox: &str) -> Vec<String> {
 }
 
 async fn ensure_mailboxes() {
-    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
-        .await
-        .unwrap();
+    let mut connection = proto_imap::connect(
+        &endpoint(3993),
+        "bob@example.com",
+        &mail_model::Credential::Password("secret".into()),
+    )
+    .await
+    .unwrap();
     let mailboxes = connection.list_mailboxes().await.unwrap();
     for (name, role) in [
         ("Sent", MailboxRole::Sent),
@@ -152,10 +160,12 @@ async fn sends_syncs_reads_and_acts_on_a_real_server() {
                 email: "bob@example.com".into(),
                 display_name: "Bob".into(),
                 username: "bob@example.com".into(),
+                smtp_username: None,
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },
             "secret".into(),
+            None,
         )
         .await
         .unwrap();
@@ -253,10 +263,12 @@ async fn deleting_an_unopened_thread_removes_it_from_the_server() {
                 email: "bob@example.com".into(),
                 display_name: "Bob".into(),
                 username: "bob@example.com".into(),
+                smtp_username: None,
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },
             "secret".into(),
+            None,
         )
         .await
         .unwrap();
@@ -304,10 +316,12 @@ async fn moves_a_thread_out_of_the_trash_and_back_to_the_inbox() {
                 email: "bob@example.com".into(),
                 display_name: "Bob".into(),
                 username: "bob@example.com".into(),
+                smtp_username: None,
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },
             "secret".into(),
+            None,
         )
         .await
         .unwrap();
@@ -374,10 +388,12 @@ async fn a_thread_waiting_to_be_trashed_stays_out_of_the_inbox_when_it_syncs() {
                 email: "bob@example.com".into(),
                 display_name: "Bob".into(),
                 username: "bob@example.com".into(),
+                smtp_username: None,
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },
             "secret".into(),
+            None,
         )
         .await
         .unwrap();
@@ -421,10 +437,12 @@ async fn sends_an_attachment_that_arrives_intact() {
                 email: "bob@example.com".into(),
                 display_name: "Bob".into(),
                 username: "bob@example.com".into(),
+                smtp_username: None,
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },
             "secret".into(),
+            None,
         )
         .await
         .unwrap();
@@ -473,9 +491,13 @@ async fn unsubscribes_from_a_list_by_mail() {
          List-Unsubscribe: <mailto:bob@example.com?subject=Leave%20{token}>\r\n\
          Content-Type: text/plain\r\n\r\nNews of the week.\r\n"
     );
-    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
-        .await
-        .unwrap();
+    let mut connection = proto_imap::connect(
+        &endpoint(3993),
+        "bob@example.com",
+        &mail_model::Credential::Password("secret".into()),
+    )
+    .await
+    .unwrap();
     connection
         .append("INBOX", newsletter.as_bytes())
         .await
@@ -492,10 +514,12 @@ async fn unsubscribes_from_a_list_by_mail() {
                 email: "bob@example.com".into(),
                 display_name: "Bob".into(),
                 username: "bob@example.com".into(),
+                smtp_username: None,
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },
             "secret".into(),
+            None,
         )
         .await
         .unwrap();
@@ -529,10 +553,12 @@ async fn background_check_reports_new_mail() {
                 email: "bob@example.com".into(),
                 display_name: "Bob".into(),
                 username: "bob@example.com".into(),
+                smtp_username: None,
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },
             "secret".into(),
+            None,
         )
         .await
         .unwrap();
@@ -557,7 +583,7 @@ async fn background_check_reports_new_mail() {
     proto_smtp::send(
         &endpoint(3465),
         "alice@example.com",
-        "secret",
+        &mail_model::Credential::Password("secret".into()),
         "alice@example.com",
         &["bob@example.com".into()],
         raw.as_bytes(),
@@ -596,9 +622,13 @@ async fn background_check_reports_new_mail() {
         .is_empty()
     );
 
-    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
-        .await
-        .unwrap();
+    let mut connection = proto_imap::connect(
+        &endpoint(3993),
+        "bob@example.com",
+        &mail_model::Credential::Password("secret".into()),
+    )
+    .await
+    .unwrap();
     connection.select("INBOX").await.unwrap();
     let uids = connection
         .search_message_id(&format!("{token}@example.com"))
@@ -615,7 +645,6 @@ async fn background_check_reports_new_mail() {
 #[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
 async fn classifies_mail_from_the_headers_the_server_sends() {
     let token = uuid::Uuid::new_v4().simple().to_string();
-    // Only their headers tell the first two from mail a person wrote.
     let cases = [
         (
             "Boutique <contact@shop.example>",
@@ -648,9 +677,13 @@ async fn classifies_mail_from_the_headers_the_server_sends() {
             Category::Primary,
         ),
     ];
-    let mut connection = proto_imap::connect(&endpoint(3993), "bob@example.com", "secret")
-        .await
-        .unwrap();
+    let mut connection = proto_imap::connect(
+        &endpoint(3993),
+        "bob@example.com",
+        &mail_model::Credential::Password("secret".into()),
+    )
+    .await
+    .unwrap();
     for (index, (from, subject, headers, _)) in cases.iter().enumerate() {
         let raw = format!(
             "From: {from}\r\nTo: bob@example.com\r\nSubject: {subject} {token}\r\nMessage-ID: <{index}.{token}@test.example>\r\n\
@@ -670,10 +703,12 @@ async fn classifies_mail_from_the_headers_the_server_sends() {
                 email: "bob@example.com".into(),
                 display_name: "Bob".into(),
                 username: "bob@example.com".into(),
+                smtp_username: None,
                 imap: endpoint(3993),
                 smtp: endpoint(3465),
             },
             "secret".into(),
+            None,
         )
         .await
         .unwrap();
@@ -700,4 +735,207 @@ async fn classifies_mail_from_the_headers_the_server_sends() {
         .map(|summary| summary.uid)
         .collect();
     connection.delete_messages(&appended).await.unwrap();
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn sends_with_its_own_outgoing_credentials() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let config = |smtp_username: &str| AccountConfig {
+        email: "alice@example.com".into(),
+        display_name: "Alice".into(),
+        username: "alice@example.com".into(),
+        smtp_username: Some(smtp_username.into()),
+        imap: endpoint(3993),
+        smtp: endpoint(3465),
+    };
+
+    for (smtp_username, smtp_secret) in [
+        ("bob@example.com", "wrong"),
+        ("nobody@example.com", "secret"),
+    ] {
+        assert!(matches!(
+            engine
+                .add_account(
+                    config(smtp_username),
+                    "secret".into(),
+                    Some(smtp_secret.into())
+                )
+                .await,
+            Err(mail_model::Error::Auth)
+        ));
+    }
+
+    let account = engine
+        .add_account(
+            config("bob@example.com"),
+            "secret".into(),
+            Some("secret".into()),
+        )
+        .await
+        .unwrap();
+    assert_eq!(account.smtp_username.as_deref(), Some("bob@example.com"));
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(
+            &account.id,
+            format!("Relayed {token}"),
+            "Via bob",
+            None,
+        ))
+        .unwrap();
+    wait_on_server("INBOX", &token, true).await;
+
+    let servers = || ServerConfig {
+        imap: endpoint(3993),
+        smtp: endpoint(3465),
+        username: "alice@example.com".into(),
+        smtp_username: Some("bob@example.com".into()),
+    };
+    assert!(matches!(
+        engine
+            .update_servers(&account.id, servers(), None, Some("wrong".into()))
+            .await,
+        Err(mail_model::Error::Auth)
+    ));
+    engine.unlock_smtp(&account.id, "wrong".into());
+    let held = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(
+            &account.id,
+            format!("Held {held}"),
+            "Waits for bob",
+            None,
+        ))
+        .unwrap();
+    tokio::time::sleep(Duration::from_secs(3)).await;
+    assert!(
+        !server_subjects()
+            .await
+            .iter()
+            .any(|subject| subject.contains(&held))
+    );
+    engine
+        .update_servers(&account.id, servers(), None, Some("secret".into()))
+        .await
+        .unwrap();
+    wait_on_server("INBOX", &held, true).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn updates_the_servers_of_an_account_only_once_they_sign_in() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let account = mail_model::Account {
+        id: uuid::Uuid::new_v4().to_string(),
+        email: "alice@example.com".into(),
+        display_name: "Alice".into(),
+        username: "nobody@example.com".into(),
+        smtp_username: None,
+        imap: endpoint(3993),
+        smtp: endpoint(3465),
+        color: 0,
+        created_at: 0,
+        authentication: mail_model::Authentication::Password,
+        oauth_server: None,
+    };
+    mail_store::Store::open(&directory.join("mail.db"))
+        .unwrap()
+        .insert_account(&account)
+        .unwrap();
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    engine.unlock_account(&account.id, "secret".into());
+    let servers = |imap_port: u16, smtp_username: Option<&str>| ServerConfig {
+        imap: endpoint(imap_port),
+        smtp: endpoint(3465),
+        username: "alice@example.com".into(),
+        smtp_username: smtp_username.map(Into::into),
+    };
+    let stored = |engine: &Engine| {
+        engine
+            .list_accounts()
+            .unwrap()
+            .into_iter()
+            .find(|candidate| candidate.id == account.id)
+            .unwrap()
+    };
+
+    assert!(
+        engine
+            .update_servers(&account.id, servers(1, None), None, None)
+            .await
+            .is_err()
+    );
+    assert!(matches!(
+        engine
+            .update_servers(&account.id, servers(3993, None), Some("wrong".into()), None)
+            .await,
+        Err(mail_model::Error::Auth)
+    ));
+    assert!(matches!(
+        engine
+            .update_servers(
+                &account.id,
+                servers(3993, Some("bob@example.com")),
+                None,
+                Some("wrong".into())
+            )
+            .await,
+        Err(mail_model::Error::Auth)
+    ));
+    assert_eq!(stored(&engine).username, "nobody@example.com");
+    assert_eq!(stored(&engine).smtp_username, None);
+
+    engine
+        .update_servers(
+            &account.id,
+            servers(3993, Some("bob@example.com")),
+            None,
+            Some("secret".into()),
+        )
+        .await
+        .unwrap();
+    assert_eq!(stored(&engine).username, "alice@example.com");
+    assert_eq!(
+        stored(&engine).smtp_username.as_deref(),
+        Some("bob@example.com")
+    );
+
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(
+            &account.id,
+            format!("Moved {token}"),
+            "Sent after new server settings",
+            None,
+        ))
+        .unwrap();
+    wait_on_server("INBOX", &token, true).await;
+
+    engine
+        .update_servers(&account.id, servers(3993, None), None, Some("wrong".into()))
+        .await
+        .unwrap();
+    assert_eq!(stored(&engine).smtp_username, None);
+    let shared = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(
+            &account.id,
+            format!("Shared {shared}"),
+            "Sent with the incoming sign-in",
+            None,
+        ))
+        .unwrap();
+    wait_on_server("INBOX", &shared, true).await;
+    std::fs::remove_dir_all(directory).ok();
 }

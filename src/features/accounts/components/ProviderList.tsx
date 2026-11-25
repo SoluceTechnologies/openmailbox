@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -17,18 +17,39 @@ import { ChevronRight, Heart } from 'lucide-react-native';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { FormSection, Typography } from '@/ui/components';
 
-import { LOCAL_TEST_PROVIDER, PROVIDERS, type MailProvider } from '../providers';
+import { LOCAL_STALWART_PROVIDER, LOCAL_TEST_PROVIDER, PROVIDERS, type MailProvider, type ProviderIdentifier } from '../providers';
 import { ProviderMark } from './ProviderMark';
+import { SignInError } from './SignInError';
 
-function ProviderRow({ provider, onSelect }: { provider: MailProvider; onSelect: (provider: MailProvider) => void }) {
+interface ProviderRowProps {
+  provider: MailProvider;
+  onSelect: (provider: MailProvider) => void;
+  busy?: boolean;
+  disabled?: boolean;
+}
+
+const PROVIDER_HINTS: Partial<Record<ProviderIdentifier, string>> = {
+  gmail: 'accounts.setup.googleHint',
+  microsoft: 'accounts.setup.microsoftHint',
+  icloud: 'accounts.setup.icloudHint',
+  ovhcloud: 'accounts.setup.ovhHint',
+  other: 'accounts.setup.otherProviderHint',
+  stalwart: 'accounts.setup.localStalwartHint',
+  local: 'accounts.setup.localServerHint',
+};
+
+function ProviderRow({ provider, onSelect, busy = false, disabled = false }: ProviderRowProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const title = provider.identifier === 'other' ? t('accounts.setup.otherProvider') : provider.name;
+  const hint = PROVIDER_HINTS[provider.identifier];
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={title}
+      accessibilityState={{ busy, disabled }}
+      disabled={disabled}
       onPress={() => onSelect(provider)}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}
     >
@@ -37,17 +58,13 @@ function ProviderRow({ provider, onSelect }: { provider: MailProvider; onSelect:
         <Typography variant="body1" weight="500">
           {title}
         </Typography>
-        {provider.identifier === 'other' ? (
+        {hint ? (
           <Typography variant="caption" color={colors.textSecondary}>
-            {t('accounts.setup.otherProviderHint')}
-          </Typography>
-        ) : provider.identifier === 'local' ? (
-          <Typography variant="caption" color={colors.textSecondary}>
-            {t('accounts.setup.localServerHint')}
+            {t(hint)}
           </Typography>
         ) : null}
       </View>
-      <ChevronRight size={18} color={colors.textTertiary} />
+      {busy ? <ActivityIndicator size="small" color={colors.textSecondary} /> : <ChevronRight size={18} color={colors.textTertiary} />}
     </Pressable>
   );
 }
@@ -87,18 +104,32 @@ export function MadeWithLove() {
   );
 }
 
-export function ProviderList({ onSelect }: { onSelect: (provider: MailProvider) => void }) {
+interface ProviderListProps {
+  onSelect: (provider: MailProvider) => void;
+  pending?: ProviderIdentifier | null;
+  error?: string | null;
+}
+
+export function ProviderList({ onSelect, pending = null, error = null }: ProviderListProps) {
   const { t } = useTranslation();
   return (
     <View style={styles.list}>
+      {error ? <SignInError message={error} /> : null}
       <FormSection footer={t('accounts.setup.providerFooter')}>
         {PROVIDERS.map((provider) => (
-          <ProviderRow key={provider.identifier} provider={provider} onSelect={onSelect} />
+          <ProviderRow
+            key={provider.identifier}
+            provider={provider}
+            onSelect={onSelect}
+            busy={pending === provider.identifier}
+            disabled={pending !== null}
+          />
         ))}
       </FormSection>
       {__DEV__ ? (
         <FormSection title={t('accounts.setup.development')}>
           <ProviderRow provider={LOCAL_TEST_PROVIDER} onSelect={onSelect} />
+          <ProviderRow provider={LOCAL_STALWART_PROVIDER} onSelect={onSelect} />
         </FormSection>
       ) : null}
     </View>

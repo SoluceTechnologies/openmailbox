@@ -5,6 +5,7 @@ import { useSyncStore } from '@/stores/syncStore';
 import i18n from '@/utils/i18n';
 
 import { queryClient, queryKeys, UNIFIED_SCOPE } from './queryClient';
+import { saveSecret } from './secrets';
 
 function invalidateMailboxes(mailboxIds: Set<string>): void {
   queryClient.invalidateQueries({ queryKey: queryKeys.mailboxes });
@@ -37,6 +38,9 @@ export class CoreEventListener implements EventListener {
         break;
       case CoreEvent_Tags.AuthRequired:
         setAuthRequired(event.inner.accountId, true);
+        break;
+      case CoreEvent_Tags.SecretChanged:
+        saveSecret(event.inner.accountId, event.inner.secret).catch(() => undefined);
         break;
       case CoreEvent_Tags.OpFailed:
         Alert.alert(i18n.t('errors.operationFailed'), event.inner.message);

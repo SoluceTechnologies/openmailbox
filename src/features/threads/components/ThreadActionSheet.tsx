@@ -41,7 +41,7 @@ export function ThreadActionSheet({ thread, actions, onAction, onClose }: Thread
       {thread ? (
         <View style={styles.content}>
           <View style={styles.header}>
-            <ContactAvatar email={sender?.email} name={senderName} size={40} />
+            <ContactAvatar email={thread.latest.originalSender ?? sender?.email} name={senderName} size={40} />
             <View style={styles.headerText}>
               <Typography weight="600" numberOfLines={1}>
                 {senderName}

@@ -68,7 +68,7 @@ export function FormatSheets({ panel, link, accessoryId, onClose, onSize, onColo
             <Pressable
               key={name}
               accessibilityRole="button"
-              accessibilityLabel={t(`signature.colors.${name}`)}
+              accessibilityLabel={t(`colors.${name}`)}
               onPress={() => after(() => onColor(kind, color))}
               style={({ pressed }) => [styles.swatch, { backgroundColor: color, borderColor: colors.textTertiary }, pressed ? styles.pressed : null]}
             />

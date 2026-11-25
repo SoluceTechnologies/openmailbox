@@ -1,10 +1,14 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
+import { loadAvatar } from '@/features/avatars/avatarCache';
 import { ThreadRow } from '@/features/threads/components/ThreadRow';
+import { useSettingsStore } from '@/stores/settingsStore';
 import i18n from '@/utils/i18n';
 
 import { makeEmail, makeThread, NOW } from '../helpers/fixtures';
 import { renderWithProviders } from '../helpers/render';
+
+jest.mock('@/features/avatars/avatarCache', () => ({ cachedAvatar: jest.fn(), loadAvatar: jest.fn(async () => null) }));
 
 describe('ThreadRow', () => {
   beforeAll(async () => {
@@ -44,5 +48,12 @@ describe('ThreadRow', () => {
     renderWithProviders(<ThreadRow thread={thread} onOpen={onOpen} />);
     fireEvent.press(screen.getByRole('button'));
     expect(onOpen).toHaveBeenCalledWith(thread);
+  });
+
+  it('looks up the picture of the sender behind a SimpleLogin alias', () => {
+    useSettingsStore.setState({ contactPictures: true });
+    const latest = makeEmail({ from: [{ name: 'Claire', email: 'reply+abc@simplelogin.co' }], originalSender: 'claire@atlas.example' });
+    renderWithProviders(<ThreadRow thread={makeThread({ latest })} onOpen={jest.fn()} />);
+    expect(loadAvatar).toHaveBeenCalledWith('claire@atlas.example');
   });
 });

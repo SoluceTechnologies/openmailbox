@@ -27,6 +27,11 @@ const MIGRATIONS: &[&str] = &[
     include_str!("migrations/0008_store_settings.sql"),
     include_str!("migrations/0009_stored_signals.sql"),
     include_str!("migrations/0010_render_html_again.sql"),
+    include_str!("migrations/0011_authentication.sql"),
+    include_str!("migrations/0012_oauth_server.sql"),
+    include_str!("migrations/0013_original_sender.sql"),
+    include_str!("migrations/0014_alias_senders.sql"),
+    include_str!("migrations/0015_smtp_username.sql"),
 ];
 
 pub struct Store {
@@ -128,7 +133,8 @@ impl<T> StorageResult<T> for rusqlite::Result<T> {
 }
 
 pub(crate) const EMAIL_COLUMNS: &str = "e.id, e.account_id, e.thread_id, e.subject, e.from_json, e.to_json, \
-     e.cc_json, e.preview, e.received_at, e.is_seen, e.is_flagged, e.is_answered, e.has_attachment";
+     e.cc_json, e.preview, e.received_at, e.is_seen, e.is_flagged, e.is_answered, e.has_attachment, \
+     e.original_sender";
 
 pub(crate) fn email_from_row(row: &Row, offset: usize) -> rusqlite::Result<EmailSummary> {
     Ok(EmailSummary {
@@ -145,6 +151,7 @@ pub(crate) fn email_from_row(row: &Row, offset: usize) -> rusqlite::Result<Email
         is_flagged: row.get(offset + 10)?,
         is_answered: row.get(offset + 11)?,
         has_attachment: row.get(offset + 12)?,
+        original_sender: row.get(offset + 13)?,
     })
 }
 
@@ -161,325 +168,33 @@ pub(crate) fn placeholders(count: usize) -> String {
 }
 
 #[cfg(test)]
-pub(crate) mod test_support {
-    use super::*;
-    use mail_model::{Account, Security, ServerEndpoint};
-
-    pub fn store() -> (Store, std::path::PathBuf) {
-        let directory = std::env::temp_dir().join(format!("mail-store-test-{}", rand_suffix()));
-        std::fs::create_dir_all(&directory).unwrap();
-        let store = Store::open(&directory.join("mail.db")).unwrap();
-        (store, directory)
-    }
-
-    fn rand_suffix() -> String {
-        use std::sync::atomic::{AtomicU32, Ordering};
-        static COUNTER: AtomicU32 = AtomicU32::new(0);
-        format!(
-            "{}-{}-{}",
-            std::process::id(),
-            mail_model::now_millis(),
-            COUNTER.fetch_add(1, Ordering::SeqCst)
-        )
-    }
-
-    pub fn account(id: &str) -> Account {
-        let endpoint = ServerEndpoint {
-            host: "imap.example.com".into(),
-            port: 993,
-            security: Security::Tls,
-        };
-        Account {
-            id: id.into(),
-            email: format!("{id}@example.com"),
-            display_name: id.into(),
-            username: id.into(),
-            imap: endpoint.clone(),
-            smtp: endpoint,
-            color: 0,
-            created_at: 0,
-        }
-    }
-}
+#[path = "../../../tests/mail_store/test_support.rs"]
+pub(crate) mod test_support;
 
 #[cfg(test)]
-mod migration_tests {
-    use super::*;
-
-    #[test]
-    fn a_version_one_database_keeps_its_search_index_after_migrating() {
-        let directory =
-            std::env::temp_dir().join(format!("mail-store-migration-{}", std::process::id()));
-        std::fs::create_dir_all(&directory).unwrap();
-        let path = directory.join("mail.db");
-        let _ = std::fs::remove_file(&path);
-        {
-            let connection = Connection::open(&path).unwrap();
-            connection.execute_batch(MIGRATIONS[0]).unwrap();
-            connection.pragma_update(None, "user_version", 1).unwrap();
-            connection
-                .execute_batch(
-                    r#"INSERT INTO account VALUES ('a', 'a@x.org', 'A', 'a', 'h', 993, 'tls', 'h', 465, 'tls', 0, 0);
-                       INSERT INTO mailbox (id, account_id, remote_name, name, role) VALUES (1, 'a', 'INBOX', 'INBOX', 'inbox');
-                       INSERT INTO thread (id, account_id, root) VALUES (1, 'a', 'r@x');
-                       INSERT INTO email (id, account_id, thread_id, subject, from_json, to_json, cc_json, reply_to_json, received_at)
-                         VALUES (7, 'a', 1, 'Facture de novembre', '[{"name":"Inès","email":"ines@x.org"}]', '[]', '[]', '[]', 1000);
-                       INSERT INTO email_mailbox VALUES (1, 7, 3);
-                       INSERT INTO email_fts (rowid, subject, participants, body) VALUES (7, 'Facture de novembre', 'Inès ines@x.org', NULL);"#,
-                )
-                .unwrap();
-        }
-        let store = Store::open(&path).unwrap();
-        assert_eq!(store.search("facture", 10, &[]).unwrap()[0].email.id, 7);
-        assert_eq!(store.search("ines", 10, &[]).unwrap().len(), 1);
-        store.remove_uids(1, &[3]).unwrap();
-        assert!(store.search("facture", 10, &[]).unwrap().is_empty());
-        std::fs::remove_dir_all(&directory).ok();
-    }
-}
+#[path = "../../../tests/mail_store/migration_tests.rs"]
+mod migration_tests;
 
 #[cfg(test)]
-mod cached_html_tests {
-    use super::*;
-
-    #[test]
-    fn cached_html_bodies_are_rendered_again_after_migrating() {
-        let directory =
-            std::env::temp_dir().join(format!("mail-store-cached-html-{}", std::process::id()));
-        std::fs::create_dir_all(&directory).unwrap();
-        let path = directory.join("mail.db");
-        let _ = std::fs::remove_file(&path);
-        {
-            let connection = Connection::open(&path).unwrap();
-            migrate_with(&connection, &MIGRATIONS[..9]).unwrap();
-            connection
-                .execute_batch(
-                    r#"INSERT INTO account (id, email, display_name, username, imap_host, imap_port, imap_security, smtp_host, smtp_port, smtp_security, color, created_at)
-                         VALUES ('a', 'a@x.org', 'A', 'a', 'h', 993, 'tls', 'h', 465, 'tls', 0, 0);
-                       INSERT INTO thread (id, account_id, root) VALUES (1, 'a', 'r@x');
-                       INSERT INTO email (id, account_id, thread_id, from_json, to_json, cc_json, reply_to_json, received_at, body_state)
-                         VALUES (7, 'a', 1, '[]', '[]', '[]', '[]', 1000, 2), (8, 'a', 1, '[]', '[]', '[]', '[]', 1000, 2);
-                       INSERT INTO email_body (email_id, html, text, attachments_json, has_remote_content)
-                         VALUES (7, 'Weekly deals<p>Hello</p>', 'Hello', '[]', 0), (8, NULL, 'Plain', '[]', 0);"#,
-                )
-                .unwrap();
-        }
-        let store = Store::open(&path).unwrap();
-        assert!(store.body(7).unwrap().is_none());
-        assert_eq!(store.body(8).unwrap().unwrap().text, "Plain");
-        std::fs::remove_dir_all(&directory).ok();
-    }
-}
+#[path = "../../../tests/mail_store/cached_html_tests.rs"]
+mod cached_html_tests;
 
 #[cfg(test)]
-mod search_text_tests {
-    use super::*;
-
-    #[test]
-    fn text_written_without_spaces_is_indexed_again_once() {
-        let directory =
-            std::env::temp_dir().join(format!("mail-store-search-text-{}", std::process::id()));
-        std::fs::create_dir_all(&directory).unwrap();
-        let path = directory.join("mail.db");
-        let _ = std::fs::remove_file(&path);
-        {
-            let connection = Connection::open(&path).unwrap();
-            migrate_with(&connection, MIGRATIONS).unwrap();
-            connection
-                .execute_batch(
-                    r#"INSERT INTO account (id, email, display_name, username, imap_host, imap_port, imap_security, smtp_host, smtp_port, smtp_security, color, created_at)
-                         VALUES ('a', 'a@x.org', 'A', 'a', 'h', 993, 'tls', 'h', 465, 'tls', 0, 0);
-                       INSERT INTO mailbox (id, account_id, remote_name, name) VALUES (1, 'a', 'INBOX', 'Inbox');
-                       INSERT INTO thread (id, account_id, root) VALUES (1, 'a', 'r@x');
-                       INSERT INTO email (id, account_id, thread_id, subject, from_json, to_json, cc_json, reply_to_json, received_at, preview, search_key)
-                         VALUES (7, 'a', 1, '会議のお知らせ', '[{"name":"山田太郎","email":"y@x.jp"}]', '[]', '[]', '[]', 1000, '明日は10時です', 70),
-                                (8, 'a', 1, 'Facture', '[]', '[]', '[]', '[]', 2000, 'Bonjour', 80);
-                       INSERT INTO email_mailbox (mailbox_id, email_id, uid) VALUES (1, 7, 7), (1, 8, 8);
-                       INSERT INTO email_fts (rowid, subject, participants, body)
-                         VALUES (70, '会議のお知らせ', '山田太郎 y@x.jp', '明日は10時です'), (80, 'Facture', '', 'Bonjour');"#,
-                )
-                .unwrap();
-        }
-        let store = Store::open(&path).unwrap();
-        assert!(store.search("お知らせ", 10, &[]).unwrap().is_empty());
-        while store.index_text_without_spaces().unwrap() {}
-        assert!(!store.index_text_without_spaces().unwrap());
-        assert_eq!(store.search("お知らせ", 10, &[]).unwrap()[0].email.id, 7);
-        assert_eq!(store.search("太郎", 10, &[]).unwrap()[0].email.id, 7);
-        assert_eq!(store.search("10時", 10, &[]).unwrap()[0].email.id, 7);
-        assert_eq!(store.search("factu", 10, &[]).unwrap()[0].email.id, 8);
-        std::fs::remove_dir_all(&directory).ok();
-    }
-}
+#[path = "../../../tests/mail_store/search_text_tests.rs"]
+mod search_text_tests;
 
 #[cfg(test)]
-mod undecoded_tests {
-    use super::*;
-
-    #[test]
-    fn mail_stored_with_undecoded_charsets_is_fetched_again_once() {
-        let directory =
-            std::env::temp_dir().join(format!("mail-store-undecoded-{}", std::process::id()));
-        std::fs::create_dir_all(&directory).unwrap();
-        let path = directory.join("mail.db");
-        let _ = std::fs::remove_file(&path);
-        let insert = |connection: &Connection, id: i64, mailbox: i64, subject: &str, from: &str| {
-            connection
-                .execute(
-                    "INSERT INTO email (id, account_id, thread_id, subject, from_json, to_json, cc_json, reply_to_json, received_at)
-                       VALUES (?1, 'a', 1, ?2, ?3, '[]', '[]', '[]', 1000);",
-                    rusqlite::params![id, subject, from],
-                )
-                .unwrap();
-            connection
-                .execute(
-                    "INSERT INTO email_mailbox (mailbox_id, email_id, uid) VALUES (?1, ?2, ?2)",
-                    [mailbox, id],
-                )
-                .unwrap();
-        };
-        {
-            let connection = Connection::open(&path).unwrap();
-            migrate_with(&connection, MIGRATIONS).unwrap();
-            connection
-                .execute_batch(
-                    r#"INSERT INTO account (id, email, display_name, username, imap_host, imap_port, imap_security, smtp_host, smtp_port, smtp_security, color, created_at)
-                         VALUES ('a', 'a@x.org', 'A', 'a', 'h', 993, 'tls', 'h', 465, 'tls', 0, 0);
-                       INSERT INTO mailbox (id, account_id, remote_name, name, synced_at)
-                         VALUES (1, 'a', 'INBOX', 'Inbox', 5), (2, 'a', 'Sent', 'Sent', 5), (3, 'a', 'Archive', 'Archive', 5);
-                       INSERT INTO thread (id, account_id, root) VALUES (1, 'a', 'r@x');"#,
-                )
-                .unwrap();
-            insert(&connection, 7, 1, "\u{1b}$B2q5D\u{1b}(B", "[]");
-            insert(
-                &connection,
-                8,
-                2,
-                "Hello",
-                r#"[{"name":"\u001b$B;3ED\u001b(B","email":"y@x.jp"}]"#,
-            );
-            insert(&connection, 9, 3, "Caf\u{e9}", "[]");
-            insert(&connection, 10, 3, "\u{fffd}\u{fffd}", "[]");
-        }
-        let store = Store::open(&path).unwrap();
-        assert!(store.local_uids(1).unwrap().is_empty());
-        assert!(store.local_uids(2).unwrap().is_empty());
-        assert_eq!(store.local_uids(3).unwrap(), [9]);
-        assert_eq!(store.mailbox_sync_state(1).unwrap().synced_at, None);
-        assert_eq!(store.mailbox_sync_state(3).unwrap().synced_at, None);
-
-        drop(store);
-        insert(&Connection::open(&path).unwrap(), 11, 1, "\u{fffd}", "[]");
-        let store = Store::open(&path).unwrap();
-        assert_eq!(store.local_uids(1).unwrap(), [11]);
-        std::fs::remove_dir_all(&directory).ok();
-    }
-}
+#[path = "../../../tests/mail_store/undecoded_tests.rs"]
+mod undecoded_tests;
 
 #[cfg(test)]
-mod interrupted_migration_tests {
-    use super::*;
-
-    fn user_version(connection: &Connection) -> i64 {
-        connection
-            .query_row("PRAGMA user_version", [], |row| row.get(0))
-            .unwrap()
-    }
-
-    #[test]
-    fn a_migration_stopped_halfway_runs_again_from_its_start() {
-        let connection = Connection::open_in_memory().unwrap();
-        let stopped = [
-            "CREATE TABLE a (x INTEGER);",
-            "ALTER TABLE a ADD COLUMN y INTEGER; SELECT * FROM missing;",
-        ];
-        assert!(migrate_with(&connection, &stopped).is_err());
-        assert_eq!(user_version(&connection), 1);
-
-        let complete = [
-            "CREATE TABLE a (x INTEGER);",
-            "ALTER TABLE a ADD COLUMN y INTEGER;",
-        ];
-        migrate_with(&connection, &complete).unwrap();
-        assert_eq!(user_version(&connection), 2);
-    }
-}
+#[path = "../../../tests/mail_store/interrupted_migration_tests.rs"]
+mod interrupted_migration_tests;
 
 #[cfg(test)]
-mod early_notified_until_tests {
-    use super::*;
-
-    #[test]
-    fn a_database_from_the_first_notified_until_migration_gets_the_missing_column() {
-        let directory = std::env::temp_dir().join(format!(
-            "mail-store-notified-{}-{}",
-            std::process::id(),
-            mail_model::now_millis()
-        ));
-        std::fs::create_dir_all(&directory).unwrap();
-        let path = directory.join("mail.db");
-        {
-            let connection = Connection::open(&path).unwrap();
-            for migration in &MIGRATIONS[..4] {
-                connection.execute_batch(migration).unwrap();
-            }
-            connection
-                .execute_batch(
-                    "ALTER TABLE account ADD COLUMN notified_until INTEGER NOT NULL DEFAULT 0;
-                     INSERT INTO account VALUES ('a', 'a@x.org', 'A', 'a', 'h', 993, 'tls', 'h', 465, 'tls', 0, 0, 0);",
-                )
-                .unwrap();
-            connection.pragma_update(None, "user_version", 5).unwrap();
-        }
-
-        let store = Store::open(&path).unwrap();
-
-        store.set_notified_until("a", 1_000).unwrap();
-        assert_eq!(store.notified_until("a").unwrap(), (1_000, 0));
-    }
-}
+#[path = "../../../tests/mail_store/early_notified_until_tests.rs"]
+mod early_notified_until_tests;
 
 #[cfg(test)]
-mod correspondent_migration_tests {
-    use super::*;
-
-    #[test]
-    fn migration_fills_correspondents_from_existing_mail() {
-        let directory = std::env::temp_dir().join(format!(
-            "mail-store-correspondents-{}-{}",
-            std::process::id(),
-            mail_model::now_millis()
-        ));
-        std::fs::create_dir_all(&directory).unwrap();
-        let path = directory.join("mail.db");
-        {
-            let connection = Connection::open(&path).unwrap();
-            for migration in &MIGRATIONS[..2] {
-                connection.execute_batch(migration).unwrap();
-            }
-            connection.pragma_update(None, "user_version", 2).unwrap();
-            connection
-                .execute_batch(
-                    r#"INSERT INTO account VALUES ('a', 'a@x.org', 'A', 'a', 'h', 993, 'tls', 'h', 465, 'tls', 0, 0);
-                       INSERT INTO thread (id, account_id, root) VALUES (1, 'a', 'r@x');
-                       INSERT INTO email (id, account_id, thread_id, subject, from_json, to_json, cc_json, reply_to_json, received_at, search_key)
-                         VALUES (7, 'a', 1, 'Facture', '[{"name":"Inès","email":"ines@x.org"}]', '[{"name":"A","email":"a@x.org"}]', '[]', '[]', 1000, 1),
-                                (8, 'a', 1, 'Re: Facture', '[{"name":"A","email":"a@x.org"}]', '[{"name":"Paul","email":"paul@x.org"}]', '[]', '[]', 2000, 2);"#,
-                )
-                .unwrap();
-        }
-        let store = Store::open(&path).unwrap();
-        let emails = |query| -> Vec<String> {
-            store
-                .suggest_addresses(query, 8)
-                .unwrap()
-                .into_iter()
-                .map(|address| address.email)
-                .collect()
-        };
-        assert_eq!(emails("ine"), vec!["ines@x.org"]);
-        assert_eq!(emails("paul"), vec!["paul@x.org"]);
-        assert!(emails("a@").is_empty());
-        std::fs::remove_dir_all(&directory).ok();
-    }
-}
+#[path = "../../../tests/mail_store/correspondent_migration_tests.rs"]
+mod correspondent_migration_tests;

@@ -16,7 +16,7 @@ describe('address menu', () => {
   beforeAll(() => i18n.changeLanguage('en'));
   beforeEach(() => jest.clearAllMocks());
 
-  it('names the sender and, when tapped, offers to write to it or see its contact card', () => {
+  it('names the sender and, when tapped, offers to write to it, search its messages or see its contact card', () => {
     renderWithProviders(<AddressMenu address={ADDRESS} />);
     const name = screen.getByRole('button', { name: 'Forum Rust FR <notifications@forum.example>' });
     expect(screen.getByText('Forum Rust FR')).toBeOnTheScreen();
@@ -26,6 +26,10 @@ describe('address menu', () => {
     expect(screen.getByText('notifications@forum.example')).toBeOnTheScreen();
     fireEvent.press(screen.getByText('New Message'));
     expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/compose', params: { to: 'notifications@forum.example' } });
+
+    fireEvent.press(name);
+    fireEvent.press(screen.getByText('Search for “Forum Rust FR”'));
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/search', params: { query: 'Forum Rust FR' } });
 
     fireEvent.press(name);
     fireEvent.press(screen.getByText('View Contact Card'));

@@ -9,14 +9,20 @@
   "accounts": {
     "add": "Voeg account toe",
     "accountName": "Accountnaam",
+    "color": "Kleur",
+    "colorHint": "Markeert dit account in de lijst met postvakken en in Alle inkomende.",
     "moveDown": "Omlaag",
     "moveUp": "Omhoog",
     "namesHint": "De accountnaam is alleen zichtbaar in Open Mailbox. Ontvangers zien de naam van de afzender.",
-    "newPassword": "Wachtwoord",
+    "outgoingPassword": "Wachtwoord uitgaand",
+    "outgoingUsername": "Gebruikersnaam uitgaand",
+    "oauthHint": "Ingelogd via {{provider}}. Log opnieuw in als de mail niet meer synchroniseert.",
     "password": "Wachtwoord",
     "passwordHint": "Gebruik het wachtwoord, of het app-wachtwoord, van deze e-mailaccount.",
-    "passwordUpdated": "Wachtwoord bijgewerkt.",
     "reconnectRequired": "De server heeft het wachtwoord geweigerd. Voer het opnieuw in om de synchronisatie te hervatten.",
+    "signInAgain": "Opnieuw inloggen",
+    "signInRequired": "{{provider}} vraagt je opnieuw in te loggen om verder te synchroniseren.",
+    "signedIn": "Ingelogd.",
     "reorderHint": "Houd een account vast en sleep het om de volgorde van de accounts in Postvakken te wijzigen.",
     "defaultAccount": "Standaardaccount",
     "defaultAccountHint": "Nieuwe berichten die je vanuit Alle inkomende schrijft of vanuit een andere app deelt, worden vanaf dit account verstuurd.",
@@ -32,7 +38,6 @@
       "appPasswordHint": "{{provider}} accepteert in e-mailapps alleen app-wachtwoorden.",
       "appPasswordLink": "Een app-wachtwoord aanmaken",
       "appPasswordPlaceholder": "App-wachtwoord",
-      "authentication": "Authenticatie",
       "chooseProvider": "Voeg account toe",
       "connectingTo": "Verbinden met {{host}}…",
       "development": "Ontwikkeling",
@@ -44,7 +49,13 @@
       "host": "Server",
       "incoming": "Inkomende e-mail (IMAP)",
       "localServerHint": "Lokale GreenMail-testserver",
+      "localStalwartHint": "Lokale Stalwart-testserver (OAuth)",
       "manual": "Configureer servers handmatig",
+      "microsoftHint": "Outlook, Hotmail, Live, Microsoft 365",
+      "googleHint": "Gmail, Google Workspace",
+      "icloudHint": "icloud.com, me.com, mac.com",
+      "ovhHint": "MX Plan, Email Pro, Exchange, Zimbra",
+      "oauthPrivacy": "Je logt in op de pagina van {{provider}}: de app ziet je wachtwoord nooit.",
       "name": "Naam",
       "namePlaceholder": "Zichtbaar voor ontvangers",
       "otherAccountTitle": "E-mailaccount",
@@ -55,6 +66,7 @@
       "ovhOfferTitle": "Je OVHcloud-aanbod",
       "password": "Wachtwoord",
       "port": "Poort",
+      "sameAsIncoming": "Zelfde als inkomend",
       "privacy": "Je wachtwoord blijft op dit apparaat en wordt alleen naar je mailservers verstuurd.",
       "providerAccountTitle": "{{provider}}-account",
       "providerFooter": "Elke IMAP- en SMTP-account kan worden toegevoegd via Andere.",
@@ -62,6 +74,9 @@
       "security": "Beveiliging",
       "showPassword": "Toon wachtwoord",
       "signIn": "Log in",
+      "signInWith": "Inloggen met {{provider}}",
+      "useAppPassword": "In plaats daarvan een app-wachtwoord gebruiken",
+      "usePassword": "In plaats daarvan een wachtwoord gebruiken",
       "username": "Gebruikersnaam",
       "welcome": "Welkom bij Open Mailbox",
       "welcomeHint": "Voeg een e-mailaccount toe om te beginnen. Je berichten worden alleen op dit apparaat bewaard.",
@@ -82,7 +97,9 @@
     "invalidIdentityEmail": "Voer een geldig e-mailadres in.",
     "identityExists": "Dit account verstuurt al vanaf dit adres.",
     "syncNow": "Haal nieuwe e-mail op",
-    "updatePassword": "Werk wachtwoord bij"
+    "serverSettings": "Serverinstellingen",
+    "unchanged": "Ongewijzigd",
+    "saveServers": "Bewaar"
   },
   "categories": {
     "all": "Alle mail",
@@ -93,6 +110,21 @@
     "promotions": "Promoties",
     "transactions": "Transacties",
     "updates": "Updates"
+  },
+  "colors": {
+    "black": "Zwart",
+    "grey": "Grijs",
+    "red": "Rood",
+    "orange": "Oranje",
+    "yellow": "Geel",
+    "green": "Groen",
+    "blue": "Blauw",
+    "purple": "Paars",
+    "pink": "Roze",
+    "cyan": "Cyaan",
+    "indigo": "Indigo",
+    "brown": "Bruin",
+    "mint": "Mint"
   },
   "common": {
     "back": "Terug",
@@ -145,6 +177,7 @@
     "yesterday": "Gisteren"
   },
   "errors": {
+    "accountExists": "Dit account is al toegevoegd.",
     "auth": "De server heeft het adres of het wachtwoord geweigerd.",
     "generic": "Er ging iets mis. Probeer het opnieuw.",
     "invalidInput": "Ongeldige waarde: {{message}}",
@@ -188,6 +221,7 @@
     "openLink": "Open",
     "openLinkTitle": "Deze link openen?",
     "remoteContentBlocked": "Externe afbeeldingen zijn geblokkeerd.",
+    "searchFor": "Zoek naar ‘{{name}}’",
     "share": "Delen",
     "threadGone": "Dit gesprek is niet meer beschikbaar.",
     "toRecipients": "Aan: {{recipients}}",
@@ -228,6 +262,12 @@
       "light": "Licht",
       "system": "Automatisch"
     },
+    "timeFormat": "Tijdnotatie",
+    "timeFormats": {
+      "12h": "12 uur",
+      "24h": "24 uur",
+      "system": "Automatisch"
+    },
     "title": "Instellingen"
   },
   "signature": {
@@ -235,17 +275,6 @@
     "bulletList": "Lijst met opsommingstekens",
     "clearFormatting": "Opmaak wissen",
     "codePlaceholder": "Typ hier HTML…",
-    "colors": {
-      "black": "Zwart",
-      "grey": "Grijs",
-      "red": "Rood",
-      "orange": "Oranje",
-      "yellow": "Geel",
-      "green": "Groen",
-      "blue": "Blauw",
-      "purple": "Paars",
-      "pink": "Roze"
-    },
     "highlight": "Markeren",
     "italic": "Cursief",
     "link": "Link",

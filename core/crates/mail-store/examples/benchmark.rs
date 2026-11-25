@@ -1,7 +1,3 @@
-//! Store benchmark on a large generated mailbox.
-//!
-//! cargo run --release -p mail-store --example benchmark -- [messages]
-
 use std::time::{Duration, Instant};
 
 use mail_model::{
@@ -61,10 +57,13 @@ fn account(id: &str) -> Account {
         email: format!("{id}@example.com"),
         display_name: id.into(),
         username: id.into(),
+        smtp_username: None,
         imap: endpoint.clone(),
         smtp: endpoint,
         color: 0,
         created_at: 0,
+        authentication: mail_model::Authentication::Password,
+        oauth_server: None,
     }
 }
 

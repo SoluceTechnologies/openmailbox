@@ -146,14 +146,50 @@ const FfiConverterTypeServerEndpoint = (() => {
     return new FFIConverter();
 })();
 
+export enum Authentication {
+    Password,
+    Microsoft,
+    Google,
+    Server
+}
+
+const FfiConverterTypeAuthentication = (() => {
+    type TypeName = Authentication;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            switch (c.readI32()) {
+                case 1: return Authentication.Password;
+                case 2: return Authentication.Microsoft;
+                case 3: return Authentication.Google;
+                case 4: return Authentication.Server;
+                default: throw new UniffiInternalError.UnexpectedEnumCase();
+            }
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            switch (value) {
+                case Authentication.Password: return c.writeI32(1);
+                case Authentication.Microsoft: return c.writeI32(2);
+                case Authentication.Google: return c.writeI32(3);
+                case Authentication.Server: return c.writeI32(4);
+            }
+        }
+        allocationSize(value: TypeName): number {
+            return 4;
+        }
+    }
+    return new FFIConverter();
+})();
+
 export type Account = {
     id: string,
     email: string,
     displayName: string,
     username: string,
+    smtpUsername?: string,
     imap: ServerEndpoint,
     smtp: ServerEndpoint,
-    color: number
+    color: number,
+    authentication: Authentication
 }
 
 /**
@@ -181,9 +217,11 @@ const FfiConverterTypeAccount = (() => {
                 email: FfiConverterString.readFromCursor(c), 
                 displayName: FfiConverterString.readFromCursor(c), 
                 username: FfiConverterString.readFromCursor(c), 
+                smtpUsername: FfiConverterOptionalString.readFromCursor(c), 
                 imap: FfiConverterTypeServerEndpoint.readFromCursor(c), 
                 smtp: FfiConverterTypeServerEndpoint.readFromCursor(c), 
-                color: FfiConverterUInt32.readFromCursor(c)
+                color: FfiConverterUInt32.readFromCursor(c), 
+                authentication: FfiConverterTypeAuthentication.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
@@ -191,18 +229,22 @@ const FfiConverterTypeAccount = (() => {
             FfiConverterString.writeIntoCursor(value.email, c);
             FfiConverterString.writeIntoCursor(value.displayName, c);
             FfiConverterString.writeIntoCursor(value.username, c);
+            FfiConverterOptionalString.writeIntoCursor(value.smtpUsername, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.imap, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.smtp, c);
             FfiConverterUInt32.writeIntoCursor(value.color, c);
+            FfiConverterTypeAuthentication.writeIntoCursor(value.authentication, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterString.allocationSize(value.id) +
              FfiConverterString.allocationSize(value.email) +
              FfiConverterString.allocationSize(value.displayName) +
              FfiConverterString.allocationSize(value.username) +
+             FfiConverterOptionalString.allocationSize(value.smtpUsername) +
              FfiConverterTypeServerEndpoint.allocationSize(value.imap) +
              FfiConverterTypeServerEndpoint.allocationSize(value.smtp) +
-             FfiConverterUInt32.allocationSize(value.color);
+             FfiConverterUInt32.allocationSize(value.color) +
+             FfiConverterTypeAuthentication.allocationSize(value.authentication);
             
         }
     };
@@ -213,6 +255,7 @@ export type AccountConfig = {
     email: string,
     displayName: string,
     username: string,
+    smtpUsername?: string,
     imap: ServerEndpoint,
     smtp: ServerEndpoint
 }
@@ -241,6 +284,7 @@ const FfiConverterTypeAccountConfig = (() => {
                 email: FfiConverterString.readFromCursor(c), 
                 displayName: FfiConverterString.readFromCursor(c), 
                 username: FfiConverterString.readFromCursor(c), 
+                smtpUsername: FfiConverterOptionalString.readFromCursor(c), 
                 imap: FfiConverterTypeServerEndpoint.readFromCursor(c), 
                 smtp: FfiConverterTypeServerEndpoint.readFromCursor(c)
             };
@@ -249,6 +293,7 @@ const FfiConverterTypeAccountConfig = (() => {
             FfiConverterString.writeIntoCursor(value.email, c);
             FfiConverterString.writeIntoCursor(value.displayName, c);
             FfiConverterString.writeIntoCursor(value.username, c);
+            FfiConverterOptionalString.writeIntoCursor(value.smtpUsername, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.imap, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.smtp, c);
         }
@@ -256,6 +301,7 @@ const FfiConverterTypeAccountConfig = (() => {
             return FfiConverterString.allocationSize(value.email) +
              FfiConverterString.allocationSize(value.displayName) +
              FfiConverterString.allocationSize(value.username) +
+             FfiConverterOptionalString.allocationSize(value.smtpUsername) +
              FfiConverterTypeServerEndpoint.allocationSize(value.imap) +
              FfiConverterTypeServerEndpoint.allocationSize(value.smtp);
             
@@ -493,7 +539,8 @@ export type EmailSummary = {
     isSeen: boolean,
     isFlagged: boolean,
     isAnswered: boolean,
-    hasAttachment: boolean
+    hasAttachment: boolean,
+    originalSender?: string
 }
 
 /**
@@ -529,7 +576,8 @@ const FfiConverterTypeEmailSummary = (() => {
                 isSeen: FfiConverterBool.readFromCursor(c), 
                 isFlagged: FfiConverterBool.readFromCursor(c), 
                 isAnswered: FfiConverterBool.readFromCursor(c), 
-                hasAttachment: FfiConverterBool.readFromCursor(c)
+                hasAttachment: FfiConverterBool.readFromCursor(c), 
+                originalSender: FfiConverterOptionalString.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
@@ -546,6 +594,7 @@ const FfiConverterTypeEmailSummary = (() => {
             FfiConverterBool.writeIntoCursor(value.isFlagged, c);
             FfiConverterBool.writeIntoCursor(value.isAnswered, c);
             FfiConverterBool.writeIntoCursor(value.hasAttachment, c);
+            FfiConverterOptionalString.writeIntoCursor(value.originalSender, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterString.allocationSize(value.id) +
@@ -560,7 +609,8 @@ const FfiConverterTypeEmailSummary = (() => {
              FfiConverterBool.allocationSize(value.isSeen) +
              FfiConverterBool.allocationSize(value.isFlagged) +
              FfiConverterBool.allocationSize(value.isAnswered) +
-             FfiConverterBool.allocationSize(value.hasAttachment);
+             FfiConverterBool.allocationSize(value.hasAttachment) +
+             FfiConverterOptionalString.allocationSize(value.originalSender);
             
         }
     };
@@ -727,9 +777,6 @@ const FfiConverterTypeNewMessage = (() => {
     return new FFIConverter();
 })();
 
-/**
- * Where a move left the messages; `target_mailbox_id` is absent when they were deleted for good.
- */
 export type Relocation = {
     emailIds: Array<string>,
     targetMailboxId?: string
@@ -921,7 +968,8 @@ const FfiConverterTypeSearchHit = (() => {
 export type ServerConfig = {
     imap: ServerEndpoint,
     smtp: ServerEndpoint,
-    username: string
+    username: string,
+    smtpUsername?: string
 }
 
 /**
@@ -947,18 +995,64 @@ const FfiConverterTypeServerConfig = (() => {
             return {
                 imap: FfiConverterTypeServerEndpoint.readFromCursor(c), 
                 smtp: FfiConverterTypeServerEndpoint.readFromCursor(c), 
-                username: FfiConverterString.readFromCursor(c)
+                username: FfiConverterString.readFromCursor(c), 
+                smtpUsername: FfiConverterOptionalString.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.imap, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.smtp, c);
             FfiConverterString.writeIntoCursor(value.username, c);
+            FfiConverterOptionalString.writeIntoCursor(value.smtpUsername, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterTypeServerEndpoint.allocationSize(value.imap) +
              FfiConverterTypeServerEndpoint.allocationSize(value.smtp) +
-             FfiConverterString.allocationSize(value.username);
+             FfiConverterString.allocationSize(value.username) +
+             FfiConverterOptionalString.allocationSize(value.smtpUsername);
+            
+        }
+    };
+    return new FFIConverter();
+})();
+
+export type SignInRequest = {
+    url: string,
+    redirectUri: string
+}
+
+/**
+ * Generated factory for {@link SignInRequest} record objects.
+ */
+export const SignInRequest = (() => {
+    const defaults = () => ({
+    });
+    const create = (() => {
+        return uniffiCreateRecord<SignInRequest, ReturnType<typeof defaults>>(defaults);
+    })();
+    return Object.freeze({
+        create,
+        new: create,
+        defaults: () => Object.freeze(defaults()) as Partial<SignInRequest>,
+    });
+})();
+
+const FfiConverterTypeSignInRequest = (() => {
+    type TypeName = SignInRequest;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            return {
+                url: FfiConverterString.readFromCursor(c), 
+                redirectUri: FfiConverterString.readFromCursor(c)
+            };
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            FfiConverterString.writeIntoCursor(value.url, c);
+            FfiConverterString.writeIntoCursor(value.redirectUri, c);
+        }
+        allocationSize(value: TypeName): number {
+            return FfiConverterString.allocationSize(value.url) +
+             FfiConverterString.allocationSize(value.redirectUri);
             
         }
     };
@@ -1032,9 +1126,6 @@ const FfiConverterTypeThreadFilter = (() => {
     return new FFIConverter();
 })();
 
-/**
- * Inbox categories, from the most to the least important.
- */
 export enum Category {
     Primary,
     Transactions,
@@ -1199,7 +1290,9 @@ export enum CoreError_Tags {
     Server = "Server",
     Storage = "Storage",
     NotFound = "NotFound",
-    InvalidInput = "InvalidInput"
+    InvalidInput = "InvalidInput",
+    Cancelled = "Cancelled",
+    AccountExists = "AccountExists"
 }
 export const CoreError = (() => {
 
@@ -1413,6 +1506,60 @@ Readonly<{message: string}> {
 
     }
 
+    type Cancelled__interface = {
+        tag: CoreError_Tags.Cancelled
+    };
+    class Cancelled_ extends UniffiError implements Cancelled__interface {
+        /**
+         * @private
+         * This field is private and should not be used, use `tag` instead.
+         */
+        readonly [uniffiTypeNameSymbol] = "CoreError";
+        readonly tag = CoreError_Tags.Cancelled;
+        constructor() {
+            super("CoreError", "Cancelled");
+        }
+
+        static new(): Cancelled_ {
+            return new Cancelled_();
+        }
+
+        static instanceOf(obj: any): obj is Cancelled_ {
+            return obj.tag === CoreError_Tags.Cancelled;
+        }
+        static hasInner(obj: any): obj is Cancelled_ {
+            return false;
+        }
+
+    }
+
+    type AccountExists__interface = {
+        tag: CoreError_Tags.AccountExists
+    };
+    class AccountExists_ extends UniffiError implements AccountExists__interface {
+        /**
+         * @private
+         * This field is private and should not be used, use `tag` instead.
+         */
+        readonly [uniffiTypeNameSymbol] = "CoreError";
+        readonly tag = CoreError_Tags.AccountExists;
+        constructor() {
+            super("CoreError", "AccountExists");
+        }
+
+        static new(): AccountExists_ {
+            return new AccountExists_();
+        }
+
+        static instanceOf(obj: any): obj is AccountExists_ {
+            return obj.tag === CoreError_Tags.AccountExists;
+        }
+        static hasInner(obj: any): obj is AccountExists_ {
+            return false;
+        }
+
+    }
+
     function instanceOf(obj: any): obj is CoreError {
         return obj[uniffiTypeNameSymbol] === "CoreError";
     }
@@ -1424,12 +1571,14 @@ Readonly<{message: string}> {
   Server: Server_, 
   Storage: Storage_, 
   NotFound: NotFound_, 
-  InvalidInput: InvalidInput_
+  InvalidInput: InvalidInput_, 
+  Cancelled: Cancelled_, 
+  AccountExists: AccountExists_
     });
 
 })();
 export type CoreError = InstanceType<
-    typeof CoreError['Network' | 'Auth' | 'Server' | 'Storage' | 'NotFound' | 'InvalidInput']
+    typeof CoreError['Network' | 'Auth' | 'Server' | 'Storage' | 'NotFound' | 'InvalidInput' | 'Cancelled' | 'AccountExists']
 >;
 
 // FfiConverter for enum CoreError
@@ -1444,6 +1593,8 @@ const FfiConverterTypeCoreError = (() => {
                 case 4: return new CoreError.Storage({message: FfiConverterString.readFromCursor(c) });
                 case 5: return new CoreError.NotFound();
                 case 6: return new CoreError.InvalidInput({message: FfiConverterString.readFromCursor(c) });
+                case 7: return new CoreError.Cancelled();
+                case 8: return new CoreError.AccountExists();
                 default: throw new UniffiInternalError.UnexpectedEnumCase();
             }
         }
@@ -1479,6 +1630,14 @@ const FfiConverterTypeCoreError = (() => {
                     c.writeI32(6);
                     const inner = value.inner;
                     FfiConverterString.writeIntoCursor(inner.message, c);
+                    return;
+                }
+                case CoreError_Tags.Cancelled: {
+                    c.writeI32(7);
+                    return;
+                }
+                case CoreError_Tags.AccountExists: {
+                    c.writeI32(8);
                     return;
                 }
                 default:
@@ -1517,6 +1676,12 @@ const FfiConverterTypeCoreError = (() => {
                     let size = 4;
                     size += FfiConverterString.allocationSize(inner.message);
                     return size;
+                }
+                case CoreError_Tags.Cancelled: {
+                    return 4;
+                }
+                case CoreError_Tags.AccountExists: {
+                    return 4;
                 }
                 default: throw new UniffiInternalError.UnexpectedEnumCase();
             }
@@ -1769,7 +1934,8 @@ export enum CoreEvent_Tags {
     AccountsChanged = "AccountsChanged",
     SyncState = "SyncState",
     AuthRequired = "AuthRequired",
-    OpFailed = "OpFailed"
+    OpFailed = "OpFailed",
+    SecretChanged = "SecretChanged"
 }
 export const CoreEvent = (() => {
 
@@ -1921,6 +2087,37 @@ inner: {accountId: string; message: string }): OpFailed_ {
 
     }
 
+    type SecretChanged__interface = {
+        tag: CoreEvent_Tags.SecretChanged;
+        inner: 
+Readonly<{accountId: string; secret: string}>
+    };
+    class SecretChanged_ extends UniffiEnum implements SecretChanged__interface {
+        /**
+         * @private
+         * This field is private and should not be used, use `tag` instead.
+         */
+        readonly [uniffiTypeNameSymbol] = "CoreEvent";
+        readonly tag = CoreEvent_Tags.SecretChanged;
+        readonly inner: 
+Readonly<{accountId: string; secret: string}>;
+        constructor(
+inner: {accountId: string; secret: string }) {
+            super("CoreEvent", "SecretChanged");
+
+            this.inner = Object.freeze(inner);
+        }
+        static new(
+inner: {accountId: string; secret: string }): SecretChanged_ {
+            return new SecretChanged_(inner);
+        }
+
+        static instanceOf(obj: any): obj is SecretChanged_ {
+            return obj.tag === CoreEvent_Tags.SecretChanged;
+        }
+
+    }
+
     function instanceOf(obj: any): obj is CoreEvent {
         return obj[uniffiTypeNameSymbol] === "CoreEvent";
     }
@@ -1931,12 +2128,13 @@ inner: {accountId: string; message: string }): OpFailed_ {
   AccountsChanged: AccountsChanged_, 
   SyncState: SyncState_, 
   AuthRequired: AuthRequired_, 
-  OpFailed: OpFailed_
+  OpFailed: OpFailed_, 
+  SecretChanged: SecretChanged_
     });
 
 })();
 export type CoreEvent = InstanceType<
-    typeof CoreEvent['MailboxesChanged' | 'AccountsChanged' | 'SyncState' | 'AuthRequired' | 'OpFailed']
+    typeof CoreEvent['MailboxesChanged' | 'AccountsChanged' | 'SyncState' | 'AuthRequired' | 'OpFailed' | 'SecretChanged']
 >;
 
 // FfiConverter for enum CoreEvent
@@ -1950,6 +2148,7 @@ const FfiConverterTypeCoreEvent = (() => {
                 case 3: return new CoreEvent.SyncState({accountId: FfiConverterString.readFromCursor(c), status: FfiConverterTypeSyncStatus.readFromCursor(c) });
                 case 4: return new CoreEvent.AuthRequired({accountId: FfiConverterString.readFromCursor(c) });
                 case 5: return new CoreEvent.OpFailed({accountId: FfiConverterString.readFromCursor(c), message: FfiConverterString.readFromCursor(c) });
+                case 6: return new CoreEvent.SecretChanged({accountId: FfiConverterString.readFromCursor(c), secret: FfiConverterString.readFromCursor(c) });
                 default: throw new UniffiInternalError.UnexpectedEnumCase();
             }
         }
@@ -1983,6 +2182,13 @@ const FfiConverterTypeCoreEvent = (() => {
                     const inner = value.inner;
                     FfiConverterString.writeIntoCursor(inner.accountId, c);
                     FfiConverterString.writeIntoCursor(inner.message, c);
+                    return;
+                }
+                case CoreEvent_Tags.SecretChanged: {
+                    c.writeI32(6);
+                    const inner = value.inner;
+                    FfiConverterString.writeIntoCursor(inner.accountId, c);
+                    FfiConverterString.writeIntoCursor(inner.secret, c);
                     return;
                 }
                 default:
@@ -2019,6 +2225,13 @@ const FfiConverterTypeCoreEvent = (() => {
                     let size = 4;
                     size += FfiConverterString.allocationSize(inner.accountId);
                     size += FfiConverterString.allocationSize(inner.message);
+                    return size;
+                }
+                case CoreEvent_Tags.SecretChanged: {
+                    const inner = value.inner;
+                    let size = 4;
+                    size += FfiConverterString.allocationSize(inner.accountId);
+                    size += FfiConverterString.allocationSize(inner.secret);
                     return size;
                 }
                 default: throw new UniffiInternalError.UnexpectedEnumCase();
@@ -2682,18 +2895,16 @@ const uniffiCallbackInterfaceEventListener: { vtable: any; register: () => void;
 
 export interface MailCoreLike {
     
-    addAccount(config: AccountConfig, secret: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Account>;
+    addAccount(config: AccountConfig, secret: string, smtpSecret: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Account>;
+    addOauthAccount(callbackUrl: string, displayName: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Account>;
+    beginAccountSignIn(accountId: string) /*throws*/: SignInRequest;
+    beginServerSignIn(email: string, servers: ServerConfig, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<SignInRequest>;
+    beginSignIn(provider: Authentication, loginHint: string | undefined) /*throws*/: SignInRequest;
     body(emailId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<RenderedBody>;
-/**
- * Syncs the inboxes within `budget_ms` and returns the unread messages not notified yet.
- */
     checkNewMail(budgetMs: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<NewMessage>>;
     discover(email: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<ServerConfig>;
     listAccounts(asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<Account>>;
     listMailboxes(accountId: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<Mailbox>>;
-/**
- * `category` keeps the threads of that category only; `None` lists them all.
- */
     listThreads(scope: ThreadScope, filter: ThreadFilter, category: Category | undefined, cursor: string | undefined, limit: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<ThreadPage>;
     loadOlder(mailboxId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     moveEmails(emailIds: Array<string>, fromMailboxId: string, destination: Destination, holdMs: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Relocation>;
@@ -2701,18 +2912,15 @@ export interface MailCoreLike {
     onBackground(): void;
     onForeground(): void;
     openMailbox(mailboxId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
+    probeOauth(email: string, imap: ServerEndpoint, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<string | undefined>;
+    reauthorize(accountId: string, callbackUrl: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     removeAccount(accountId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     renameAccount(accountId: string, displayName: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     saveAttachment(emailId: string, index: number, directory: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<string>;
-/**
- * Every mailbox when `mailbox_ids` is empty.
- */
     search(query: string, limit: number, mailboxIds: Array<string>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<SearchHit>>;
     send(draft: Draft, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
+    setAccountColor(accountId: string, color: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     setKeywords(emailIds: Array<string>, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
-/**
- * Moves every message from `sender`, past and future, to `category`.
- */
     setSenderCategory(sender: string, category: Category, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     setThreadKeywords(mailboxId: string, threadId: string, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     subscribe(listener: EventListener): void;
@@ -2720,8 +2928,9 @@ export interface MailCoreLike {
     syncNow(accountId: string | undefined): void;
     threadEmails(threadId: string, contextMailboxId: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<EmailSummary>>;
     unlockAccount(accountId: string, secret: string): void;
+    unlockSmtp(accountId: string, secret: string): void;
     unsubscribe(emailId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<UnsubscribeOutcome>;
-    updatePassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
+    updateServers(accountId: string, servers: ServerConfig, secret: string | undefined, smtpSecret: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
 }
 /**
  * @deprecated Use `MailCoreLike` instead.
@@ -2756,14 +2965,14 @@ private constructor(pointer: UniffiHandle) {
     
 
     
-    async addAccount(config: AccountConfig, secret: string, asyncOpts_?: { signal: AbortSignal }): Promise<Account> /*throws*/ {
+    async addAccount(config: AccountConfig, secret: string, smtpSecret: string | undefined, asyncOpts_?: { signal: AbortSignal }): Promise<Account> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
         return await uniffiRustCallAsync(
             /*rustCaller:*/ uniffiCaller,
             /*rustFutureFunc:*/ () => {
                 return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_add_account(
-                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterTypeAccountConfig.lower(config, nativeModule().rustbuffer_alloc),FfiConverterString.lower(secret, nativeModule().rustbuffer_alloc)
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterTypeAccountConfig.lower(config, nativeModule().rustbuffer_alloc),FfiConverterString.lower(secret, nativeModule().rustbuffer_alloc),FfiConverterOptionalString.lower(smtpSecret, nativeModule().rustbuffer_alloc)
                 );
             },
             /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
@@ -2794,6 +3003,125 @@ private constructor(pointer: UniffiHandle) {
             __error.stack = __stack;
         }
         throw __error;
+    }
+    }
+    
+    async addOauthAccount(callbackUrl: string, displayName: string, asyncOpts_?: { signal: AbortSignal }): Promise<Account> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_add_oauth_account(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(callbackUrl, nativeModule().rustbuffer_alloc),FfiConverterString.lower(displayName, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterTypeAccount.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
+    beginAccountSignIn(accountId: string): SignInRequest /*throws*/ {
+    const __rb: Uint8Array = uniffiCaller.rustCallWithError(
+            /*liftError:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError),
+            /*caller:*/ (callStatus) => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_begin_account_sign_in(
+                uniffiTypeMailCoreObjectFactory.clonePointer(this),
+        FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),
+                callStatus);
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+    );
+    try {
+        return FfiConverterTypeSignInRequest.lift(__rb);
+    } finally {
+        nativeModule().rustbuffer_free(__rb);
+    }
+    }
+    
+    async beginServerSignIn(email: string, servers: ServerConfig, asyncOpts_?: { signal: AbortSignal }): Promise<SignInRequest> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_begin_server_sign_in(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(email, nativeModule().rustbuffer_alloc),FfiConverterTypeServerConfig.lower(servers, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterTypeSignInRequest.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
+    beginSignIn(provider: Authentication, loginHint: string | undefined): SignInRequest /*throws*/ {
+    const __rb: Uint8Array = uniffiCaller.rustCallWithError(
+            /*liftError:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError),
+            /*caller:*/ (callStatus) => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_begin_sign_in(
+                uniffiTypeMailCoreObjectFactory.clonePointer(this),
+        FfiConverterTypeAuthentication.lower(provider, nativeModule().rustbuffer_alloc),
+        FfiConverterOptionalString.lower(loginHint, nativeModule().rustbuffer_alloc),
+                callStatus);
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+    );
+    try {
+        return FfiConverterTypeSignInRequest.lift(__rb);
+    } finally {
+        nativeModule().rustbuffer_free(__rb);
     }
     }
     
@@ -2838,9 +3166,6 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
-/**
- * Syncs the inboxes within `budget_ms` and returns the unread messages not notified yet.
- */
     async checkNewMail(budgetMs: number, asyncOpts_?: { signal: AbortSignal }): Promise<Array<NewMessage>> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3005,9 +3330,6 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
-/**
- * `category` keeps the threads of that category only; `None` lists them all.
- */
     async listThreads(scope: ThreadScope, filter: ThreadFilter, category: Category | undefined, cursor: string | undefined, limit: number, asyncOpts_?: { signal: AbortSignal }): Promise<ThreadPage> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3203,6 +3525,74 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
+    async probeOauth(email: string, imap: ServerEndpoint, asyncOpts_?: { signal: AbortSignal }): Promise<string | undefined> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_probe_oauth(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(email, nativeModule().rustbuffer_alloc),FfiConverterTypeServerEndpoint.lower(imap, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterOptionalString.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
+    async reauthorize(accountId: string, callbackUrl: string, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_reauthorize(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),FfiConverterString.lower(callbackUrl, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_void,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_void,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_void,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_void,
+            /*liftFunc:*/ (_v) => {},
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
     async removeAccount(accountId: string, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3298,9 +3688,6 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
-/**
- * Every mailbox when `mailbox_ids` is empty.
- */
     async search(query: string, limit: number, mailboxIds: Array<string>, asyncOpts_?: { signal: AbortSignal }): Promise<Array<SearchHit>> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3369,6 +3756,33 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
+    async setAccountColor(accountId: string, color: number, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_set_account_color(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(color, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_void,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_void,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_void,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_void,
+            /*liftFunc:*/ (_v) => {},
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
     async setKeywords(emailIds: Array<string>, add: Array<Keyword>, remove: Array<Keyword>, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3396,9 +3810,6 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
-/**
- * Moves every message from `sender`, past and future, to `category`.
- */
     async setSenderCategory(sender: string, category: Category, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3566,6 +3977,17 @@ private constructor(pointer: UniffiHandle) {
     );
     }
     
+    unlockSmtp(accountId: string, secret: string): void {uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => { nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_unlock_smtp(
+                uniffiTypeMailCoreObjectFactory.clonePointer(this),
+        FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),
+        FfiConverterString.lower(secret, nativeModule().rustbuffer_alloc),
+                callStatus);
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+    );
+    }
+    
     async unsubscribe(emailId: string, asyncOpts_?: { signal: AbortSignal }): Promise<UnsubscribeOutcome> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3607,14 +4029,14 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
-    async updatePassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    async updateServers(accountId: string, servers: ServerConfig, secret: string | undefined, smtpSecret: string | undefined, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
         return await uniffiRustCallAsync(
             /*rustCaller:*/ uniffiCaller,
             /*rustFutureFunc:*/ () => {
-                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_update_password(
-                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),FfiConverterString.lower(secret, nativeModule().rustbuffer_alloc)
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_update_servers(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),FfiConverterTypeServerConfig.lower(servers, nativeModule().rustbuffer_alloc),FfiConverterOptionalString.lower(secret, nativeModule().rustbuffer_alloc),FfiConverterOptionalString.lower(smtpSecret, nativeModule().rustbuffer_alloc)
                 );
             },
             /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_void,
@@ -3780,13 +4202,25 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_constructor_mailcore_open() !== 57857) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_constructor_mailcore_open");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_add_account() !== 59215) {
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_add_account() !== 24878) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_add_account");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_add_oauth_account() !== 38929) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_add_oauth_account");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_begin_account_sign_in() !== 17699) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_begin_account_sign_in");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_begin_server_sign_in() !== 56404) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_begin_server_sign_in");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_begin_sign_in() !== 26043) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_begin_sign_in");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_body() !== 20776) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_body");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_check_new_mail() !== 48290) {
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_check_new_mail() !== 53864) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_check_new_mail");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_discover() !== 13186) {
@@ -3798,7 +4232,7 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_list_mailboxes() !== 29520) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_list_mailboxes");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_list_threads() !== 62176) {
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_list_threads() !== 41028) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_list_threads");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_load_older() !== 1859) {
@@ -3819,6 +4253,12 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_open_mailbox() !== 12471) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_open_mailbox");
     }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_probe_oauth() !== 35009) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_probe_oauth");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_reauthorize() !== 47626) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_reauthorize");
+    }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_remove_account() !== 38132) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_remove_account");
     }
@@ -3828,16 +4268,19 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_attachment() !== 54661) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_save_attachment");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_search() !== 53102) {
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_search() !== 62065) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_search");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_send() !== 1994) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_send");
     }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_account_color() !== 42939) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_set_account_color");
+    }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_keywords() !== 6845) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_set_keywords");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_sender_category() !== 56143) {
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_sender_category() !== 27915) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_set_sender_category");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_thread_keywords() !== 51422) {
@@ -3858,11 +4301,14 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_unlock_account() !== 18429) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_unlock_account");
     }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_unlock_smtp() !== 34255) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_unlock_smtp");
+    }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_unsubscribe() !== 41042) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_unsubscribe");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_password() !== 26042) {
-        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_update_password");
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_servers() !== 14217) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_update_servers");
     }
 
     uniffiCallbackInterfaceEventListener.register();
@@ -3875,6 +4321,7 @@ export default Object.freeze({
     FfiConverterTypeAccountConfig,
     FfiConverterTypeAddress,
     FfiConverterTypeAttachment,
+    FfiConverterTypeAuthentication,
     FfiConverterTypeCategory,
     FfiConverterTypeCoreError,
     FfiConverterTypeCoreEvent,
@@ -3894,6 +4341,7 @@ export default Object.freeze({
     FfiConverterTypeSecurity,
     FfiConverterTypeServerConfig,
     FfiConverterTypeServerEndpoint,
+    FfiConverterTypeSignInRequest,
     FfiConverterTypeSyncErrorKind,
     FfiConverterTypeSyncStatus,
     FfiConverterTypeThreadFilter,

@@ -1,9 +1,9 @@
 import { Platform } from 'react-native';
-import { Security, type ServerConfig } from '@openmailbox/mail-core';
+import { Authentication, Security, type ServerConfig } from '@openmailbox/mail-core';
 
 import { organizationDomain } from '@/utils/addresses';
 
-export type ProviderIdentifier = 'gmail' | 'icloud' | 'ovhcloud' | 'ionos' | 'yahoo' | 'other' | 'local';
+export type ProviderIdentifier = 'gmail' | 'microsoft' | 'stalwart' | 'icloud' | 'ovhcloud' | 'ionos' | 'yahoo' | 'other' | 'local';
 
 export interface BrandMark {
   background: string;
@@ -21,6 +21,9 @@ export interface MailProvider {
   domains: string[];
   brand?: BrandMark;
   appPasswordHelp?: string;
+  oauth?: Authentication;
+  oauthOnly?: boolean;
+  probesOAuth?: boolean;
   servers?: ServerConfig;
   editableServers?: boolean;
   account?: { email: string; password: string };
@@ -52,7 +55,6 @@ export const PROVIDERS: MailProvider[] = [
     identifier: 'gmail',
     name: 'Google',
     domains: ['gmail.com', 'googlemail.com'],
-    // Google's own "G", in its four colors.
     brand: {
       background: WHITE,
       viewBox: '0 0 48 48',
@@ -65,7 +67,26 @@ export const PROVIDERS: MailProvider[] = [
       ],
     },
     appPasswordHelp: 'https://support.google.com/accounts/answer/185833',
+    oauth: __DEV__ ? Authentication.Google : undefined,
     servers: servers('imap.gmail.com', 'smtp.gmail.com'),
+  },
+  {
+    identifier: 'microsoft',
+    name: 'Microsoft',
+    domains: ['outlook.com', 'outlook.fr', 'hotmail.com', 'hotmail.fr', 'live.com', 'live.fr', 'msn.com'],
+    brand: {
+      background: WHITE,
+      scale: 0.56,
+      shapes: [
+        { fill: '#F25022', d: 'M0 0h11.4v11.4H0z' },
+        { fill: '#7FBA00', d: 'M12.6 0H24v11.4H12.6z' },
+        { fill: '#00A4EF', d: 'M0 12.6h11.4V24H0z' },
+        { fill: '#FFB900', d: 'M12.6 12.6H24V24H12.6z' },
+      ],
+    },
+    oauth: Authentication.Microsoft,
+    oauthOnly: true,
+    servers: servers('outlook.office365.com', 'smtp-mail.outlook.com', 587),
   },
   {
     identifier: 'icloud',
@@ -90,7 +111,6 @@ export const PROVIDERS: MailProvider[] = [
     identifier: 'ionos',
     name: 'IONOS',
     domains: [],
-    // The certified logo IONOS publishes in its BIMI record (vmc.digicert.com).
     brand: {
       background: WHITE,
       viewBox: '0 0 400 400',
@@ -121,7 +141,7 @@ export const PROVIDERS: MailProvider[] = [
     appPasswordHelp: 'https://help.yahoo.com/kb/SLN15241.html',
     servers: servers('imap.mail.yahoo.com', 'smtp.mail.yahoo.com'),
   },
-  { identifier: 'other', name: '', domains: [] },
+  { identifier: 'other', name: '', domains: [], probesOAuth: true },
 ];
 
 export interface OvhOffer {
@@ -178,6 +198,19 @@ export const LOCAL_TEST_PROVIDER: MailProvider = {
   },
 };
 
+export const LOCAL_STALWART_PROVIDER: MailProvider = {
+  identifier: 'stalwart',
+  name: 'Stalwart',
+  domains: [],
+  probesOAuth: true,
+  account: { email: 'carol@example.com', password: '' },
+  servers: {
+    imap: { host: LOCAL_HOST, port: 993, security: Security.Tls },
+    smtp: { host: LOCAL_HOST, port: 465, security: Security.Tls },
+    username: 'carol@example.com',
+  },
+};
+
 export function providerForAddress(email: string): MailProvider | undefined {
   const domain = email.split('@')[1]?.toLowerCase();
   return domain ? PROVIDERS.find((provider) => provider.domains.includes(domain)) : undefined;
@@ -186,9 +219,11 @@ export function providerForAddress(email: string): MailProvider | undefined {
 const serverKind = (host: string) => host.split('.')[0].replace(/\d+$/, '');
 const brandName = (host: string) => organizationDomain(host).split('.')[0];
 
-export function providerForAccount(account: { imap: { host: string } }): { provider: MailProvider; offer?: string } | undefined {
+export function providerForAccount(account: { imap: { host: string; port?: number } }): { provider: MailProvider; offer?: string } | undefined {
   const host = account.imap.host.trim().toLowerCase();
-  if (host === LOCAL_TEST_PROVIDER.servers?.imap.host) return { provider: LOCAL_TEST_PROVIDER };
+  if (host === LOCAL_TEST_PROVIDER.servers?.imap.host) {
+    return { provider: account.imap.port === LOCAL_STALWART_PROVIDER.servers?.imap.port ? LOCAL_STALWART_PROVIDER : LOCAL_TEST_PROVIDER };
+  }
   const ovh = OVH_OFFERS.find((offer) => brandName(offer.servers.imap.host) === brandName(host));
   if (ovh) {
     const offer = OVH_OFFERS.find((candidate) => serverKind(candidate.servers.imap.host) === serverKind(host));

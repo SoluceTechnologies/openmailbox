@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
@@ -9,26 +10,25 @@ const COALESCING_WINDOW: Duration = Duration::from_millis(60);
 
 pub type EventSink = Arc<dyn Fn(CoreEvent) + Send + Sync>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Events {
-    sender: Sender<CoreEvent>,
-    sink: Arc<RwLock<Option<EventSink>>>,
+    sender: Arc<RwLock<Option<Sender<CoreEvent>>>>,
 }
 
 impl Events {
     pub fn start() -> Events {
-        let (sender, receiver) = channel();
-        let sink: Arc<RwLock<Option<EventSink>>> = Arc::default();
-        let dispatcher_sink = sink.clone();
-        std::thread::Builder::new()
-            .name("mail-events".into())
-            .spawn(move || dispatch(receiver, dispatcher_sink))
-            .expect("event dispatcher thread starts");
-        Events { sender, sink }
+        Events::default()
     }
 
     pub fn emit(&self, event: CoreEvent) {
-        let _ = self.sender.send(event);
+        if let Some(sender) = self
+            .sender
+            .read()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .as_ref()
+        {
+            let _ = sender.send(event);
+        }
     }
 
     pub fn mailboxes_changed(&self, mailbox_ids: impl IntoIterator<Item = i64>) {
@@ -38,14 +38,19 @@ impl Events {
     }
 
     pub fn set_sink(&self, sink: EventSink) {
+        let (sender, receiver) = channel();
+        std::thread::Builder::new()
+            .name("mail-events".into())
+            .spawn(move || dispatch(receiver, sink))
+            .expect("event dispatcher thread starts");
         *self
-            .sink
+            .sender
             .write()
-            .unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(sink);
+            .unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(sender);
     }
 }
 
-fn dispatch(receiver: Receiver<CoreEvent>, sink: Arc<RwLock<Option<EventSink>>>) {
+fn dispatch(receiver: Receiver<CoreEvent>, sink: EventSink) {
     while let Ok(first) = receiver.recv() {
         let mut batch = vec![first];
         let deadline = Instant::now() + COALESCING_WINDOW;
@@ -54,14 +59,8 @@ fn dispatch(receiver: Receiver<CoreEvent>, sink: Arc<RwLock<Option<EventSink>>>)
         {
             batch.push(event);
         }
-        let current_sink = sink
-            .read()
-            .unwrap_or_else(|poisoned| poisoned.into_inner())
-            .clone();
-        if let Some(current_sink) = current_sink {
-            for event in coalesce(batch) {
-                current_sink(event);
-            }
+        for event in coalesce(batch) {
+            let _ = catch_unwind(AssertUnwindSafe(|| sink(event)));
         }
     }
 }
@@ -80,6 +79,10 @@ fn coalesce(batch: Vec<CoreEvent>) -> Vec<CoreEvent> {
                 others.retain(|existing| !matches!(existing, CoreEvent::SyncState { account_id: other, .. } if other == account_id));
                 others.push(event);
             }
+            CoreEvent::SecretChanged { ref account_id, .. } => {
+                others.retain(|existing| !matches!(existing, CoreEvent::SecretChanged { account_id: other, .. } if other == account_id));
+                others.push(event);
+            }
             event if others.contains(&event) => {}
             event => others.push(event),
         }
@@ -96,42 +99,5 @@ fn coalesce(batch: Vec<CoreEvent>) -> Vec<CoreEvent> {
 }
 
 #[cfg(test)]
-mod tests {
-    use mail_model::SyncStatus;
-
-    use super::*;
-
-    #[test]
-    fn coalesce_merges_mailbox_changes_and_keeps_the_latest_sync_state() {
-        let syncing = |status| CoreEvent::SyncState {
-            account_id: "a".into(),
-            status,
-        };
-        let merged = coalesce(vec![
-            CoreEvent::MailboxesChanged {
-                mailbox_ids: vec![2],
-            },
-            syncing(SyncStatus::Syncing),
-            CoreEvent::AccountsChanged,
-            CoreEvent::MailboxesChanged {
-                mailbox_ids: vec![1, 2],
-            },
-            syncing(SyncStatus::Idle {
-                last_synced_at: Some(5),
-            }),
-            CoreEvent::AccountsChanged,
-        ]);
-        assert_eq!(
-            merged,
-            vec![
-                CoreEvent::MailboxesChanged {
-                    mailbox_ids: vec![1, 2]
-                },
-                CoreEvent::AccountsChanged,
-                syncing(SyncStatus::Idle {
-                    last_synced_at: Some(5)
-                }),
-            ]
-        );
-    }
-}
+#[path = "../../../tests/mail_sync/events.rs"]
+mod tests;

@@ -1,3 +1,8 @@
+pub mod graph;
+mod http;
+pub mod oauth;
+pub mod server;
+
 use std::time::Duration;
 
 use mail_model::{Error, Result, Security, ServerConfig, ServerEndpoint};
@@ -68,6 +73,7 @@ pub async fn discover(email: &str) -> Result<ServerConfig> {
             imap: endpoint(provider.imap),
             smtp: endpoint(provider.smtp),
             username: email.to_owned(),
+            smtp_username: None,
         });
     }
     let urls = [
@@ -97,6 +103,7 @@ pub async fn discover(email: &str) -> Result<ServerConfig> {
             security: Security::Tls,
         },
         username: email.to_owned(),
+        smtp_username: None,
     })
 }
 
@@ -131,54 +138,37 @@ fn parse_autoconfig(
                     "STARTTLS" => Security::StartTls,
                     _ => return None,
                 };
-                let username = text("username").unwrap_or("%EMAILADDRESS%");
                 Some((
                     ServerEndpoint {
                         host: text("hostname")?.to_owned(),
                         port: text("port")?.parse().ok()?,
                         security,
                     },
-                    username.to_owned(),
+                    text("username").map(str::to_owned),
                 ))
             })
             .min_by_key(|(endpoint, _)| endpoint.security != Security::Tls)
     };
-    let (imap, username_template) = server("incomingServer", "imap")?;
-    let (smtp, _) = server("outgoingServer", "smtp")?;
-    let username = username_template
-        .replace("%EMAILADDRESS%", email)
-        .replace("%EMAILLOCALPART%", local_part)
-        .replace("%EMAILDOMAIN%", domain);
+    let expand = |template: &str| {
+        template
+            .replace("%EMAILADDRESS%", email)
+            .replace("%EMAILLOCALPART%", local_part)
+            .replace("%EMAILDOMAIN%", domain)
+    };
+    let (imap, imap_username) = server("incomingServer", "imap")?;
+    let (smtp, smtp_username) = server("outgoingServer", "smtp")?;
+    let username = expand(imap_username.as_deref().unwrap_or("%EMAILADDRESS%"));
+    let smtp_username = smtp_username
+        .map(|template| expand(&template))
+        .filter(|smtp_username| *smtp_username != username);
     Some(ServerConfig {
         imap,
         smtp,
         username,
+        smtp_username,
     })
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn autoconfig_prefers_implicit_tls_and_expands_username() {
-        let xml = r#"<clientConfig version="1.1"><emailProvider id="example.org">
-            <incomingServer type="pop3"><hostname>pop.example.org</hostname><port>995</port><socketType>SSL</socketType></incomingServer>
-            <incomingServer type="imap"><hostname>imap.example.org</hostname><port>143</port><socketType>STARTTLS</socketType><username>%EMAILLOCALPART%</username></incomingServer>
-            <incomingServer type="imap"><hostname>imap.example.org</hostname><port>993</port><socketType>SSL</socketType><username>%EMAILLOCALPART%</username></incomingServer>
-            <outgoingServer type="smtp"><hostname>smtp.example.org</hostname><port>587</port><socketType>STARTTLS</socketType></outgoingServer>
-            <outgoingServer type="smtp"><hostname>smtp.example.org</hostname><port>25</port><socketType>plain</socketType></outgoingServer>
-        </emailProvider></clientConfig>"#;
-        let config = parse_autoconfig(xml, "jane@example.org", "jane", "example.org").unwrap();
-        assert_eq!(config.imap.port, 993);
-        assert_eq!(
-            config.smtp,
-            ServerEndpoint {
-                host: "smtp.example.org".into(),
-                port: 587,
-                security: Security::StartTls
-            }
-        );
-        assert_eq!(config.username, "jane");
-    }
-}
+#[path = "../../../tests/mail_auth/lib.rs"]
+mod tests;

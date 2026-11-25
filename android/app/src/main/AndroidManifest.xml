@@ -32,6 +32,8 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="openmailbox"/>
+        <data android:scheme="com.googleusercontent.apps.894628345620-n02dmit6km3lipioghk4r6unjnmr5l98"/>
+        <data android:scheme="com.soluce.openmailbox"/>
         <data android:scheme="exp+openmailbox"/>
       </intent-filter>
       <intent-filter android:autoVerify="false" expo-sharing-intent-filters="true">

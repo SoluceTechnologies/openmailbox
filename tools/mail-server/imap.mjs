@@ -87,9 +87,12 @@ export class ImapConnection {
   async listMailboxes() {
     const lines = await this.run('LIST "" "*"');
     return lines
-      .map((line) => line.match(/^\* LIST \([^)]*\) (?:"[^"]*"|NIL) "?(.*?)"?$/))
+      .map((line) => line.match(/^\* LIST \(([^)]*)\) (?:"([^"]*)"|NIL) "?(.*?)"?$/))
       .filter(Boolean)
-      .map((match) => match[1]);
+      .map(([, attributes, delimiter, name]) => {
+        const flags = attributes.toLowerCase().split(' ');
+        return { name, delimiter: delimiter ?? '.', use: SPECIAL_USES.find((use) => flags.includes(`\\${use.toLowerCase()}`)) };
+      });
   }
 
   async close() {
@@ -101,6 +104,8 @@ export class ImapConnection {
 export function quote(value) {
   return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
+
+const SPECIAL_USES = ['Sent', 'Drafts', 'Trash', 'Junk', 'Archive'];
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

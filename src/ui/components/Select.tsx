@@ -29,7 +29,6 @@ interface SelectProps<T> {
   accessibilityLabel?: string;
   disabled?: boolean;
   trigger?: ReactNode;
-  /** Shown above the options, as the title of a menu. */
   header?: ReactNode;
   footer?: (close: () => void) => ReactNode;
 }

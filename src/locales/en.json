@@ -9,14 +9,20 @@
   "accounts": {
     "add": "Add Account",
     "accountName": "Account Name",
+    "color": "Color",
+    "colorHint": "Marks this account in the mailbox list and in All Inboxes.",
     "moveDown": "Move Down",
     "moveUp": "Move Up",
     "namesHint": "The account name is only shown in Open Mailbox. Recipients see the sender name.",
-    "newPassword": "Password",
+    "outgoingPassword": "Outgoing Password",
+    "outgoingUsername": "Outgoing Username",
+    "oauthHint": "Signed in through {{provider}}. Sign in again if mail stops syncing.",
     "password": "Password",
     "passwordHint": "Use the password, or the app password, of this mail account.",
-    "passwordUpdated": "Password updated.",
     "reconnectRequired": "The server rejected the password. Enter it again to resume syncing.",
+    "signInAgain": "Sign in Again",
+    "signInRequired": "{{provider}} asks you to sign in again to resume syncing.",
+    "signedIn": "Signed in.",
     "reorderHint": "Touch and hold an account, then drag it to change the order of the accounts in Mailboxes.",
     "defaultAccount": "Default Account",
     "defaultAccountHint": "New messages written from All Inboxes or shared from another app are sent from this account.",
@@ -32,7 +38,6 @@
       "appPasswordHint": "{{provider}} only accepts app passwords from mail apps.",
       "appPasswordLink": "How to create an app password",
       "appPasswordPlaceholder": "App password",
-      "authentication": "Authentication",
       "chooseProvider": "Add Account",
       "connectingTo": "Connecting to {{host}}…",
       "development": "Development",
@@ -44,7 +49,13 @@
       "host": "Server",
       "incoming": "Incoming Mail (IMAP)",
       "localServerHint": "Local GreenMail test server",
+      "localStalwartHint": "Local Stalwart test server (OAuth)",
       "manual": "Configure Servers Manually",
+      "microsoftHint": "Outlook, Hotmail, Live, Microsoft 365",
+      "googleHint": "Gmail, Google Workspace",
+      "icloudHint": "icloud.com, me.com, mac.com",
+      "ovhHint": "MX Plan, Email Pro, Exchange, Zimbra",
+      "oauthPrivacy": "You sign in on {{provider}}’s page: this app never sees your password.",
       "name": "Name",
       "namePlaceholder": "Shown to recipients",
       "otherAccountTitle": "Mail Account",
@@ -55,6 +66,7 @@
       "ovhOfferTitle": "Your OVHcloud Offer",
       "password": "Password",
       "port": "Port",
+      "sameAsIncoming": "Same as incoming",
       "privacy": "Your password stays on this device and is only sent to your mail servers.",
       "providerAccountTitle": "{{provider}} Account",
       "providerFooter": "Any IMAP and SMTP mail account can be added with Other.",
@@ -62,6 +74,9 @@
       "security": "Security",
       "showPassword": "Show password",
       "signIn": "Sign In",
+      "signInWith": "Sign in with {{provider}}",
+      "useAppPassword": "Use an app password instead",
+      "usePassword": "Use a password instead",
       "username": "Username",
       "welcome": "Welcome to Open Mailbox",
       "welcomeHint": "Add a mail account to get started. Your messages are stored on this device only.",
@@ -82,7 +97,9 @@
     "invalidIdentityEmail": "Enter a valid email address.",
     "identityExists": "This account already sends from this address.",
     "syncNow": "Check for New Mail",
-    "updatePassword": "Update Password"
+    "serverSettings": "Server Settings",
+    "unchanged": "Unchanged",
+    "saveServers": "Save"
   },
   "categories": {
     "all": "All Mail",
@@ -93,6 +110,21 @@
     "promotions": "Promotions",
     "transactions": "Transactions",
     "updates": "Updates"
+  },
+  "colors": {
+    "black": "Black",
+    "grey": "Grey",
+    "red": "Red",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "blue": "Blue",
+    "purple": "Purple",
+    "pink": "Pink",
+    "cyan": "Cyan",
+    "indigo": "Indigo",
+    "brown": "Brown",
+    "mint": "Mint"
   },
   "common": {
     "back": "Back",
@@ -145,6 +177,7 @@
     "yesterday": "Yesterday"
   },
   "errors": {
+    "accountExists": "This account is already added.",
     "auth": "The server rejected the email address or password.",
     "generic": "Something went wrong. Try again.",
     "invalidInput": "Invalid value: {{message}}",
@@ -188,6 +221,7 @@
     "openLink": "Open",
     "openLinkTitle": "Open this link?",
     "remoteContentBlocked": "Remote images are blocked.",
+    "searchFor": "Search for “{{name}}”",
     "share": "Share",
     "threadGone": "This conversation is no longer available.",
     "toRecipients": "To: {{recipients}}",
@@ -228,6 +262,12 @@
       "light": "Light",
       "system": "Automatic"
     },
+    "timeFormat": "Time Format",
+    "timeFormats": {
+      "12h": "12-Hour",
+      "24h": "24-Hour",
+      "system": "Automatic"
+    },
     "title": "Settings"
   },
   "signature": {
@@ -235,17 +275,6 @@
     "bulletList": "Bulleted List",
     "clearFormatting": "Clear Formatting",
     "codePlaceholder": "Type HTML here…",
-    "colors": {
-      "black": "Black",
-      "grey": "Grey",
-      "red": "Red",
-      "orange": "Orange",
-      "yellow": "Yellow",
-      "green": "Green",
-      "blue": "Blue",
-      "purple": "Purple",
-      "pink": "Pink"
-    },
     "highlight": "Highlight",
     "italic": "Italic",
     "link": "Link",

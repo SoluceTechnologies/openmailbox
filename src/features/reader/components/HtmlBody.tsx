@@ -149,7 +149,7 @@ function HtmlBodyImpl({ html, allowRemoteContent, background }: HtmlBodyProps) {
 
   const onShouldStartLoadWithRequest = (request: ShouldStartLoadRequest) => {
     if (request.url === 'about:blank' || request.url.startsWith('data:')) return true;
-    if (!request.isTopFrame) return false;
+    if (request.isTopFrame === false) return false;
     confirmOpenLink(request.url, t);
     return false;
   };

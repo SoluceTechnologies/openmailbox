@@ -9,14 +9,20 @@
   "accounts": {
     "add": "Apondre un compte",
     "accountName": "Compte",
+    "color": "Color",
+    "colorHint": "Marca aqueste compte dins la lista de las bóstias e dins « Totas las bóstias ».",
     "moveDown": "Davalar",
     "moveUp": "Montar",
     "namesHint": "Lo nom del compte es pas afichat que dins Open Mailbox. Los destinataris veson lo nom de l’expeditor.",
-    "newPassword": "Senhal",
+    "outgoingPassword": "Senhal d’enviament",
+    "outgoingUsername": "Identificant d’enviament",
+    "oauthHint": "Connectat via {{provider}}. Tornatz vos connectar se lo corrièr se sincroniza pas mai.",
     "password": "Senhal",
     "passwordHint": "Utilizatz lo senhal, o lo senhal d'aplicacion, d'aqueste compte.",
-    "passwordUpdated": "Senhal mes a jorn.",
     "reconnectRequired": "Lo servidor a refusat lo senhal. Picatz-lo tornamai per reprendre la sincronizacion.",
+    "signInAgain": "Se tornar connectar",
+    "signInRequired": "{{provider}} demanda de vos tornar connectar per reprendre la sincronizacion.",
+    "signedIn": "Connectat.",
     "reorderHint": "Tenètz quichat un compte puèi fasètz-lo lisar per cambiar l’òrdre dels comptes dins Bóstias de letras.",
     "defaultAccount": "Compte per defaut",
     "defaultAccountHint": "Los messatges novèls redigits dempuèi Totas las bóstias o partejats dempuèi una autra aplicacion son mandats dempuèi aqueste compte.",
@@ -32,7 +38,6 @@
       "appPasswordHint": "{{provider}} accèpta pas que los senhals d'aplicacion dins las aplicacions de messatjariá.",
       "appPasswordLink": "Crear un senhal d'aplicacion",
       "appPasswordPlaceholder": "Senhal d'aplicacion",
-      "authentication": "Autentificacion",
       "chooseProvider": "Apondre un compte",
       "connectingTo": "Connexion a {{host}}…",
       "development": "Desvolopament",
@@ -44,7 +49,13 @@
       "host": "Servidor",
       "incoming": "Corrièr dintrant (IMAP)",
       "localServerHint": "Servidor de tèst GreenMail local",
+      "localStalwartHint": "Servidor de tèst Stalwart local (OAuth)",
       "manual": "Configurar los servidors manualament",
+      "microsoftHint": "Outlook, Hotmail, Live, Microsoft 365",
+      "googleHint": "Gmail, Google Workspace",
+      "icloudHint": "icloud.com, me.com, mac.com",
+      "ovhHint": "MX Plan, Email Pro, Exchange, Zimbra",
+      "oauthPrivacy": "Vos connectatz sus la pagina de {{provider}} : l’aplicacion vei pas jamai vòstre senhal.",
       "name": "Nom",
       "namePlaceholder": "Afichat als destinataris",
       "otherAccountTitle": "Compte de messatjariá",
@@ -55,6 +66,7 @@
       "ovhOfferTitle": "Vòstra ofèrta OVHcloud",
       "password": "Senhal",
       "port": "Pòrt",
+      "sameAsIncoming": "Parièr que lo dintrant",
       "privacy": "Vòstre senhal demòra sus aqueste aparelh e es pas mandat qu'a vòstres servidors de messatjariá.",
       "providerAccountTitle": "Compte {{provider}}",
       "providerFooter": "Tot compte IMAP e SMTP pòt èsser apondut amb Autre.",
@@ -62,6 +74,9 @@
       "security": "Seguretat",
       "showPassword": "Afichar lo senhal",
       "signIn": "Se connectar",
+      "signInWith": "Se connectar amb {{provider}}",
+      "useAppPassword": "Utilizar puslèu un senhal d'aplicacion",
+      "usePassword": "Utilizar puslèu un senhal",
       "username": "Identificant",
       "welcome": "Benvenguda dins Open Mailbox",
       "welcomeHint": "Apondètz un compte de messatjariá per començar. Vòstres messatges son gardats sonque sus aqueste aparelh.",
@@ -82,7 +97,9 @@
     "invalidIdentityEmail": "Picatz una adreça electronica valida.",
     "identityExists": "Aqueste compte manda ja dempuèi aquesta adreça.",
     "syncNow": "Relevar los messatges",
-    "updatePassword": "Metre a jorn lo senhal"
+    "serverSettings": "Paramètres dels servidors",
+    "unchanged": "Sens cambiament",
+    "saveServers": "Enregistrar"
   },
   "categories": {
     "all": "Totes los corrièrs",
@@ -93,6 +110,21 @@
     "promotions": "Promocions",
     "transactions": "Transaccions",
     "updates": "Actualitats"
+  },
+  "colors": {
+    "black": "Negre",
+    "grey": "Gris",
+    "red": "Roge",
+    "orange": "Irange",
+    "yellow": "Jaune",
+    "green": "Verd",
+    "blue": "Blau",
+    "purple": "Violet",
+    "pink": "Ròse",
+    "cyan": "Cian",
+    "indigo": "Indi",
+    "brown": "Marron",
+    "mint": "Menta"
   },
   "common": {
     "back": "Tornar",
@@ -145,6 +177,7 @@
     "yesterday": "Ièr"
   },
   "errors": {
+    "accountExists": "Aqueste compte es ja apondut.",
     "auth": "Lo servidor a refusat l'adreça o lo senhal.",
     "generic": "Una error s'es producha. Tornatz ensajar.",
     "invalidInput": "Valor invalida : {{message}}",
@@ -188,6 +221,7 @@
     "openLink": "Dobrir",
     "openLinkTitle": "Dobrir aqueste ligam ?",
     "remoteContentBlocked": "Los imatges distants son blocats.",
+    "searchFor": "Cercar « {{name}} »",
     "share": "Partejar",
     "threadGone": "Aquesta conversacion es pas mai disponibla.",
     "toRecipients": "A : {{recipients}}",
@@ -228,6 +262,12 @@
       "light": "Clar",
       "system": "Automatic"
     },
+    "timeFormat": "Format de l’ora",
+    "timeFormats": {
+      "12h": "12 oras",
+      "24h": "24 oras",
+      "system": "Automatic"
+    },
     "title": "Paramètres"
   },
   "signature": {
@@ -235,17 +275,6 @@
     "bulletList": "Lista amb piuses",
     "clearFormatting": "Escafar la mesa en forma",
     "codePlaceholder": "Picatz l’HTML aquí…",
-    "colors": {
-      "black": "Negre",
-      "grey": "Gris",
-      "red": "Roge",
-      "orange": "Irange",
-      "yellow": "Jaune",
-      "green": "Verd",
-      "blue": "Blau",
-      "purple": "Violet",
-      "pink": "Ròse"
-    },
     "highlight": "Evidenciar",
     "italic": "Italica",
     "link": "Ligam",

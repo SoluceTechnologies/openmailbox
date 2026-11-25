@@ -44,9 +44,8 @@ function MessageCardImpl({ email, expanded, onToggle }: MessageCardProps) {
   return (
     <View style={styles.message}>
       {showDetails ? (
-        // Not inside a Pressable: each name is a native menu, which a parent press would close.
         <View style={styles.header}>
-          <ContactAvatar email={sender?.email} name={senderName} size={44} />
+          <ContactAvatar email={email.originalSender ?? sender?.email} name={senderName} size={44} />
           <View style={styles.headerText}>
             <AddressLine label={t('compose.headerFrom')} addresses={email.from} />
             <AddressLine label={t('compose.headerTo')} addresses={email.to} />
@@ -63,7 +62,7 @@ function MessageCardImpl({ email, expanded, onToggle }: MessageCardProps) {
           onPress={() => (expanded ? setDetails(true) : onToggle(email.id))}
           style={styles.header}
         >
-          <ContactAvatar email={sender?.email} name={senderName} size={44} />
+          <ContactAvatar email={email.originalSender ?? sender?.email} name={senderName} size={44} />
           <View style={styles.headerText}>
             <View style={styles.line}>
               <Typography numberOfLines={1} style={[styles.sender, { color: colors.text, fontWeight: email.isSeen ? '600' : '700' }]}>

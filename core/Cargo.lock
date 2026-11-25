@@ -931,10 +931,16 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 name = "mail-auth"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "mail-model",
+ "ring",
  "roxmltree",
+ "serde",
+ "serde_json",
  "tokio",
  "ureq",
+ "url",
+ "uuid",
 ]
 
 [[package]]
@@ -1258,10 +1264,12 @@ name = "proto-imap"
 version = "0.1.0"
 dependencies = [
  "async-imap",
+ "base64 0.22.1",
  "chrono",
  "futures",
  "mail-model",
  "rustls",
+ "serde_json",
  "tokio",
  "tokio-rustls",
  "utf7-imap",

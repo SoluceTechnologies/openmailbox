@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 import { Link } from 'expo-router';
@@ -123,9 +123,10 @@ interface SwipeableThreadRowProps {
   onAction: (action: ThreadActionId, thread: ThreadSummary) => void;
   onMore: (thread: ThreadSummary) => void;
   selected?: boolean;
+  children?: ReactNode;
 }
 
-function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, menuActions, onOpen, onLongPress, onAction, onMore, selected }: SwipeableThreadRowProps) {
+function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, menuActions, onOpen, onLongPress, onAction, onMore, selected, children }: SwipeableThreadRowProps) {
   const { t } = useTranslation();
   const swipeable = useRef<SwipeableMethods>(null);
   const selecting = selected !== undefined;
@@ -192,7 +193,7 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, menuActions
       {NATIVE_CHROME && menuActions ? (
         <Link href={{ pathname: '/thread/[threadId]', params: { threadId: thread.threadId, mailboxId: thread.mailboxId } }} asChild>
           <Link.Trigger>
-            <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} />
+            {children ?? <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} />}
           </Link.Trigger>
           <Link.Preview />
           <Link.Menu>
@@ -211,7 +212,7 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, menuActions
           </Link.Menu>
         </Link>
       ) : (
-        <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} onLongPress={selecting ? undefined : onLongPress} selected={selected} />
+        children ?? <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} onLongPress={selecting ? undefined : onLongPress} selected={selected} />
       )}
     </ReanimatedSwipeable>
   );

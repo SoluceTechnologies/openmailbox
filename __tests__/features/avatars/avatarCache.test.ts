@@ -72,7 +72,6 @@ describe('avatar cache', () => {
 
     expect(uri).toMatch(/^file:\/\/\/cache\/avatars\/[0-9a-f]{64}$/);
     expect(mockFiles.get(uri!)).toEqual(ICON);
-    // Gravatar, the DNS lookup for a BIMI logo, then the two website icons.
     expect(fetchMock).toHaveBeenCalledTimes(4);
     expect(cachedAvatar('claire.dubois@lumen.example')).toBe(uri);
     await loadAvatar('claire.dubois@lumen.example');
@@ -149,7 +148,6 @@ describe('avatar cache', () => {
       'https://vmc.example/logo.svg',
     );
     expect(bimiLogoLocation(['"v=BIMI1;l=https://brand.example/logo.svg;"'])).toBe('https://brand.example/logo.svg');
-    // A domain that declines BIMI, a plain HTTP logo, another kind of record.
     expect(bimiLogoLocation(['"v=BIMI1; l=; a=;"'])).toBeNull();
     expect(bimiLogoLocation(['"v=BIMI1; l=http://brand.example/logo.svg"'])).toBeNull();
     expect(bimiLogoLocation(['"v=spf1 include:_spf.example ~all"'])).toBeNull();

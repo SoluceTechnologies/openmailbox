@@ -6,6 +6,12 @@
 #   mail-server.sh performance [--messages N]
 #                                         start a Dovecot IMAP server on port 3994, seeded with
 #                                         a large inbox, for performance measurements
+#   mail-server.sh oauth [--messages N]   start a Stalwart server (HTTPS 443, IMAPS 993, SMTPS 465)
+#                                         that offers OAuth sign-in, with carol@example.com (empty),
+#                                         alice@example.com and bob@example.com (seeded), all with
+#                                         password "secret-password"; from the Android emulator, run
+#                                         `adb reverse tcp:443 tcp:443` first (IMAP and SMTP
+#                                         are reached at 10.0.2.2)
 #   mail-server.sh stop                   stop and remove the containers
 #   mail-server.sh status                 show whether the server is running
 #
@@ -47,6 +53,41 @@ wait_until_ready() {
   exit 1
 }
 
+stalwart_api() {
+  curl -sk --fail-with-body -u admin:openmailbox-admin -H 'Content-Type: application/json' \
+    "https://localhost/jmap/" -d "{\"using\":[\"urn:ietf:params:jmap:core\",\"urn:stalwart:jmap\"],\"methodCalls\":[$1]}"
+}
+
+wait_for_stalwart() {
+  for _ in $(seq 1 60); do
+    if curl -sk -o /dev/null "$1"; then
+      return
+    fi
+    sleep 1
+  done
+  echo "Stalwart did not start, see: docker logs openmailbox-stalwart" >&2
+  exit 1
+}
+
+start_stalwart() {
+  create_certificates
+  docker compose -f "$root/compose.yaml" --profile oauth up -d --force-recreate --renew-anon-volumes stalwart >/dev/null
+  wait_for_stalwart http://127.0.0.1:18080/
+  if docker logs openmailbox-stalwart 2>&1 | grep -q "bootstrap mode"; then
+    curl -s --fail-with-body -u admin:openmailbox-admin -H 'Content-Type: application/json' \
+      "http://127.0.0.1:18080/jmap/" -d '{"using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],"methodCalls":[["x:Bootstrap/set",{"accountId":"d333333","update":{"singleton":{"defaultHostname":"localhost","defaultDomain":"example.com","requestTlsCertificate":false,"generateDkimKeys":false}}},"a"]]}' >/dev/null
+    docker restart openmailbox-stalwart >/dev/null
+  fi
+  wait_for_stalwart https://localhost/.well-known/oauth-authorization-server
+  local certificate key
+  certificate="$(python3 -c 'import json,sys; print(json.dumps(open(sys.argv[1]).read()))' "$certificates/server.pem")"
+  key="$(python3 -c 'import json,sys; print(json.dumps(open(sys.argv[1]).read()))' "$certificates/server.key")"
+  stalwart_api "[\"x:Certificate/set\",{\"accountId\":\"d333333\",\"create\":{\"test\":{\"certificate\":{\"@type\":\"Text\",\"value\":$certificate},\"privateKey\":{\"@type\":\"Text\",\"secret\":$key}}}},\"c\"],[\"x:SystemSettings/set\",{\"accountId\":\"d333333\",\"update\":{\"singleton\":{\"defaultCertificateId\":\"#test\"}}},\"s\"],[\"x:Account/set\",{\"accountId\":\"d333333\",\"create\":{\"carol\":{\"@type\":\"User\",\"name\":\"carol\",\"domainId\":\"b\",\"credentials\":{\"0\":{\"@type\":\"Password\",\"secret\":\"secret-password\"}}},\"alice\":{\"@type\":\"User\",\"name\":\"alice\",\"domainId\":\"b\",\"credentials\":{\"0\":{\"@type\":\"Password\",\"secret\":\"secret-password\"}}},\"bob\":{\"@type\":\"User\",\"name\":\"bob\",\"domainId\":\"b\",\"credentials\":{\"0\":{\"@type\":\"Password\",\"secret\":\"secret-password\"}}}}},\"u\"]" >/dev/null
+  docker restart openmailbox-stalwart >/dev/null
+  wait_for_stalwart https://localhost/.well-known/oauth-authorization-server
+  curl -s --cacert "$certificates/ca.pem" -o /dev/null https://localhost/.well-known/oauth-authorization-server
+}
+
 seed() {
   node "$directory/seed.mjs" --ca "$certificates/ca.pem" "$@"
 }
@@ -73,14 +114,20 @@ case "$command" in
     seed --port 3994 --reset --messages 10000 "$@"
     echo "Dovecot ready on IMAPS localhost:3994 (alice@example.com / secret)"
     ;;
+  oauth)
+    start_stalwart
+    seed --port 993 --password secret-password "$@"
+    echo "Stalwart ready: https://localhost, IMAPS localhost:993, SMTPS localhost:465 (carol, alice and bob @example.com / secret-password)"
+    echo "From the Android emulator: adb reverse tcp:443 tcp:443 (IMAP and SMTP at 10.0.2.2)"
+    ;;
   stop)
-    docker compose -f "$root/compose.yaml" --profile performance down >/dev/null
+    docker compose -f "$root/compose.yaml" --profile performance --profile oauth down >/dev/null
     ;;
   status)
     docker ps --filter name=openmailbox- --format '{{.Names}}: {{.Status}}'
     ;;
   *)
-    echo "Unknown command: $command (start, seed, stop, status)" >&2
+    echo "Unknown command: $command (start, seed, performance, oauth, stop, status)" >&2
     exit 1
     ;;
 esac

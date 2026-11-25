@@ -38,7 +38,7 @@ function ScreenHeader({ title, onBack, left, right }: ScreenHeaderProps) {
         </View>
       )}
       {title ? (
-        <Typography variant="h2" numberOfLines={2} style={styles.title}>
+        <Typography variant="h2" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} style={styles.title}>
           {title}
         </Typography>
       ) : null}

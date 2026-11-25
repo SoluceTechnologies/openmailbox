@@ -21,6 +21,10 @@ pub enum CoreError {
     NotFound,
     #[error("invalid input: {message}")]
     InvalidInput { message: String },
+    #[error("cancelled")]
+    Cancelled,
+    #[error("account already added")]
+    AccountExists,
 }
 
 impl From<mail_model::Error> for CoreError {
@@ -33,6 +37,8 @@ impl From<mail_model::Error> for CoreError {
             Error::Storage(message) => CoreError::Storage { message },
             Error::NotFound => CoreError::NotFound,
             Error::InvalidInput(message) => CoreError::InvalidInput { message },
+            Error::Cancelled => CoreError::Cancelled,
+            Error::AccountExists => CoreError::AccountExists,
         }
     }
 }
@@ -67,6 +73,7 @@ pub struct ServerConfig {
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
     pub username: String,
+    pub smtp_username: Option<String>,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -74,8 +81,23 @@ pub struct AccountConfig {
     pub email: String,
     pub display_name: String,
     pub username: String,
+    pub smtp_username: Option<String>,
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum Authentication {
+    Password,
+    Microsoft,
+    Google,
+    Server,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct SignInRequest {
+    pub url: String,
+    pub redirect_uri: String,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -84,9 +106,11 @@ pub struct Account {
     pub email: String,
     pub display_name: String,
     pub username: String,
+    pub smtp_username: Option<String>,
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
     pub color: u32,
+    pub authentication: Authentication,
 }
 
 #[derive(Debug, Clone, Copy, uniffi::Enum)]
@@ -135,6 +159,7 @@ pub struct EmailSummary {
     pub is_flagged: bool,
     pub is_answered: bool,
     pub has_attachment: bool,
+    pub original_sender: Option<String>,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -143,7 +168,6 @@ pub struct SearchHit {
     pub mailbox_id: String,
 }
 
-/// Inbox categories, from the most to the least important.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
 pub enum Category {
     Primary,
@@ -282,7 +306,6 @@ impl Destination {
     }
 }
 
-/// Where a move left the messages; `target_mailbox_id` is absent when they were deleted for good.
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct Relocation {
     pub email_ids: Vec<String>,
@@ -370,6 +393,10 @@ pub enum CoreEvent {
         account_id: String,
         message: String,
     },
+    SecretChanged {
+        account_id: String,
+        secret: String,
+    },
 }
 
 #[uniffi::export(with_foreign)]
@@ -422,9 +449,33 @@ impl From<mail_model::Account> for Account {
             email: account.email,
             display_name: account.display_name,
             username: account.username,
+            smtp_username: account.smtp_username,
             imap: account.imap.into(),
             smtp: account.smtp.into(),
             color: account.color,
+            authentication: account.authentication.into(),
+        }
+    }
+}
+
+impl From<mail_model::Authentication> for Authentication {
+    fn from(authentication: mail_model::Authentication) -> Authentication {
+        match authentication {
+            mail_model::Authentication::Password => Authentication::Password,
+            mail_model::Authentication::Microsoft => Authentication::Microsoft,
+            mail_model::Authentication::Google => Authentication::Google,
+            mail_model::Authentication::Server => Authentication::Server,
+        }
+    }
+}
+
+impl From<Authentication> for mail_model::Authentication {
+    fn from(authentication: Authentication) -> mail_model::Authentication {
+        match authentication {
+            Authentication::Password => mail_model::Authentication::Password,
+            Authentication::Microsoft => mail_model::Authentication::Microsoft,
+            Authentication::Google => mail_model::Authentication::Google,
+            Authentication::Server => mail_model::Authentication::Server,
         }
     }
 }
@@ -499,6 +550,7 @@ impl From<mail_model::EmailSummary> for EmailSummary {
             is_flagged: email.is_flagged,
             is_answered: email.is_answered,
             has_attachment: email.has_attachment,
+            original_sender: email.original_sender,
         }
     }
 }
@@ -597,6 +649,9 @@ impl From<mail_model::CoreEvent> for CoreEvent {
                 account_id,
                 message,
             },
+            Event::SecretChanged { account_id, secret } => {
+                CoreEvent::SecretChanged { account_id, secret }
+            }
         }
     }
 }
@@ -605,8 +660,6 @@ fn keywords(values: Vec<Keyword>) -> Vec<mail_model::Keyword> {
     values.into_iter().map(Into::into).collect()
 }
 
-/// A JavaScript reload creates a new `MailCore` while the previous one is still alive in the
-/// process: reusing it keeps a single sync engine per database.
 static OPEN_CORES: LazyLock<Mutex<HashMap<String, Arc<MailCore>>>> =
     LazyLock::new(Default::default);
 
@@ -685,30 +738,125 @@ impl MailCore {
             imap: config.imap.into(),
             smtp: config.smtp.into(),
             username: config.username,
+            smtp_username: config.smtp_username,
         })
     }
 
-    pub async fn add_account(&self, config: AccountConfig, secret: String) -> CoreResult<Account> {
+    pub async fn add_account(
+        &self,
+        config: AccountConfig,
+        secret: String,
+        smtp_secret: Option<String>,
+    ) -> CoreResult<Account> {
         let config = mail_model::AccountConfig {
             email: config.email,
             display_name: config.display_name,
             username: config.username,
+            smtp_username: config.smtp_username,
             imap: config.imap.into(),
             smtp: config.smtp.into(),
         };
         let account = self
-            .asynchronous(async move |engine| engine.add_account(config, secret).await)
+            .asynchronous(async move |engine| engine.add_account(config, secret, smtp_secret).await)
             .await?;
         Ok(account.into())
+    }
+
+    pub fn begin_sign_in(
+        &self,
+        provider: Authentication,
+        login_hint: Option<String>,
+    ) -> CoreResult<SignInRequest> {
+        let request = self.engine.begin_sign_in(provider.into(), login_hint)?;
+        Ok(SignInRequest {
+            url: request.url,
+            redirect_uri: request.redirect_uri,
+        })
+    }
+
+    pub async fn probe_oauth(
+        &self,
+        email: String,
+        imap: ServerEndpoint,
+    ) -> CoreResult<Option<String>> {
+        let imap: mail_model::ServerEndpoint = imap.into();
+        self.asynchronous(async move |engine| engine.probe_oauth(&email, &imap).await)
+            .await
+    }
+
+    pub async fn begin_server_sign_in(
+        &self,
+        email: String,
+        servers: ServerConfig,
+    ) -> CoreResult<SignInRequest> {
+        let servers = mail_model::ServerConfig {
+            imap: servers.imap.into(),
+            smtp: servers.smtp.into(),
+            username: servers.username,
+            smtp_username: None,
+        };
+        let request = self
+            .asynchronous(async move |engine| engine.begin_server_sign_in(&email, servers).await)
+            .await?;
+        Ok(SignInRequest {
+            url: request.url,
+            redirect_uri: request.redirect_uri,
+        })
+    }
+
+    pub fn begin_account_sign_in(&self, account_id: String) -> CoreResult<SignInRequest> {
+        let request = self.engine.begin_account_sign_in(&account_id)?;
+        Ok(SignInRequest {
+            url: request.url,
+            redirect_uri: request.redirect_uri,
+        })
+    }
+
+    pub async fn add_oauth_account(
+        &self,
+        callback_url: String,
+        display_name: String,
+    ) -> CoreResult<Account> {
+        let account = self
+            .asynchronous(async move |engine| {
+                engine.add_oauth_account(&callback_url, &display_name).await
+            })
+            .await?;
+        Ok(account.into())
+    }
+
+    pub async fn reauthorize(&self, account_id: String, callback_url: String) -> CoreResult<()> {
+        self.asynchronous(async move |engine| engine.reauthorize(&account_id, &callback_url).await)
+            .await
     }
 
     pub fn unlock_account(&self, account_id: String, secret: String) {
         self.engine.unlock_account(&account_id, secret);
     }
 
-    pub async fn update_password(&self, account_id: String, secret: String) -> CoreResult<()> {
-        self.asynchronous(async move |engine| engine.update_password(&account_id, secret).await)
-            .await
+    pub fn unlock_smtp(&self, account_id: String, secret: String) {
+        self.engine.unlock_smtp(&account_id, secret);
+    }
+
+    pub async fn update_servers(
+        &self,
+        account_id: String,
+        servers: ServerConfig,
+        secret: Option<String>,
+        smtp_secret: Option<String>,
+    ) -> CoreResult<()> {
+        let servers = mail_model::ServerConfig {
+            imap: servers.imap.into(),
+            smtp: servers.smtp.into(),
+            username: servers.username,
+            smtp_username: servers.smtp_username,
+        };
+        self.asynchronous(async move |engine| {
+            engine
+                .update_servers(&account_id, servers, secret, smtp_secret)
+                .await
+        })
+        .await
     }
 
     pub async fn list_accounts(&self) -> CoreResult<Vec<Account>> {
@@ -719,6 +867,11 @@ impl MailCore {
 
     pub async fn rename_account(&self, account_id: String, display_name: String) -> CoreResult<()> {
         self.blocking(move |engine| engine.rename_account(&account_id, &display_name))
+            .await
+    }
+
+    pub async fn set_account_color(&self, account_id: String, color: u32) -> CoreResult<()> {
+        self.blocking(move |engine| engine.set_account_color(&account_id, color))
             .await
     }
 
@@ -734,7 +887,6 @@ impl MailCore {
         ))
     }
 
-    /// `category` keeps the threads of that category only; `None` lists them all.
     pub async fn list_threads(
         &self,
         scope: ThreadScope,
@@ -780,7 +932,6 @@ impl MailCore {
         ))
     }
 
-    /// Syncs the inboxes within `budget_ms` and returns the unread messages not notified yet.
     pub async fn check_new_mail(&self, budget_ms: u32) -> CoreResult<Vec<NewMessage>> {
         let budget = Duration::from_millis(budget_ms.into());
         let found = self
@@ -836,7 +987,6 @@ impl MailCore {
             .await
     }
 
-    /// Every mailbox when `mailbox_ids` is empty.
     pub async fn search(
         &self,
         query: String,
@@ -856,7 +1006,6 @@ impl MailCore {
             .collect())
     }
 
-    /// Moves every message from `sender`, past and future, to `category`.
     pub async fn set_sender_category(&self, sender: String, category: Category) -> CoreResult<()> {
         self.blocking(move |engine| engine.set_sender_category(&sender, category.into()))
             .await

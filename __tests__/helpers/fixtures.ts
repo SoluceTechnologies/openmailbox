@@ -1,4 +1,5 @@
 import {
+  Authentication,
   Category,
   MailboxRole,
   Security,
@@ -25,6 +26,7 @@ export function makeAccount(overrides: Partial<Account> = {}): Account {
     imap: { host: 'imap.example.com', port: 993, security: Security.Tls },
     smtp: { host: 'smtp.example.com', port: 465, security: Security.Tls },
     color: 0,
+    authentication: Authentication.Password,
     ...overrides,
   };
 }

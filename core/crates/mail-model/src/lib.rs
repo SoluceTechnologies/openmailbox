@@ -18,6 +18,10 @@ pub enum Error {
     NotFound,
     #[error("invalid input: {0}")]
     InvalidInput(String),
+    #[error("cancelled")]
+    Cancelled,
+    #[error("account already added")]
+    AccountExists,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -45,6 +49,49 @@ impl Security {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Authentication {
+    Password,
+    Microsoft,
+    Google,
+    Server,
+}
+
+impl Authentication {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Authentication::Password => "password",
+            Authentication::Microsoft => "microsoft",
+            Authentication::Google => "google",
+            Authentication::Server => "server",
+        }
+    }
+
+    pub fn parse(value: &str) -> Authentication {
+        match value {
+            "microsoft" => Authentication::Microsoft,
+            "google" => Authentication::Google,
+            "server" => Authentication::Server,
+            _ => Authentication::Password,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OAuthServer {
+    pub issuer: String,
+    pub authorization_endpoint: String,
+    pub token_endpoint: String,
+    pub client_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Credential {
+    Password(String),
+    AccessToken(String),
+    OAuthBearer(String),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ServerEndpoint {
     pub host: String,
@@ -57,6 +104,7 @@ pub struct ServerConfig {
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
     pub username: String,
+    pub smtp_username: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -64,6 +112,7 @@ pub struct AccountConfig {
     pub email: String,
     pub display_name: String,
     pub username: String,
+    pub smtp_username: Option<String>,
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
 }
@@ -74,13 +123,20 @@ pub struct Account {
     pub email: String,
     pub display_name: String,
     pub username: String,
+    pub smtp_username: Option<String>,
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
     pub color: u32,
     pub created_at: i64,
+    pub authentication: Authentication,
+    pub oauth_server: Option<OAuthServer>,
 }
 
 impl Account {
+    pub fn outgoing_username(&self) -> &str {
+        self.smtp_username.as_deref().unwrap_or(&self.username)
+    }
+
     pub fn is_gmail(&self) -> bool {
         self.imap.host.ends_with("gmail.com") || self.imap.host.ends_with("googlemail.com")
     }
@@ -194,7 +250,6 @@ pub struct Flags {
     pub deleted: bool,
 }
 
-/// A message found by search, with the mailbox to open it in.
 #[derive(Debug, Clone)]
 pub struct SearchHit {
     pub email: EmailSummary,
@@ -216,6 +271,7 @@ pub struct EmailSummary {
     pub is_flagged: bool,
     pub is_answered: bool,
     pub has_attachment: bool,
+    pub original_sender: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -238,9 +294,6 @@ pub enum ThreadScope {
     Mailbox(i64),
 }
 
-/// Criteria for a thread list. Within `unread`/`flagged` and within `to_me`/`cc_me` a thread
-/// needs any of the set ones; every other criterion must also hold. `keep_thread_ids` are
-/// listed whatever the criteria.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ThreadFilter {
     pub unread: bool,
@@ -253,7 +306,6 @@ pub struct ThreadFilter {
     pub keep_thread_ids: Vec<i64>,
 }
 
-/// An unread inbox message that arrived since the last background check.
 #[derive(Debug, Clone)]
 pub struct NewMessage {
     pub mailbox_id: i64,
@@ -283,7 +335,6 @@ pub struct RenderedBody {
     pub unsubscribe: Option<Unsubscribe>,
 }
 
-/// The ways a mailing list offers to unsubscribe (RFC 2369 and RFC 8058).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Unsubscribe {
     pub https_url: Option<String>,
@@ -297,7 +348,6 @@ pub enum UnsubscribeOutcome {
     OpenInBrowser { url: String },
 }
 
-/// Largest total size of the files attached to one outgoing message.
 pub const MAX_ATTACHMENTS_BYTES: u64 = 26_214_400;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -344,6 +394,7 @@ pub struct ParsedHeaders {
     pub has_attachment: bool,
     pub preview: Option<String>,
     pub signals: SendingSignals,
+    pub original_sender: Option<String>,
 }
 
 impl ParsedHeaders {
@@ -392,6 +443,10 @@ pub enum CoreEvent {
     OpFailed {
         account_id: String,
         message: String,
+    },
+    SecretChanged {
+        account_id: String,
+        secret: String,
     },
 }
 

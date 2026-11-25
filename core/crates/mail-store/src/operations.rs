@@ -155,7 +155,6 @@ impl Store {
         })
     }
 
-    /// Every account's when `account_id` is `None`.
     pub fn reset_in_flight_operations(&self, account_id: Option<&str>) -> Result<()> {
         self.write(|transaction| {
             transaction

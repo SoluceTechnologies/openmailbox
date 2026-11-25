@@ -9,6 +9,10 @@ notifyManager.setNotifyFunction((notify) => act(notify));
 jest.mock('@/core/mailCore', () => {
   const core = {
     addAccount: jest.fn(),
+    addOauthAccount: jest.fn(),
+    beginAccountSignIn: jest.fn(),
+    beginServerSignIn: jest.fn(),
+    beginSignIn: jest.fn(),
     body: jest.fn(async () => ({ text: '', hasRemoteContent: false, attachments: [] })),
     discover: jest.fn(),
     listAccounts: jest.fn(async () => []),
@@ -20,12 +24,15 @@ jest.mock('@/core/mailCore', () => {
     onBackground: jest.fn(),
     onForeground: jest.fn(),
     openMailbox: jest.fn(async () => undefined),
+    probeOauth: jest.fn(async () => undefined),
+    reauthorize: jest.fn(async () => undefined),
     removeAccount: jest.fn(async () => undefined),
     renameAccount: jest.fn(async () => undefined),
     saveAttachment: jest.fn(),
     search: jest.fn(async () => []),
     suggestAddresses: jest.fn(async () => []),
     send: jest.fn(async () => undefined),
+    setAccountColor: jest.fn(async () => undefined),
     setKeywords: jest.fn(async () => undefined),
     setSenderCategory: jest.fn(async () => undefined),
     setThreadKeywords: jest.fn(async () => undefined),
@@ -35,13 +42,18 @@ jest.mock('@/core/mailCore', () => {
     unsubscribe: jest.fn(async () => ({ tag: "Done" })),
     threadEmails: jest.fn(async () => []),
     unlockAccount: jest.fn(),
-    updatePassword: jest.fn(async () => undefined),
+    unlockSmtp: jest.fn(),
+    updateServers: jest.fn(async () => undefined),
   };
   return {
     mailCore: () => core,
     attachmentsDirectory: () => '/cache/attachments',
   };
 });
+
+jest.mock('expo-web-browser', () => ({
+  openAuthSessionAsync: jest.fn(async () => ({ type: 'cancel' })),
+}));
 
 jest.mock('expo-secure-store', () => {
   const values = new Map();

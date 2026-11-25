@@ -1,10 +1,12 @@
-use mail_model::{Account, Error, Result, Security, ServerEndpoint};
+use mail_model::{Account, Authentication, Error, Result, Security, ServerConfig, ServerEndpoint};
 use rusqlite::{OptionalExtension, Row, params};
 
 use crate::{StorageResult, Store};
 
+const ACCOUNT_COLOR_COUNT: u32 = 12;
+
 const ACCOUNT_COLUMNS: &str = "id, email, display_name, username, imap_host, imap_port, imap_security, \
-     smtp_host, smtp_port, smtp_security, color, created_at";
+     smtp_host, smtp_port, smtp_security, color, created_at, authentication, oauth_server, smtp_username";
 
 fn account_from_row(row: &Row) -> rusqlite::Result<Account> {
     Ok(Account {
@@ -12,6 +14,7 @@ fn account_from_row(row: &Row) -> rusqlite::Result<Account> {
         email: row.get(1)?,
         display_name: row.get(2)?,
         username: row.get(3)?,
+        smtp_username: row.get(14)?,
         imap: ServerEndpoint {
             host: row.get(4)?,
             port: row.get(5)?,
@@ -24,13 +27,14 @@ fn account_from_row(row: &Row) -> rusqlite::Result<Account> {
         },
         color: row.get(10)?,
         created_at: row.get(11)?,
+        authentication: Authentication::parse(&row.get::<_, String>(12)?),
+        oauth_server: row
+            .get::<_, Option<String>>(13)?
+            .and_then(|json| serde_json::from_str(&json).ok()),
     })
 }
 
 impl Store {
-    /// The notification watermark: messages received at or after this time, and stored after this
-    /// email id, have not been notified. Dates from servers often have one-second precision, so the
-    /// time alone cannot tell apart two messages received in the same second.
     pub fn notified_until(&self, account_id: &str) -> Result<(i64, i64)> {
         self.read()
             .query_row(
@@ -57,7 +61,6 @@ impl Store {
         })
     }
 
-    /// Moves the notification watermark past every message already in the account's inbox.
     pub fn advance_notified_until(&self, account_id: &str) -> Result<()> {
         self.write(|transaction| {
             transaction
@@ -85,7 +88,7 @@ impl Store {
         self.write(|transaction| {
             transaction
                 .execute(
-                    &format!("INSERT INTO account ({ACCOUNT_COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)"),
+                    &format!("INSERT INTO account ({ACCOUNT_COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)"),
                     params![
                         account.id,
                         account.email,
@@ -99,6 +102,12 @@ impl Store {
                         account.smtp.security.as_str(),
                         account.color,
                         account.created_at,
+                        account.authentication.as_str(),
+                        account
+                            .oauth_server
+                            .as_ref()
+                            .and_then(|server| serde_json::to_string(server).ok()),
+                        account.smtp_username,
                     ],
                 )
                 .storage()?;
@@ -133,15 +142,44 @@ impl Store {
             .ok_or(Error::NotFound)
     }
 
+    pub fn has_account_for(&self, email: &str) -> Result<bool> {
+        self.read()
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM account WHERE lower(email) = lower(trim(?1)))",
+                [email],
+                |row| row.get(0),
+            )
+            .storage()
+    }
+
     pub fn next_account_color(&self) -> Result<u32> {
         let connection = self.read();
         connection
             .query_row(
-                "SELECT COALESCE(MAX(color) + 1, 0) FROM account",
-                [],
+                "WITH RECURSIVE palette(color) AS (
+                   SELECT 0 UNION ALL SELECT color + 1 FROM palette WHERE color + 1 < ?1
+                 )
+                 SELECT palette.color FROM palette
+                 LEFT JOIN account ON account.color % ?1 = palette.color
+                 GROUP BY palette.color
+                 ORDER BY COUNT(account.id), random()
+                 LIMIT 1",
+                [ACCOUNT_COLOR_COUNT],
                 |row| row.get(0),
             )
             .storage()
+    }
+
+    pub fn set_account_color(&self, account_id: &str, color: u32) -> Result<()> {
+        self.write(|transaction| {
+            transaction
+                .execute(
+                    "UPDATE account SET color = ?2 WHERE id = ?1",
+                    params![account_id, color % ACCOUNT_COLOR_COUNT],
+                )
+                .storage()?;
+            Ok(())
+        })
     }
 
     pub fn rename_account(&self, account_id: &str, display_name: &str) -> Result<()> {
@@ -150,6 +188,31 @@ impl Store {
                 .execute(
                     "UPDATE account SET display_name = ?2 WHERE id = ?1",
                     params![account_id, display_name],
+                )
+                .storage()?;
+            Ok(())
+        })
+    }
+
+    pub fn update_servers(&self, account_id: &str, servers: &ServerConfig) -> Result<()> {
+        self.write(|transaction| {
+            transaction
+                .execute(
+                    "UPDATE account SET username = ?2, smtp_username = ?3,
+                       imap_host = ?4, imap_port = ?5, imap_security = ?6,
+                       smtp_host = ?7, smtp_port = ?8, smtp_security = ?9
+                     WHERE id = ?1",
+                    params![
+                        account_id,
+                        servers.username,
+                        servers.smtp_username,
+                        servers.imap.host,
+                        servers.imap.port,
+                        servers.imap.security.as_str(),
+                        servers.smtp.host,
+                        servers.smtp.port,
+                        servers.smtp.security.as_str(),
+                    ],
                 )
                 .storage()?;
             Ok(())
@@ -165,3 +228,7 @@ impl Store {
         })
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/mail_store/accounts.rs"]
+mod tests;

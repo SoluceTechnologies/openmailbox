@@ -1,13 +1,17 @@
-import { useCallback, useDeferredValue, useState, type ComponentProps } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { FlashList } from '@shopify/flash-list';
 import { ChevronRight, Reply, Search } from 'lucide-react-native';
-import type { SearchHit } from '@openmailbox/mail-core';
+import { Category, type SearchHit, type ThreadSummary } from '@openmailbox/mail-core';
 
 import { useSearch } from '@/core/hooks';
 import { ContactAvatar } from '@/features/avatars/ContactAvatar';
+import { MailboxPicker } from '@/features/mailboxes/components/MailboxPicker';
+import { SwipeableThreadRow } from '@/features/threads/components/SwipeableThreadRow';
+import { ThreadActionSheet } from '@/features/threads/components/ThreadActionSheet';
+import { useThreadActions } from '@/features/threads/useThreadActions';
 import { EmptyState, Typography } from '@/ui/components';
 import { SegmentedPicker } from '@/ui/SegmentedPicker';
 import { displayName } from '@/utils/addresses';
@@ -15,6 +19,20 @@ import { formatListDate } from '@/utils/dates';
 import { highlightParts, snippetAround } from '@/utils/highlight';
 
 type Scope = 'all' | 'current';
+
+const threadOfHit = ({ email, mailboxId }: SearchHit): ThreadSummary => ({
+  key: `${mailboxId}:${email.id}`,
+  threadId: email.threadId,
+  mailboxId,
+  accountId: email.accountId,
+  latest: email,
+  messageCount: 1,
+  unreadCount: email.isSeen ? 0 : 1,
+  isFlagged: email.isFlagged,
+  hasAttachment: email.hasAttachment,
+  lastReceivedAt: email.receivedAt,
+  category: Category.Primary,
+});
 
 function Highlighted({ text, query, ...rest }: { text: string; query: string } & ComponentProps<typeof Typography>) {
   const { colors } = useTheme();
@@ -33,17 +51,17 @@ function Highlighted({ text, query, ...rest }: { text: string; query: string } &
   );
 }
 
-function SearchResultRow({ hit, query, onOpen }: { hit: SearchHit; query: string; onOpen: (hit: SearchHit) => void }) {
+function SearchResultRow({ thread, query, onOpen }: { thread: ThreadSummary; query: string; onOpen: (thread: ThreadSummary) => void }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { email } = hit;
+  const email = thread.latest;
   const sender = email.from[0];
   const senderName = displayName(sender) || t('threads.unknownSender');
 
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => onOpen(hit)}
+      onPress={() => onOpen(thread)}
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.pressed : colors.background }]}
     >
       <View style={styles.indicator}>
@@ -53,7 +71,7 @@ function SearchResultRow({ hit, query, onOpen }: { hit: SearchHit; query: string
           <Reply size={15} strokeWidth={2.5} color={colors.primary} />
         ) : null}
       </View>
-      <ContactAvatar email={sender?.email} name={senderName} size={40} />
+      <ContactAvatar email={email.originalSender ?? sender?.email} name={senderName} size={40} />
       <View style={[styles.content, { borderBottomColor: colors.border }]}>
         <View style={styles.line}>
           <Highlighted
@@ -94,50 +112,81 @@ export function SearchResults({ query, currentMailboxIds }: SearchResultsProps) 
   const [scope, setScope] = useState<Scope>('all');
   const deferredQuery = useDeferredValue(query);
   const results = useSearch(deferredQuery, scope === 'current' && currentMailboxIds ? currentMailboxIds : undefined);
-  const hits = results.data ?? [];
+  const threads = useMemo(() => (results.data ?? []).map(threadOfHit), [results.data]);
+  const [sheetThread, setSheetThread] = useState<ThreadSummary | null>(null);
+  const [moving, setMoving] = useState<ThreadSummary | null>(null);
+  const { run, actionsFor, moveTo } = useThreadActions(setMoving);
+  const actionsOf = useCallback((thread: ThreadSummary) => actionsFor(thread).filter((action) => action !== 'categorize'), [actionsFor]);
 
   const open = useCallback(
-    (hit: SearchHit) =>
-      router.push({ pathname: '/thread/[threadId]', params: { threadId: hit.email.threadId, mailboxId: hit.mailboxId } }),
+    (thread: ThreadSummary) =>
+      router.push({ pathname: '/thread/[threadId]', params: { threadId: thread.threadId, mailboxId: thread.mailboxId } }),
     [router],
   );
 
+  const renderItem = useCallback(
+    ({ item }: { item: ThreadSummary }) => {
+      const actions = actionsOf(item);
+      return (
+        <SwipeableThreadRow thread={item} canArchive={actions.includes('archive')} menuActions={actions} onOpen={open} onAction={run} onMore={setSheetThread}>
+          <SearchResultRow thread={item} query={deferredQuery} onOpen={open} />
+        </SwipeableThreadRow>
+      );
+    },
+    [actionsOf, open, run, deferredQuery],
+  );
+
   return (
-    <FlashList
-      data={hits}
-      keyExtractor={(hit) => hit.email.id}
-      renderItem={({ item }) => <SearchResultRow hit={item} query={deferredQuery} onOpen={open} />}
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="on-drag"
-      contentInsetAdjustmentBehavior="automatic"
-      ListHeaderComponent={
-        <View style={styles.header}>
-          {currentMailboxIds ? (
-            <View style={styles.scope}>
-              <SegmentedPicker
-                accessibilityLabel={t('search.title')}
-                value={scope}
-                onChange={setScope}
-                options={[
-                  { value: 'all', label: t('search.allMailboxes') },
-                  { value: 'current', label: t('search.currentMailbox') },
-                ]}
-              />
-            </View>
-          ) : null}
-          {hits.length > 0 ? (
-            <Typography weight="600" style={[styles.section, { color: colors.textSecondary, borderBottomColor: colors.border }]}>
-              {t('search.topResults')}
-            </Typography>
-          ) : null}
-        </View>
-      }
-      ListEmptyComponent={
-        deferredQuery.trim().length > 1 && !results.isFetching ? (
-          <EmptyState icon={<Search />} title={t('search.noResults')} description={t('search.localOnly')} />
-        ) : null
-      }
-    />
+    <>
+      <FlashList
+        data={threads}
+        keyExtractor={(thread) => thread.key}
+        renderItem={renderItem}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentInsetAdjustmentBehavior="automatic"
+        ListHeaderComponent={
+          <View style={styles.header}>
+            {currentMailboxIds ? (
+              <View style={styles.scope}>
+                <SegmentedPicker
+                  accessibilityLabel={t('search.title')}
+                  value={scope}
+                  onChange={setScope}
+                  options={[
+                    { value: 'all', label: t('search.allMailboxes') },
+                    { value: 'current', label: t('search.currentMailbox') },
+                  ]}
+                />
+              </View>
+            ) : null}
+            {threads.length > 0 ? (
+              <Typography weight="600" style={[styles.section, { color: colors.textSecondary, borderBottomColor: colors.border }]}>
+                {t('search.topResults')}
+              </Typography>
+            ) : null}
+          </View>
+        }
+        ListEmptyComponent={
+          deferredQuery.trim().length > 1 && !results.isFetching ? (
+            <EmptyState icon={<Search />} title={t('search.noResults')} description={t('search.localOnly')} />
+          ) : null
+        }
+      />
+      <ThreadActionSheet
+        thread={sheetThread}
+        actions={sheetThread ? actionsOf(sheetThread) : []}
+        onAction={run}
+        onClose={() => setSheetThread(null)}
+      />
+      <MailboxPicker
+        accountId={moving?.accountId}
+        excludeMailboxId={moving?.mailboxId}
+        visible={moving !== null}
+        onSelect={(target) => moving && moveTo(moving, target)}
+        onClose={() => setMoving(null)}
+      />
+    </>
   );
 }
 

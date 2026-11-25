@@ -1,16 +1,16 @@
 use std::time::Duration;
 
 use lettre::address::Envelope;
-use lettre::transport::smtp::authentication::Credentials;
+use lettre::transport::smtp::authentication::{Credentials, Mechanism};
 use lettre::{AsyncSmtpTransport, AsyncTransport, Tokio1Executor};
-use mail_model::{Error, Result, Security, ServerEndpoint};
+use mail_model::{Credential, Error, Result, Security, ServerEndpoint};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
 fn transport(
     endpoint: &ServerEndpoint,
     username: &str,
-    password: &str,
+    credential: &Credential,
 ) -> Result<AsyncSmtpTransport<Tokio1Executor>> {
     let builder = match endpoint.security {
         Security::Tls => AsyncSmtpTransport::<Tokio1Executor>::relay(&endpoint.host),
@@ -34,11 +34,16 @@ fn transport(
         }
         None => builder,
     };
-    Ok(builder
-        .port(endpoint.port)
-        .timeout(Some(TIMEOUT))
-        .credentials(Credentials::new(username.to_owned(), password.to_owned()))
-        .build())
+    let builder = builder.port(endpoint.port).timeout(Some(TIMEOUT));
+    Ok(match credential {
+        Credential::Password(password) => {
+            builder.credentials(Credentials::new(username.to_owned(), password.to_owned()))
+        }
+        Credential::AccessToken(token) | Credential::OAuthBearer(token) => builder
+            .credentials(Credentials::new(username.to_owned(), token.to_owned()))
+            .authentication(vec![Mechanism::Xoauth2]),
+    }
+    .build())
 }
 
 fn map_error(error: lettre::transport::smtp::Error) -> Error {
@@ -48,7 +53,7 @@ fn map_error(error: lettre::transport::smtp::Error) -> Error {
             .status()
             .is_some_and(|code| code.to_string().starts_with("53"))
         {
-            return Error::Auth;
+            return rejection(message);
         }
         return Error::Server(message);
     }
@@ -56,8 +61,20 @@ fn map_error(error: lettre::transport::smtp::Error) -> Error {
     Error::Network(error.to_string())
 }
 
-pub async fn verify(endpoint: &ServerEndpoint, username: &str, password: &str) -> Result<()> {
-    let connected = transport(endpoint, username, password)?
+fn rejection(message: String) -> Error {
+    if message.contains("5.7.139") {
+        Error::Server(message)
+    } else {
+        Error::Auth
+    }
+}
+
+pub async fn verify(
+    endpoint: &ServerEndpoint,
+    username: &str,
+    credential: &Credential,
+) -> Result<()> {
+    let connected = transport(endpoint, username, credential)?
         .test_connection()
         .await
         .map_err(map_error)?;
@@ -71,7 +88,7 @@ pub async fn verify(endpoint: &ServerEndpoint, username: &str, password: &str) -
 pub async fn send(
     endpoint: &ServerEndpoint,
     username: &str,
-    password: &str,
+    credential: &Credential,
     envelope_from: &str,
     recipients: &[String],
     raw: &[u8],
@@ -87,9 +104,13 @@ pub async fn send(
         .collect::<Result<Vec<_>>>()?;
     let envelope = Envelope::new(Some(parse(envelope_from)?), recipients)
         .map_err(|error| Error::InvalidInput(error.to_string()))?;
-    transport(endpoint, username, password)?
+    transport(endpoint, username, credential)?
         .send_raw(&envelope, raw)
         .await
         .map_err(map_error)?;
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "../../../tests/proto_smtp/lib.rs"]
+mod tests;

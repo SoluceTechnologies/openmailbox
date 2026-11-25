@@ -10,6 +10,7 @@ import { IconButton, Typography, ViewContainer } from '@/ui/components';
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
 
 import { ovhProvider, PROVIDERS, type MailProvider } from '../providers';
+import { useOAuthSignIn } from '../useOAuthSignIn';
 import { OvhOfferPicker } from './OvhOfferPicker';
 import { LanguageSelect } from './LanguageSelect';
 import { MadeWithLove, ProviderList } from './ProviderList';
@@ -27,6 +28,8 @@ export function AccountSetupFlow({ onDone, onClose }: AccountSetupFlowProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [provider, setProvider] = useState<MailProvider | null>(null);
+  const oauth = useOAuthSignIn(onDone);
+  const select = (chosen: MailProvider) => (chosen.oauthOnly ? oauth.signIn(chosen) : setProvider(chosen));
   const choosingOvhOffer = provider?.identifier === 'ovhcloud' && !provider.servers;
 
   const back = useCallback(
@@ -43,7 +46,6 @@ export function AccountSetupFlow({ onDone, onClose }: AccountSetupFlowProps) {
     return () => subscription.remove();
   }, [provider, back]);
 
-  // On iOS, the Add Account sheet uses the native header like the other sheets.
   const nativeModal = NATIVE_CHROME && onClose !== undefined;
   const welcome = !provider && !onClose;
   const title = welcome
@@ -111,9 +113,9 @@ export function AccountSetupFlow({ onDone, onClose }: AccountSetupFlowProps) {
             {choosingOvhOffer ? (
               <OvhOfferPicker onSelect={(offer) => setProvider(ovhProvider(offer))} />
             ) : provider ? (
-              <SignInForm key={`${provider.identifier}:${provider.servers?.imap.host ?? ''}`} provider={provider} onDone={onDone} />
+              <SignInForm key={`${provider.identifier}:${provider.servers?.imap.host ?? ''}`} provider={provider} nativeChrome={nativeModal} onDone={onDone} />
             ) : (
-              <ProviderList onSelect={setProvider} />
+              <ProviderList onSelect={select} pending={oauth.pending} error={oauth.error} />
             )}
           </ScrollView>
 

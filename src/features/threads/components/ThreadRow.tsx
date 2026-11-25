@@ -54,7 +54,7 @@ function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress, selected }:
           <Reply size={15} strokeWidth={2.5} color={colors.primary} />
         ) : null}
       </View>
-      <ContactAvatar email={sender?.email} name={senderName} size={40} />
+      <ContactAvatar email={thread.latest.originalSender ?? sender?.email} name={senderName} size={40} />
       <View style={[styles.content, { borderBottomColor: colors.border }]}>
         <View style={styles.line}>
           {accountAccent ? <View style={[styles.accountDot, { backgroundColor: accountAccent }]} /> : null}

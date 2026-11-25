@@ -69,8 +69,6 @@ export function useThreads(scope: string, filter: ThreadFilter, category?: Categ
   return useInfiniteQuery({
     ...threadsQuery(scope, filter, category, keep),
     select: flattenThreadPages,
-    // Another category or the unread filter keeps the list on screen until its threads are read,
-    // rather than flashing a spinner.
     placeholderData: keepPreviousData,
   });
 }

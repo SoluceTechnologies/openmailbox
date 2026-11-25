@@ -9,14 +9,20 @@
   "accounts": {
     "add": "Añadir cuenta",
     "accountName": "Cuenta",
+    "color": "Color",
+    "colorHint": "Identifica esta cuenta en la lista de buzones y en Todas las bandejas.",
     "moveDown": "Bajar",
     "moveUp": "Subir",
     "namesHint": "El nombre de la cuenta solo se muestra en Open Mailbox. Los destinatarios ven el nombre del remitente.",
-    "newPassword": "Contraseña",
+    "outgoingPassword": "Contraseña de salida",
+    "outgoingUsername": "Usuario de salida",
+    "oauthHint": "Sesión iniciada con {{provider}}. Vuelve a iniciar sesión si el correo deja de sincronizarse.",
     "password": "Contraseña",
     "passwordHint": "Usa la contraseña, o la contraseña de aplicación, de esta cuenta de correo.",
-    "passwordUpdated": "Contraseña actualizada.",
     "reconnectRequired": "El servidor ha rechazado la contraseña. Vuelve a introducirla para reanudar la sincronización.",
+    "signInAgain": "Volver a iniciar sesión",
+    "signInRequired": "{{provider}} pide que vuelvas a iniciar sesión para seguir sincronizando.",
+    "signedIn": "Sesión iniciada.",
     "reorderHint": "Mantén pulsada una cuenta y arrástrala para cambiar el orden de las cuentas en Buzones.",
     "defaultAccount": "Cuenta predeterminada",
     "defaultAccountHint": "Los mensajes nuevos redactados desde Todas las bandejas o compartidos desde otra app se envían desde esta cuenta.",
@@ -32,7 +38,6 @@
       "appPasswordHint": "{{provider}} solo acepta contraseñas de aplicación en las apps de correo.",
       "appPasswordLink": "Crear una contraseña de aplicación",
       "appPasswordPlaceholder": "Contraseña de aplicación",
-      "authentication": "Autenticación",
       "chooseProvider": "Añadir cuenta",
       "connectingTo": "Conectando con {{host}}…",
       "development": "Desarrollo",
@@ -44,7 +49,13 @@
       "host": "Servidor",
       "incoming": "Correo entrante (IMAP)",
       "localServerHint": "Servidor de pruebas GreenMail local",
+      "localStalwartHint": "Servidor de pruebas Stalwart local (OAuth)",
       "manual": "Configurar los servidores manualmente",
+      "microsoftHint": "Outlook, Hotmail, Live, Microsoft 365",
+      "googleHint": "Gmail, Google Workspace",
+      "icloudHint": "icloud.com, me.com, mac.com",
+      "ovhHint": "MX Plan, Email Pro, Exchange, Zimbra",
+      "oauthPrivacy": "Inicias sesión en la página de {{provider}}: la app nunca ve tu contraseña.",
       "name": "Nombre",
       "namePlaceholder": "Visible para los destinatarios",
       "otherAccountTitle": "Cuenta de correo",
@@ -55,6 +66,7 @@
       "ovhOfferTitle": "Tu oferta de OVHcloud",
       "password": "Contraseña",
       "port": "Puerto",
+      "sameAsIncoming": "Igual que el entrante",
       "privacy": "Tu contraseña se queda en este dispositivo y solo se envía a tus servidores de correo.",
       "providerAccountTitle": "Cuenta de {{provider}}",
       "providerFooter": "Cualquier cuenta IMAP y SMTP se puede añadir con Otra.",
@@ -62,6 +74,9 @@
       "security": "Seguridad",
       "showPassword": "Mostrar contraseña",
       "signIn": "Iniciar sesión",
+      "signInWith": "Iniciar sesión con {{provider}}",
+      "useAppPassword": "Usar una contraseña de aplicación",
+      "usePassword": "Usar una contraseña",
       "username": "Usuario",
       "welcome": "Te damos la bienvenida a Open Mailbox",
       "welcomeHint": "Añade una cuenta de correo para empezar. Tus mensajes se guardan solo en este dispositivo.",
@@ -82,7 +97,9 @@
     "invalidIdentityEmail": "Introduce una dirección de correo válida.",
     "identityExists": "Esta cuenta ya envía desde esta dirección.",
     "syncNow": "Buscar correo nuevo",
-    "updatePassword": "Actualizar contraseña"
+    "serverSettings": "Ajustes del servidor",
+    "unchanged": "Sin cambios",
+    "saveServers": "Guardar"
   },
   "categories": {
     "all": "Todo el correo",
@@ -93,6 +110,21 @@
     "promotions": "Promociones",
     "transactions": "Transacciones",
     "updates": "Actualizaciones"
+  },
+  "colors": {
+    "black": "Negro",
+    "grey": "Gris",
+    "red": "Rojo",
+    "orange": "Naranja",
+    "yellow": "Amarillo",
+    "green": "Verde",
+    "blue": "Azul",
+    "purple": "Morado",
+    "pink": "Rosa",
+    "cyan": "Cian",
+    "indigo": "Índigo",
+    "brown": "Marrón",
+    "mint": "Menta"
   },
   "common": {
     "back": "Atrás",
@@ -145,6 +177,7 @@
     "yesterday": "Ayer"
   },
   "errors": {
+    "accountExists": "Esta cuenta ya está añadida.",
     "auth": "El servidor ha rechazado la dirección o la contraseña.",
     "generic": "Se ha producido un error. Inténtalo de nuevo.",
     "invalidInput": "Valor no válido: {{message}}",
@@ -188,6 +221,7 @@
     "openLink": "Abrir",
     "openLinkTitle": "¿Abrir este enlace?",
     "remoteContentBlocked": "Las imágenes remotas están bloqueadas.",
+    "searchFor": "Buscar «{{name}}»",
     "share": "Compartir",
     "threadGone": "Esta conversación ya no está disponible.",
     "toRecipients": "Para: {{recipients}}",
@@ -228,6 +262,12 @@
       "light": "Claro",
       "system": "Automático"
     },
+    "timeFormat": "Formato de hora",
+    "timeFormats": {
+      "12h": "12 horas",
+      "24h": "24 horas",
+      "system": "Automático"
+    },
     "title": "Ajustes"
   },
   "signature": {
@@ -235,17 +275,6 @@
     "bulletList": "Lista con viñetas",
     "clearFormatting": "Borrar formato",
     "codePlaceholder": "Escribe el HTML aquí…",
-    "colors": {
-      "black": "Negro",
-      "grey": "Gris",
-      "red": "Rojo",
-      "orange": "Naranja",
-      "yellow": "Amarillo",
-      "green": "Verde",
-      "blue": "Azul",
-      "purple": "Morado",
-      "pink": "Rosa"
-    },
     "highlight": "Resaltar",
     "italic": "Cursiva",
     "link": "Enlace",

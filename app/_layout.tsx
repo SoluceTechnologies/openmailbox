@@ -34,7 +34,13 @@ function Navigator() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen
         name="compose"
-        options={({ route }) => modalHeader(t(composeTitleKey((route.params as { mode?: ComposeMode } | undefined)?.mode)))}
+        getId={({ params }) => (params as { mailto?: string } | undefined)?.mailto}
+        options={({ route }) => ({
+          ...modalHeader(t(composeTitleKey((route.params as { mode?: ComposeMode } | undefined)?.mode))),
+          headerTransparent: false,
+          headerStyle: { backgroundColor: colors.background },
+          headerShadowVisible: false,
+        })}
       />
       <Stack.Screen name="accounts/add" options={modalHeader(t('accounts.setup.chooseProvider'), colors.groupedBackground)} />
       <Stack.Screen

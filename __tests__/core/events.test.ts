@@ -2,6 +2,7 @@ import { Alert } from 'react-native';
 import { CoreEvent, SyncErrorKind, SyncStatus } from '@openmailbox/mail-core';
 
 import { CoreEventListener } from '@/core/events';
+import { readSecret } from '@/core/secrets';
 import { EMPTY_THREAD_FILTER } from '@/core/hooks';
 import { queryClient, queryKeys } from '@/core/queryClient';
 import { useSyncStore } from '@/stores/syncStore';
@@ -38,6 +39,11 @@ describe('core events', () => {
     expect(invalidated(queryKeys.newestUnread('mailbox-archive'))).toBe(false);
     expect(invalidated(queryKeys.search('atlas', []))).toBe(true);
     expect(invalidated(queryKeys.accounts)).toBe(false);
+  });
+
+  it('keeps a new sign-in token in the keychain', async () => {
+    listener.onEvent(new CoreEvent.SecretChanged({ accountId: 'account-1', secret: 'refresh-2' }));
+    expect(await readSecret('account-1')).toBe('refresh-2');
   });
 
   it('refreshes accounts when they change', () => {

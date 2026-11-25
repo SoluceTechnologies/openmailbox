@@ -76,7 +76,6 @@ export interface Theme {
 
 declare global {
   namespace ReactNavigation {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface Theme {
       dark: boolean;
       colors: ThemeColors;
@@ -147,10 +146,23 @@ const darkColors: ThemeColors = {
   highlight: '#5c4d00',
 };
 
-export const ACCOUNT_COLORS = ['#109be6', '#34c759', '#ff9500', '#af52de', '#ff2d55', '#5ac8fa', '#ffcc00', '#8e8e93'];
+export const ACCOUNT_COLORS = [
+  { name: 'blue', hex: '#109be6' },
+  { name: 'green', hex: '#34c759' },
+  { name: 'orange', hex: '#ff9500' },
+  { name: 'purple', hex: '#af52de' },
+  { name: 'pink', hex: '#ff2d55' },
+  { name: 'cyan', hex: '#5ac8fa' },
+  { name: 'yellow', hex: '#ffcc00' },
+  { name: 'grey', hex: '#8e8e93' },
+  { name: 'indigo', hex: '#5856d6' },
+  { name: 'red', hex: '#ff3b30' },
+  { name: 'brown', hex: '#a2845e' },
+  { name: 'mint', hex: '#00c7be' },
+] as const;
 
 export function accountColor(index: number): string {
-  return ACCOUNT_COLORS[index % ACCOUNT_COLORS.length];
+  return ACCOUNT_COLORS[index % ACCOUNT_COLORS.length].hex;
 }
 
 const AVATAR_COLORS = ['#5e8bde', '#3fae8c', '#d9822b', '#9b6bd3', '#d4577b', '#4aa3c9', '#8a9a3b', '#c46a4f'];

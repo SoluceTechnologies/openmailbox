@@ -5,6 +5,7 @@ import { zustandStorage } from '@/storage';
 import type { InboxFilter } from '@/features/categories/categories';
 import { DEFAULT_FILTER_CRITERIA, type FilterCriteria } from '@/features/threads/threadFilter';
 import { linkedHtml } from '@/features/composer/prefill';
+import type { TimeFormat } from '@/utils/dates';
 import { getInitialLanguage, type AppLanguage } from '@/utils/i18n';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
@@ -41,6 +42,7 @@ function withText(texts: Record<string, string>, accountId: string, text: string
 interface SettingsState {
   themePreference: ThemePreference;
   language: AppLanguage;
+  timeFormat: TimeFormat;
   hapticsEnabled: boolean;
   reduceMotion: boolean;
   loadRemoteImages: boolean;
@@ -60,6 +62,7 @@ interface SettingsState {
   filterCriteria: FilterCriteria;
   setThemePreference: (preference: ThemePreference) => void;
   setLanguage: (language: AppLanguage) => void;
+  setTimeFormat: (timeFormat: TimeFormat) => void;
   setHapticsEnabled: (enabled: boolean) => void;
   setLoadRemoteImages: (enabled: boolean) => void;
   setContactPictures: (enabled: boolean) => void;
@@ -85,6 +88,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       themePreference: 'system',
       language: getInitialLanguage(),
+      timeFormat: 'system',
       hapticsEnabled: true,
       reduceMotion: false,
       loadRemoteImages: false,
@@ -104,6 +108,7 @@ export const useSettingsStore = create<SettingsState>()(
       filterCriteria: DEFAULT_FILTER_CRITERIA,
       setThemePreference: (themePreference) => set({ themePreference }),
       setLanguage: (language) => set({ language }),
+      setTimeFormat: (timeFormat) => set({ timeFormat }),
       setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
       setLoadRemoteImages: (loadRemoteImages) => set({ loadRemoteImages }),
       setContactPictures: (contactPictures) => set({ contactPictures }),
@@ -173,6 +178,7 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: ({
         themePreference,
         language,
+        timeFormat,
         hapticsEnabled,
         reduceMotion,
         loadRemoteImages,
@@ -193,6 +199,7 @@ export const useSettingsStore = create<SettingsState>()(
       }) => ({
         themePreference,
         language,
+        timeFormat,
         hapticsEnabled,
         reduceMotion,
         loadRemoteImages,

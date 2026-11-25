@@ -5,7 +5,9 @@ use async_imap::extensions::idle::IdleResponse;
 use async_imap::imap_proto::NameAttribute;
 use async_imap::types::{Fetch, Flag};
 use futures::TryStreamExt;
-use mail_model::{Error, Flags, MailboxRole, RemoteMailbox, Result, Security, ServerEndpoint};
+use mail_model::{
+    Credential, Error, Flags, MailboxRole, RemoteMailbox, Result, Security, ServerEndpoint,
+};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio_rustls::TlsConnector;
@@ -14,19 +16,17 @@ use tokio_rustls::rustls::pki_types::ServerName;
 
 const NETWORK_TIMEOUT: Duration = Duration::from_secs(45);
 const NOOP_TIMEOUT: Duration = Duration::from_secs(10);
-/// The slowest uplink a large upload is given time for.
 const SLOW_UPLINK_BYTES_PER_SECOND: u64 = 32 * 1024;
 const SUMMARY_HEADER_FIELDS: &str = "DATE FROM TO CC REPLY-TO SUBJECT MESSAGE-ID IN-REPLY-TO REFERENCES \
      CONTENT-TYPE CONTENT-TRANSFER-ENCODING MIME-VERSION \
      LIST-UNSUBSCRIBE LIST-UNSUBSCRIBE-POST LIST-ID PRECEDENCE AUTO-SUBMITTED X-AUTO-RESPONSE-SUPPRESS \
-     X-MAILER X-CSA-COMPLAINTS X-CAMPAIGN X-CAMPAIGNID X-MAILIN-CAMPAIGN X-MAILJET-CAMPAIGN";
+     X-MAILER X-CSA-COMPLAINTS X-CAMPAIGN X-CAMPAIGNID X-MAILIN-CAMPAIGN X-MAILJET-CAMPAIGN \
+     X-SIMPLELOGIN-ORIGINAL-FROM X-ANONADDY-ORIGINAL-SENDER";
 const PREVIEW_BYTES: u32 = 2048;
-/// Without partial fetches, previews come from whole texts, so only small messages get one.
 const WHOLE_TEXT_PREVIEW_MAX_SIZE: u32 = 16 * 1024;
 
 type Session = async_imap::Session<TlsStream<TcpStream>>;
 
-/// Hosts whose FETCH responses for partial sections (`BODY[TEXT]<0>`) cannot be parsed.
 static HOSTS_WITHOUT_PARTIAL_FETCH: LazyLock<std::sync::Mutex<std::collections::HashSet<String>>> =
     LazyLock::new(Default::default);
 
@@ -57,6 +57,7 @@ pub struct Capabilities {
     pub idle: bool,
     pub move_command: bool,
     pub uidplus: bool,
+    pub preview: bool,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -76,6 +77,7 @@ pub struct FetchedSummary {
     pub size: u32,
     pub header: Vec<u8>,
     pub text: Vec<u8>,
+    pub preview: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -134,11 +136,134 @@ fn network(error: std::io::Error) -> Error {
     Error::Network(error.to_string())
 }
 
-pub async fn connect(
+pub fn xoauth2(username: &str, token: &str) -> String {
+    format!("user={username}\x01auth=Bearer {token}\x01\x01")
+}
+
+pub fn oauthbearer(username: &str, endpoint: &ServerEndpoint, token: &str) -> String {
+    format!(
+        "n,a={username},\x01host={}\x01port={}\x01auth=Bearer {token}\x01\x01",
+        endpoint.host, endpoint.port
+    )
+}
+
+struct OAuthBearer {
+    payload: Option<String>,
+    challenge: Arc<std::sync::Mutex<Option<Vec<u8>>>>,
+}
+
+impl async_imap::Authenticator for OAuthBearer {
+    type Response = Vec<u8>;
+
+    fn process(&mut self, challenge: &[u8]) -> Vec<u8> {
+        match self.payload.take() {
+            Some(payload) => payload.into_bytes(),
+            None => {
+                *self
+                    .challenge
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(challenge.to_vec());
+                b"\x01".to_vec()
+            }
+        }
+    }
+}
+
+fn oauth_configuration_in(challenge: &[u8]) -> Option<String> {
+    serde_json::from_slice::<serde_json::Value>(challenge)
+        .ok()?
+        .get("openid-configuration")?
+        .as_str()
+        .map(str::to_owned)
+}
+
+async fn probe<T>(
+    client: async_imap::Client<T>,
     endpoint: &ServerEndpoint,
     username: &str,
-    password: &str,
-) -> Result<ImapConnection> {
+) -> Option<String>
+where
+    T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + std::fmt::Debug + Send,
+{
+    let challenge = Arc::new(std::sync::Mutex::new(None));
+    let attempt = client.authenticate(
+        "OAUTHBEARER",
+        OAuthBearer {
+            payload: Some(oauthbearer(username, endpoint, "invalid")),
+            challenge: challenge.clone(),
+        },
+    );
+    if let Ok(Ok(mut session)) = tokio::time::timeout(NETWORK_TIMEOUT, attempt).await {
+        let _ = session.logout().await;
+    }
+    let bytes = challenge
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+        .take()?;
+    oauth_configuration_in(&bytes)
+}
+
+pub async fn oauth_configuration(
+    endpoint: &ServerEndpoint,
+    username: &str,
+) -> Result<Option<String>> {
+    let client = open_client(endpoint).await?;
+    Ok(probe(client, endpoint, username).await)
+}
+
+struct XOAuth2(Option<String>);
+
+impl async_imap::Authenticator for XOAuth2 {
+    type Response = String;
+
+    fn process(&mut self, _: &[u8]) -> String {
+        self.0.take().unwrap_or_default()
+    }
+}
+
+async fn log_in<T>(
+    client: async_imap::Client<T>,
+    endpoint: &ServerEndpoint,
+    username: &str,
+    credential: &Credential,
+) -> Result<async_imap::Session<T>>
+where
+    T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + std::fmt::Debug + Send,
+{
+    let attempt = async {
+        match credential {
+            Credential::Password(password) => client.login(username, password).await,
+            Credential::AccessToken(token) => {
+                client
+                    .authenticate("XOAUTH2", XOAuth2(Some(xoauth2(username, token))))
+                    .await
+            }
+            Credential::OAuthBearer(token) => {
+                client
+                    .authenticate(
+                        "OAUTHBEARER",
+                        OAuthBearer {
+                            payload: Some(oauthbearer(username, endpoint, token)),
+                            challenge: Arc::default(),
+                        },
+                    )
+                    .await
+            }
+        }
+    };
+    match tokio::time::timeout(NETWORK_TIMEOUT, attempt).await {
+        Ok(Ok(session)) => Ok(session),
+        Ok(Err((async_imap::error::Error::No(_) | async_imap::error::Error::Bad(_), _))) => {
+            Err(Error::Auth)
+        }
+        Ok(Err((error, _))) => Err(map_error(error)),
+        Err(_) => Err(Error::Network("timed out".into())),
+    }
+}
+
+async fn open_client(
+    endpoint: &ServerEndpoint,
+) -> Result<async_imap::Client<TlsStream<TcpStream>>> {
     let stream = tokio::time::timeout(NETWORK_TIMEOUT, open_tls_stream(endpoint))
         .await
         .map_err(|_| Error::Network("timed out".into()))??;
@@ -152,21 +277,23 @@ pub async fn connect(
         })
         .await?;
     }
-    let mut session =
-        match tokio::time::timeout(NETWORK_TIMEOUT, client.login(username, password)).await {
-            Ok(Ok(session)) => session,
-            Ok(Err((async_imap::error::Error::No(_) | async_imap::error::Error::Bad(_), _))) => {
-                return Err(Error::Auth);
-            }
-            Ok(Err((error, _))) => return Err(map_error(error)),
-            Err(_) => return Err(Error::Network("timed out".into())),
-        };
+    Ok(client)
+}
+
+pub async fn connect(
+    endpoint: &ServerEndpoint,
+    username: &str,
+    credential: &Credential,
+) -> Result<ImapConnection> {
+    let client = open_client(endpoint).await?;
+    let mut session = log_in(client, endpoint, username, credential).await?;
     let capabilities = timed(session.capabilities()).await?;
     let capabilities = Capabilities {
         condstore: capabilities.has_str("CONDSTORE") || capabilities.has_str("QRESYNC"),
         idle: capabilities.has_str("IDLE"),
         move_command: capabilities.has_str("MOVE"),
         uidplus: capabilities.has_str("UIDPLUS"),
+        preview: capabilities.has_str("PREVIEW"),
     };
     Ok(ImapConnection {
         session,
@@ -237,8 +364,12 @@ pub fn uid_set(uids: &[u32]) -> String {
 }
 
 fn flags_of(fetch: &Fetch) -> Flags {
+    flags_from(fetch.flags())
+}
+
+fn flags_from<'a>(names: impl Iterator<Item = Flag<'a>>) -> Flags {
     let mut flags = Flags::default();
-    for flag in fetch.flags() {
+    for flag in names {
         match flag {
             Flag::Seen => flags.seen = true,
             Flag::Flagged => flags.flagged = true,
@@ -264,8 +395,6 @@ fn declared_role(attributes: &[NameAttribute]) -> Option<MailboxRole> {
     })
 }
 
-/// Keeps each role on one mailbox: the one the server declares (SPECIAL-USE) over a name guess,
-/// then the shallowest, so a stray `INBOX.INBOX.Sent` listed first cannot take Sent from `INBOX.Sent`.
 fn keep_one_mailbox_per_role(mailboxes: &mut [RemoteMailbox], declared: &[bool]) {
     let mut best: std::collections::HashMap<MailboxRole, usize> = Default::default();
     for (index, mailbox) in mailboxes.iter().enumerate() {
@@ -403,12 +532,10 @@ impl ImapConnection {
         Ok(())
     }
 
-    /// Whether the connection still answers, within a few seconds.
     pub async fn noop(&mut self) -> Result<()> {
         timed_within(NOOP_TIMEOUT, self.session.noop()).await
     }
 
-    /// The INTERNALDATE of the message at `sequence` in the selected mailbox.
     pub async fn internal_date(&mut self, sequence: u32) -> Result<Option<i64>> {
         let fetches: Vec<Fetch> = timed(async {
             self.session
@@ -443,6 +570,9 @@ impl ImapConnection {
     }
 
     pub async fn fetch_summaries(&mut self, uids: &[u32]) -> Result<Vec<FetchedSummary>> {
+        if self.capabilities.preview {
+            return timed(fetch_summaries_with_preview(&mut self.session, uids)).await;
+        }
         let hosts_without_partial_fetch = || {
             HOSTS_WITHOUT_PARTIAL_FETCH
                 .lock()
@@ -483,6 +613,7 @@ impl ImapConnection {
                     size: fetch.size.unwrap_or_default(),
                     header: fetch.header().unwrap_or_default().to_vec(),
                     text: fetch.text().unwrap_or_default().to_vec(),
+                    preview: None,
                 })
             })
             .collect();
@@ -655,9 +786,6 @@ impl ImapConnection {
     }
 }
 
-/// async-imap ends SELECT, STATUS and SEARCH replies at the end of the stream without an error, so
-/// a connection the server closed half-way reads as an empty mailbox: synced as is, that empties it
-/// on the phone. Every complete SELECT, and the STATUS we send, carries UIDVALIDITY.
 fn complete(mailbox: async_imap::types::Mailbox) -> Result<async_imap::types::Mailbox> {
     match mailbox.uid_validity {
         Some(_) => Ok(mailbox),
@@ -681,9 +809,6 @@ where
     complete(mailbox)
 }
 
-/// Dovecot answers STATUS on the selected mailbox from the session's own view, which only takes
-/// in mail delivered since on a NOOP: without one, a new message stays unseen until the
-/// connection idles long enough to be checked.
 async fn status_complete<T>(
     session: &mut async_imap::Session<T>,
     remote_name: &str,
@@ -699,8 +824,6 @@ where
     complete(timed(session.status(remote_name, items)).await?)
 }
 
-/// UID SEARCH, where an empty result is confirmed with a NOOP: a closed connection answers
-/// "nothing found" too (see [`complete`]), and NOOP does fail on one.
 async fn search_complete<T>(
     session: &mut async_imap::Session<T>,
     query: String,
@@ -715,8 +838,213 @@ where
     Ok(uids)
 }
 
-/// APPEND as async-imap does it, except that untagged responses arriving before the continuation
-/// (an EXISTS for a message just delivered to the selected mailbox) are skipped instead of failing.
+async fn fetch_summaries_with_preview<T>(
+    session: &mut async_imap::Session<T>,
+    uids: &[u32],
+) -> std::result::Result<Vec<FetchedSummary>, async_imap::error::Error>
+where
+    T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + std::fmt::Debug + Send,
+{
+    use async_imap::error::Error as ImapError;
+    use async_imap::imap_proto::{Response, Status};
+
+    let tag = session
+        .run_command(format!(
+            "UID FETCH {} (UID FLAGS INTERNALDATE RFC822.SIZE BODY.PEEK[HEADER.FIELDS ({SUMMARY_HEADER_FIELDS})] PREVIEW)",
+            uid_set(uids)
+        ))
+        .await?;
+    let mut summaries = Vec::new();
+    loop {
+        let response = session
+            .read_response()
+            .await?
+            .ok_or(ImapError::ConnectionLost)?;
+        match response.parsed() {
+            Response::Fetch(_, attributes) => {
+                add_to_summaries(&mut summaries, uids, attributes, response.borrow_owner());
+            }
+            Response::Done {
+                tag: done,
+                status,
+                outcome,
+            } if *done == tag => {
+                let information = outcome
+                    .information
+                    .as_deref()
+                    .unwrap_or_default()
+                    .to_owned();
+                return match status {
+                    Status::Ok => Ok(summaries),
+                    Status::No => Err(ImapError::No(information)),
+                    _ => Err(ImapError::Bad(information)),
+                };
+            }
+            _ => {}
+        }
+    }
+}
+
+fn add_to_summaries(
+    summaries: &mut Vec<FetchedSummary>,
+    uids: &[u32],
+    attributes: &[async_imap::imap_proto::AttributeValue<'_>],
+    raw: &[u8],
+) {
+    use async_imap::imap_proto::{AttributeValue, MessageSection, SectionPath};
+
+    let Some(uid) = attributes.iter().find_map(|attribute| match attribute {
+        AttributeValue::Uid(uid) => Some(*uid),
+        _ => None,
+    }) else {
+        return;
+    };
+    if !uids.contains(&uid) {
+        return;
+    }
+    let index = match summaries.iter().position(|summary| summary.uid == uid) {
+        Some(index) => index,
+        None => {
+            summaries.push(FetchedSummary {
+                uid,
+                flags: Flags::default(),
+                internal_date: None,
+                size: 0,
+                header: Vec::new(),
+                text: Vec::new(),
+                preview: None,
+            });
+            summaries.len() - 1
+        }
+    };
+    let summary = &mut summaries[index];
+    if let Some(preview) = preview_in(raw) {
+        summary.preview = Some(preview);
+    }
+    for attribute in attributes {
+        match attribute {
+            AttributeValue::Flags(names) => {
+                summary.flags = flags_from(names.iter().map(|name| Flag::from(name.as_ref())));
+            }
+            AttributeValue::InternalDate(date) => {
+                summary.internal_date =
+                    chrono::DateTime::parse_from_str(date, "%d-%b-%Y %H:%M:%S %z")
+                        .ok()
+                        .map(|date| date.timestamp_millis());
+            }
+            AttributeValue::Rfc822Size(size) => summary.size = *size,
+            AttributeValue::BodySection {
+                section: Some(SectionPath::Full(MessageSection::Header)),
+                data: Some(data),
+                ..
+            }
+            | AttributeValue::Rfc822Header(Some(data)) => summary.header = data.to_vec(),
+            _ => {}
+        }
+    }
+}
+
+fn preview_in(raw: &[u8]) -> Option<String> {
+    let mut at = raw
+        .windows(7)
+        .position(|window| window.eq_ignore_ascii_case(b"FETCH ("))?
+        + 7;
+    loop {
+        while raw.get(at) == Some(&b' ') {
+            at += 1;
+        }
+        if raw.get(at).is_none_or(|byte| *byte == b')') {
+            return None;
+        }
+        let name_start = at;
+        let mut in_section = false;
+        while let Some(&byte) = raw.get(at) {
+            match byte {
+                b'[' => in_section = true,
+                b']' => in_section = false,
+                b' ' | b')' if !in_section => break,
+                _ => {}
+            }
+            at += 1;
+        }
+        let name = &raw[name_start..at];
+        while raw.get(at) == Some(&b' ') {
+            at += 1;
+        }
+        let (value, end) = item_value(raw, at)?;
+        if name.eq_ignore_ascii_case(b"PREVIEW") {
+            return value.map(|value| String::from_utf8_lossy(&value).into_owned());
+        }
+        at = end;
+    }
+}
+
+fn item_value(raw: &[u8], at: usize) -> Option<(Option<Vec<u8>>, usize)> {
+    match raw.get(at)? {
+        b'"' => {
+            let mut value = Vec::new();
+            let mut at = at + 1;
+            loop {
+                match *raw.get(at)? {
+                    b'\\' => {
+                        value.push(*raw.get(at + 1)?);
+                        at += 2;
+                    }
+                    b'"' => return Some((Some(value), at + 1)),
+                    byte => {
+                        value.push(byte);
+                        at += 1;
+                    }
+                }
+            }
+        }
+        b'{' => {
+            let close = at + raw[at..].iter().position(|byte| *byte == b'}')?;
+            let length: usize = std::str::from_utf8(&raw[at + 1..close])
+                .ok()?
+                .trim_end_matches('+')
+                .parse()
+                .ok()?;
+            let start = close + 3;
+            let value = raw.get(start..start + length)?;
+            Some((Some(value.to_vec()), start + length))
+        }
+        b'(' => {
+            let mut depth = 0;
+            let mut at = at;
+            loop {
+                match *raw.get(at)? {
+                    b'(' => {
+                        depth += 1;
+                        at += 1;
+                    }
+                    b')' => {
+                        depth -= 1;
+                        at += 1;
+                        if depth == 0 {
+                            return Some((None, at));
+                        }
+                    }
+                    b'"' | b'{' => at = item_value(raw, at)?.1,
+                    _ => at += 1,
+                }
+            }
+        }
+        _ => {
+            let end = at
+                + raw[at..]
+                    .iter()
+                    .position(|byte| *byte == b' ' || *byte == b')')
+                    .unwrap_or(raw.len() - at);
+            let atom = &raw[at..end];
+            Some((
+                (!atom.eq_ignore_ascii_case(b"NIL")).then(|| atom.to_vec()),
+                end,
+            ))
+        }
+    }
+}
+
 async fn append_seen<T>(
     session: &mut async_imap::Session<T>,
     remote_name: &str,
@@ -771,223 +1099,5 @@ where
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn uid_set_collapses_consecutive_uids() {
-        assert_eq!(uid_set(&[7, 1, 2, 3, 5, 9, 8]), "1:3,5,7:9");
-    }
-
-    #[test]
-    fn roles_fall_back_to_localized_names() {
-        assert_eq!(role_of("INBOX", &[]), Some(MailboxRole::Inbox));
-        assert_eq!(role_of("INBOX.Envoy&AOk-s", &[]), Some(MailboxRole::Sent));
-        assert_eq!(
-            role_of("[Gmail]/Tous les messages", &[NameAttribute::All]),
-            Some(MailboxRole::All)
-        );
-        assert_eq!(role_of("Projets", &[]), None);
-    }
-
-    #[test]
-    fn declared_and_shallow_mailboxes_win_a_role() {
-        let mailbox = |remote_name: &str, depth| RemoteMailbox {
-            remote_name: remote_name.into(),
-            name: remote_name.into(),
-            depth,
-            role: role_of(remote_name, &[]),
-            selectable: true,
-        };
-        let mut mailboxes = vec![
-            mailbox("INBOX", 0),
-            mailbox("INBOX.INBOX.Sent", 2),
-            mailbox("INBOX.INBOX.Trash", 2),
-            mailbox("INBOX.Sent Messages", 1),
-            mailbox("INBOX.Trash", 1),
-            mailbox("INBOX.Deleted Messages", 1),
-        ];
-        mailboxes[5].role = Some(MailboxRole::Trash);
-        keep_one_mailbox_per_role(&mut mailboxes, &[false, false, false, false, false, true]);
-        let roles: Vec<_> = mailboxes.iter().map(|mailbox| mailbox.role).collect();
-        assert_eq!(
-            roles,
-            vec![
-                Some(MailboxRole::Inbox),
-                None,
-                None,
-                Some(MailboxRole::Sent),
-                None,
-                Some(MailboxRole::Trash),
-            ]
-        );
-    }
-
-    #[test]
-    fn large_appends_get_time_for_a_slow_uplink() {
-        assert_eq!(transfer_timeout(0), NETWORK_TIMEOUT);
-        assert!(transfer_timeout(34_000_000) >= Duration::from_secs(17 * 60));
-    }
-
-    /// A fake server that logs in, then answers the next command with `reply` and hangs up when
-    /// `hang_up` (as a server closing an idle connection does), or keeps answering NOOPs.
-    async fn scripted_session(
-        reply: &'static str,
-        hang_up: bool,
-    ) -> async_imap::Session<tokio::io::DuplexStream> {
-        use tokio::io::{AsyncBufReadExt, BufReader};
-
-        let (client, server) = tokio::io::duplex(4096);
-        tokio::spawn(async move {
-            let (read, mut write) = tokio::io::split(server);
-            let mut read = BufReader::new(read);
-            let mut line = String::new();
-            let mut answered = false;
-            while read.read_line(&mut line).await.unwrap_or(0) > 0 {
-                let tag = line.split(' ').next().unwrap_or_default().to_owned();
-                let answer = if line.contains("LOGIN") {
-                    format!("{tag} OK LOGIN completed\r\n")
-                } else if line.contains("NOOP") {
-                    format!("{tag} OK NOOP completed\r\n")
-                } else if !answered {
-                    answered = true;
-                    reply.replace("{tag}", &tag)
-                } else {
-                    format!("{tag} BAD unexpected\r\n")
-                };
-                write.write_all(answer.as_bytes()).await.unwrap();
-                if answered && hang_up {
-                    return;
-                }
-                line.clear();
-            }
-        });
-        async_imap::Client::new(client)
-            .login("alice", "secret")
-            .await
-            .map_err(|(error, _)| error)
-            .unwrap()
-    }
-
-    #[tokio::test]
-    async fn a_select_cut_off_by_the_server_is_a_lost_connection_not_an_empty_mailbox() {
-        let mut session = scripted_session("* 147 EXISTS\r\n", true).await;
-        let result = select_complete(&mut session, "INBOX", false).await;
-        assert!(matches!(result, Err(Error::Network(_))), "{result:?}");
-    }
-
-    #[tokio::test]
-    async fn a_complete_select_reports_its_uidvalidity() {
-        let reply = "* 147 EXISTS\r\n* OK [UIDVALIDITY 1794294172] UIDs valid\r\n* OK [UIDNEXT 148] next\r\n{tag} OK [READ-WRITE] SELECT completed\r\n";
-        let mut session = scripted_session(reply, false).await;
-        let mailbox = select_complete(&mut session, "INBOX", false).await.unwrap();
-        assert_eq!(
-            (mailbox.exists, mailbox.uid_validity),
-            (147, Some(1_794_294_172))
-        );
-    }
-
-    #[tokio::test]
-    async fn the_selected_mailbox_status_includes_mail_delivered_since_it_was_selected() {
-        use tokio::io::{AsyncBufReadExt, BufReader};
-
-        // Like Dovecot: STATUS on the selected mailbox answers from the session's view, which
-        // only takes in the message delivered meanwhile on the next NOOP.
-        let (client, server) = tokio::io::duplex(4096);
-        tokio::spawn(async move {
-            let (read, mut write) = tokio::io::split(server);
-            let mut read = BufReader::new(read);
-            let mut line = String::new();
-            let mut uid_next = 16;
-            while read.read_line(&mut line).await.unwrap_or(0) > 0 {
-                let tag = line.split(' ').next().unwrap_or_default().to_owned();
-                let answer = if line.contains("NOOP") {
-                    uid_next = 17;
-                    format!("* 16 EXISTS\r\n{tag} OK NOOP completed\r\n")
-                } else if line.contains("STATUS") {
-                    format!(
-                        "* STATUS INBOX (MESSAGES {} UIDNEXT {uid_next} UIDVALIDITY 1)\r\n{tag} OK STATUS completed\r\n",
-                        uid_next - 1
-                    )
-                } else {
-                    format!("{tag} OK completed\r\n")
-                };
-                write.write_all(answer.as_bytes()).await.unwrap();
-                line.clear();
-            }
-        });
-        let mut session = async_imap::Client::new(client)
-            .login("alice", "secret")
-            .await
-            .map_err(|(error, _)| error)
-            .unwrap();
-        let mailbox = status_complete(
-            &mut session,
-            "INBOX",
-            "(MESSAGES UIDNEXT UIDVALIDITY)",
-            true,
-        )
-        .await
-        .unwrap();
-        assert_eq!((mailbox.exists, mailbox.uid_next), (16, Some(17)));
-    }
-
-    #[tokio::test]
-    async fn a_search_cut_off_by_the_server_is_a_lost_connection_not_an_empty_result() {
-        let mut session = scripted_session("", true).await;
-        let result = search_complete(&mut session, "SINCE 01-Oct-2026".into()).await;
-        assert!(matches!(result, Err(Error::Network(_))), "{result:?}");
-    }
-
-    #[tokio::test]
-    async fn a_search_that_found_nothing_stays_empty() {
-        let mut session =
-            scripted_session("* SEARCH\r\n{tag} OK SEARCH completed\r\n", false).await;
-        let uids = search_complete(&mut session, "SINCE 01-Oct-2026".into())
-            .await
-            .unwrap();
-        assert!(uids.is_empty());
-    }
-
-    #[tokio::test]
-    async fn append_waits_past_untagged_responses_for_the_continuation() {
-        use tokio::io::{AsyncBufReadExt, BufReader};
-
-        let (client, server) = tokio::io::duplex(4096);
-        let server = tokio::spawn(async move {
-            let (read, mut write) = tokio::io::split(server);
-            let mut read = BufReader::new(read);
-            let mut line = String::new();
-            read.read_line(&mut line).await.unwrap();
-            let tag = line.split(' ').next().unwrap().to_owned();
-            write
-                .write_all(format!("{tag} OK LOGIN completed\r\n").as_bytes())
-                .await
-                .unwrap();
-            line.clear();
-            read.read_line(&mut line).await.unwrap();
-            let tag = line.split(' ').next().unwrap().to_owned();
-            assert!(line.ends_with("APPEND \"Sent\" (\\Seen) {5}\r\n"), "{line}");
-            write
-                .write_all(b"* 146 EXISTS\r\n* 1 RECENT\r\n+ Ready\r\n")
-                .await
-                .unwrap();
-            let mut literal = [0u8; 7];
-            read.read_exact(&mut literal).await.unwrap();
-            write
-                .write_all(format!("{tag} OK APPEND completed\r\n").as_bytes())
-                .await
-                .unwrap();
-            literal
-        });
-        let mut session = async_imap::Client::new(client)
-            .login("alice", "secret")
-            .await
-            .map_err(|(error, _)| error)
-            .unwrap();
-
-        append_seen(&mut session, "Sent", b"hello").await.unwrap();
-
-        assert_eq!(&server.await.unwrap(), b"hello\r\n");
-    }
-}
+#[path = "../../../tests/proto_imap/lib.rs"]
+mod tests;

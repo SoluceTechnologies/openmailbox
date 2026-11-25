@@ -45,7 +45,6 @@ describe('settings', () => {
     expect(screen.getByLabelText('Work')).toBeOnTheScreen();
     expect(screen.queryByText('Alice Martin')).toBeNull();
     expect(screen.getByText('Google · alice@example.com')).toBeOnTheScreen();
-    // A server the app does not know is named after its domain.
     expect(screen.getByText('example.com')).toBeOnTheScreen();
     expect(screen.getAllByText('bob@example.com')).toHaveLength(1);
   });

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useTheme } from 'expo-router';
+import { Stack, useLocalSearchParams, useTheme } from 'expo-router';
+import type { SearchBarCommands } from 'react-native-screens';
 import { useTranslation } from 'react-i18next';
 
 import { SearchResults } from '@/features/search/SearchResults';
@@ -12,7 +13,15 @@ import { goBack } from '@/utils/navigation';
 export default function SearchScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const [query, setQuery] = useState('');
+  const { query: initialQuery = '' } = useLocalSearchParams<{ query?: string }>();
+  const [query, setQuery] = useState(initialQuery);
+  const searchBar = useRef<SearchBarCommands>(null);
+
+  useEffect(() => {
+    if (!initialQuery) return;
+    const frame = requestAnimationFrame(() => searchBar.current?.setText(initialQuery));
+    return () => cancelAnimationFrame(frame);
+  }, [initialQuery]);
 
   if (NATIVE_CHROME) {
     return (
@@ -22,8 +31,9 @@ export default function SearchScreen() {
           options={{ headerShown: true, title: t('search.title'), ...translucentHeader(colors.background), headerBackButtonDisplayMode: 'minimal' }}
         />
         <Stack.SearchBar
+          ref={searchBar}
           placeholder={t('search.placeholder')}
-          autoFocus
+          autoFocus={!initialQuery}
           hideWhenScrolling={false}
           onChangeText={(event) => setQuery(event.nativeEvent.text)}
           onCancelButtonPress={goBack}
@@ -40,7 +50,7 @@ export default function SearchScreen() {
           <TextField
             value={query}
             onChangeText={setQuery}
-            autoFocus
+            autoFocus={!initialQuery}
             autoCorrect={false}
             returnKeyType="search"
             placeholder={t('search.placeholder')}
