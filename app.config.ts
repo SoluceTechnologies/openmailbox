@@ -6,6 +6,11 @@ import { version } from './package.json';
 const [major, minor, patch] = version.split('.').map(Number);
 const versionCode = major * 10000 + minor * 100 + patch;
 
+// entitlements: {
+//   'com.apple.developer.mail-client': true,
+// },
+
+
 const VIEW_SEND_TO = `
   override fun onNewIntent(intent: Intent) {
     viewSendTo(intent)
@@ -46,9 +51,6 @@ const config: ExpoConfig = {
     infoPlist: {
       CFBundleDisplayName: 'Open Mailbox',
       ITSAppUsesNonExemptEncryption: false,
-    },
-    entitlements: {
-      'com.apple.developer.mail-client': true,
     },
   },
 
