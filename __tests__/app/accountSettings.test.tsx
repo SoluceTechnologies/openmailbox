@@ -5,7 +5,7 @@ import { Authentication, CoreError, Security } from '@openmailbox/mail-core';
 
 import AccountSettingsScreen from '../../app/settings/account/[id]';
 import { queryClient, queryKeys } from '@/core/queryClient';
-import { readSecret, saveSecret } from '@/core/secrets';
+import { readSecret, saveSecret, smtpSecretId } from '@/core/secrets';
 import { useSignatureEditor } from '@/features/signatures/signatureEditorStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
@@ -115,6 +115,26 @@ describe('account settings', () => {
     expect(useSyncStore.getState().authRequired['account-1']).toBe(false);
   });
 
+  it('stores a new outgoing password for an account that signs in to its outgoing server apart', async () => {
+    queryClient.setQueryData(queryKeys.accounts, [makeAccount({ smtpUsername: 'alice-smtp' })]);
+    renderWithProviders(<AccountSettingsScreen />);
+    expect(screen.getByText('Outgoing Username')).toBeOnTheScreen();
+    expect(screen.getByText('alice-smtp')).toBeOnTheScreen();
+    fireEvent.changeText(screen.getByLabelText('Outgoing Password'), 'smtp-new');
+    fireEvent.press(screen.getByText('Update Password'));
+
+    expect(await screen.findByText('Password updated.')).toBeOnTheScreen();
+    expect(core.updateSmtpPassword).toHaveBeenCalledWith('account-1', 'smtp-new');
+    expect(core.updatePassword).not.toHaveBeenCalled();
+    expect(await readSecret(smtpSecretId('account-1'))).toBe('smtp-new');
+  });
+
+  it('asks for one password when the outgoing server shares the incoming credentials', () => {
+    renderWithProviders(<AccountSettingsScreen />);
+    expect(screen.queryByText('Outgoing Username')).toBeNull();
+    expect(screen.queryByLabelText('Outgoing Password')).toBeNull();
+  });
+
   it('keeps the old password when the server rejects the new one', async () => {
     await saveSecret('account-1', 'old-secret');
     core.updatePassword.mockRejectedValueOnce(new CoreError.Auth());
@@ -174,6 +194,7 @@ describe('account settings', () => {
   });
 
   it('removes the account and its password after confirmation', async () => {
+    await saveSecret(smtpSecretId('account-1'), 'smtp-secret');
     useSettingsStore.getState().setSignature('account-1', { html: 'Charles', text: 'Charles' });
     useSettingsStore.getState().setAccountNotified('account-1', false);
     useSettingsStore.getState().setAccountName('account-1', 'Work');
@@ -188,6 +209,7 @@ describe('account settings', () => {
     expect(mockRouter.back).toHaveBeenCalled();
     expect(core.removeAccount).toHaveBeenCalledWith('account-1');
     expect(await readSecret('account-1')).toBeNull();
+    expect(await readSecret(smtpSecretId('account-1'))).toBeNull();
     expect(useSettingsStore.getState().signatures['account-1']).toBeUndefined();
     expect(useSettingsStore.getState().silencedAccountIds).not.toContain('account-1');
     expect(useSettingsStore.getState().accountNames['account-1']).toBeUndefined();

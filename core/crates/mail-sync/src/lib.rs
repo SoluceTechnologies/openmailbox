@@ -53,6 +53,7 @@ pub struct Relocation {
 struct AccountHandle {
     account: Account,
     secret: Secret,
+    smtp_secret: Secret,
     tokens: TokenCache,
     commands: mpsc::UnboundedSender<Command>,
     worker: JoinHandle<()>,
@@ -126,6 +127,7 @@ impl Engine {
         let handle = self.spawn_worker(
             account,
             Arc::new(RwLock::new(secret)),
+            Arc::new(RwLock::new(None)),
             Arc::new(tokio::sync::Mutex::new(token)),
             None,
         );
@@ -136,6 +138,7 @@ impl Engine {
         &self,
         account: Account,
         secret: Secret,
+        smtp_secret: Secret,
         tokens: TokenCache,
         idle: Option<JoinHandle<()>>,
     ) -> AccountHandle {
@@ -144,6 +147,7 @@ impl Engine {
         let worker = Worker::new(
             account.clone(),
             secret.clone(),
+            smtp_secret.clone(),
             tokens.clone(),
             self.store.clone(),
             self.events.clone(),
@@ -154,6 +158,7 @@ impl Engine {
             worker: self.runtime.spawn(worker.run()),
             account,
             secret,
+            smtp_secret,
             tokens,
             commands,
             heartbeat,
@@ -173,6 +178,7 @@ impl Engine {
             *handle = self.spawn_worker(
                 handle.account.clone(),
                 handle.secret.clone(),
+                handle.smtp_secret.clone(),
                 handle.tokens.clone(),
                 handle.idle.take(),
             );
@@ -203,17 +209,28 @@ impl Engine {
         mail_auth::discover(email).await
     }
 
-    pub async fn add_account(&self, config: AccountConfig, secret: String) -> Result<Account> {
+    pub async fn add_account(
+        &self,
+        config: AccountConfig,
+        secret: String,
+        smtp_secret: Option<String>,
+    ) -> Result<Account> {
         self.ensure_new(&config.email)?;
         let credential = Credential::Password(secret.clone());
         let connection = proto_imap::connect(&config.imap, &config.username, &credential).await?;
         connection.logout().await;
-        proto_smtp::verify(&config.smtp, &config.username, &credential).await?;
+        proto_smtp::verify(
+            &config.smtp,
+            config.smtp_username.as_deref().unwrap_or(&config.username),
+            &Credential::Password(smtp_secret.clone().unwrap_or_else(|| secret.clone())),
+        )
+        .await?;
         let account = Account {
             id: uuid::Uuid::new_v4().to_string(),
             email: config.email.trim().to_owned(),
             display_name: config.display_name.trim().to_owned(),
             username: config.username,
+            smtp_username: config.smtp_username,
             imap: config.imap,
             smtp: config.smtp,
             color: self.store.next_account_color()?,
@@ -222,6 +239,9 @@ impl Engine {
             oauth_server: None,
         };
         self.register(&account, secret, None)?;
+        if let Some(smtp_secret) = smtp_secret {
+            self.unlock_smtp(&account.id, smtp_secret);
+        }
         Ok(account)
     }
 
@@ -338,6 +358,7 @@ impl Engine {
                     imap: account.imap.clone(),
                     smtp: account.smtp.clone(),
                     username: account.username.clone(),
+                    smtp_username: None,
                 },
             ),
             (Authentication::Server, None) => Err(Error::InvalidInput(
@@ -416,6 +437,7 @@ impl Engine {
             email: identity.email.clone(),
             display_name,
             username: config.username,
+            smtp_username: None,
             imap: config.imap,
             smtp: config.smtp,
             color: self.store.next_account_color()?,
@@ -498,6 +520,34 @@ impl Engine {
                 },
             );
         }
+    }
+
+    pub fn unlock_smtp(&self, account_id: &str, secret: String) {
+        if let Some(handle) = self.accounts().get(account_id) {
+            *handle
+                .smtp_secret
+                .write()
+                .unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(secret);
+        }
+    }
+
+    pub async fn update_smtp_password(&self, account_id: &str, secret: String) -> Result<()> {
+        let account = self.store.account(account_id)?;
+        proto_smtp::verify(
+            &account.smtp,
+            account.outgoing_username(),
+            &Credential::Password(secret.clone()),
+        )
+        .await?;
+        self.unlock_smtp(account_id, secret);
+        self.dispatch(
+            account_id,
+            Command::Sync {
+                mailbox_ids: None,
+                force: true,
+            },
+        );
+        Ok(())
     }
 
     pub async fn update_password(&self, account_id: &str, secret: String) -> Result<()> {

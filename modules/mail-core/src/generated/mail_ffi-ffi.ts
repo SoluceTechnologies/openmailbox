@@ -74,7 +74,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_fn_init_callback_vtable_eventlistener(vtable: UniffiVTableCallbackInterfaceMailFfiEventListener): void;
     ubrn_uniffi_mail_ffi_fn_method_eventlistener_on_event(uniffiSelf: bigint, event: Uint8Array, uniffi_out_err: UniffiRustCallStatus): void;
     ubrn_uniffi_mail_ffi_fn_constructor_mailcore_open(dataDirectory: Uint8Array, uniffi_out_err: UniffiRustCallStatus): bigint;
-    ubrn_uniffi_mail_ffi_fn_method_mailcore_add_account(uniffiSelf: bigint, config: Uint8Array, secret: Uint8Array): bigint;
+    ubrn_uniffi_mail_ffi_fn_method_mailcore_add_account(uniffiSelf: bigint, config: Uint8Array, secret: Uint8Array, smtpSecret: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_add_oauth_account(uniffiSelf: bigint, callbackUrl: Uint8Array, displayName: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_begin_account_sign_in(uniffiSelf: bigint, accountId: Uint8Array, uniffi_out_err: UniffiRustCallStatus): Uint8Array;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_begin_server_sign_in(uniffiSelf: bigint, email: Uint8Array, servers: Uint8Array): bigint;
@@ -107,8 +107,10 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_fn_method_mailcore_sync_now(uniffiSelf: bigint, accountId: Uint8Array, uniffi_out_err: UniffiRustCallStatus): void;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_thread_emails(uniffiSelf: bigint, threadId: Uint8Array, contextMailboxId: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_unlock_account(uniffiSelf: bigint, accountId: Uint8Array, secret: Uint8Array, uniffi_out_err: UniffiRustCallStatus): void;
+    ubrn_uniffi_mail_ffi_fn_method_mailcore_unlock_smtp(uniffiSelf: bigint, accountId: Uint8Array, secret: Uint8Array, uniffi_out_err: UniffiRustCallStatus): void;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_unsubscribe(uniffiSelf: bigint, emailId: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_update_password(uniffiSelf: bigint, accountId: Uint8Array, secret: Uint8Array): bigint;
+    ubrn_uniffi_mail_ffi_fn_method_mailcore_update_smtp_password(uniffiSelf: bigint, accountId: Uint8Array, secret: Uint8Array): bigint;
     ubrn_ffi_mail_ffi_uniffi_contract_version(): number;
     ubrn_uniffi_mail_ffi_checksum_method_eventlistener_on_event(): number;
     ubrn_uniffi_mail_ffi_checksum_constructor_mailcore_open(): number;
@@ -145,8 +147,10 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_sync_now(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_thread_emails(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_unlock_account(): number;
+    ubrn_uniffi_mail_ffi_checksum_method_mailcore_unlock_smtp(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_unsubscribe(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_password(): number;
+    ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_smtp_password(): number;
     ubrn_uniffi_internal_fn_method_eventlistener_ffi__bless_pointer(pointer: bigint, uniffi_out_err: UniffiRustCallStatus): UniffiGcObject;
     ubrn_uniffi_internal_fn_method_mailcore_ffi__bless_pointer(pointer: bigint, uniffi_out_err: UniffiRustCallStatus): UniffiGcObject;
     // Codegen call sites use these via `nativeModule().rustbuffer_alloc(...)`

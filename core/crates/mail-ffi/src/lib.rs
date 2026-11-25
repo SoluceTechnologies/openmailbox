@@ -73,6 +73,7 @@ pub struct ServerConfig {
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
     pub username: String,
+    pub smtp_username: Option<String>,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -80,6 +81,7 @@ pub struct AccountConfig {
     pub email: String,
     pub display_name: String,
     pub username: String,
+    pub smtp_username: Option<String>,
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
 }
@@ -104,6 +106,7 @@ pub struct Account {
     pub email: String,
     pub display_name: String,
     pub username: String,
+    pub smtp_username: Option<String>,
     pub imap: ServerEndpoint,
     pub smtp: ServerEndpoint,
     pub color: u32,
@@ -446,6 +449,7 @@ impl From<mail_model::Account> for Account {
             email: account.email,
             display_name: account.display_name,
             username: account.username,
+            smtp_username: account.smtp_username,
             imap: account.imap.into(),
             smtp: account.smtp.into(),
             color: account.color,
@@ -734,19 +738,26 @@ impl MailCore {
             imap: config.imap.into(),
             smtp: config.smtp.into(),
             username: config.username,
+            smtp_username: config.smtp_username,
         })
     }
 
-    pub async fn add_account(&self, config: AccountConfig, secret: String) -> CoreResult<Account> {
+    pub async fn add_account(
+        &self,
+        config: AccountConfig,
+        secret: String,
+        smtp_secret: Option<String>,
+    ) -> CoreResult<Account> {
         let config = mail_model::AccountConfig {
             email: config.email,
             display_name: config.display_name,
             username: config.username,
+            smtp_username: config.smtp_username,
             imap: config.imap.into(),
             smtp: config.smtp.into(),
         };
         let account = self
-            .asynchronous(async move |engine| engine.add_account(config, secret).await)
+            .asynchronous(async move |engine| engine.add_account(config, secret, smtp_secret).await)
             .await?;
         Ok(account.into())
     }
@@ -782,6 +793,7 @@ impl MailCore {
             imap: servers.imap.into(),
             smtp: servers.smtp.into(),
             username: servers.username,
+            smtp_username: None,
         };
         let request = self
             .asynchronous(async move |engine| engine.begin_server_sign_in(&email, servers).await)
@@ -820,6 +832,17 @@ impl MailCore {
 
     pub fn unlock_account(&self, account_id: String, secret: String) {
         self.engine.unlock_account(&account_id, secret);
+    }
+
+    pub fn unlock_smtp(&self, account_id: String, secret: String) {
+        self.engine.unlock_smtp(&account_id, secret);
+    }
+
+    pub async fn update_smtp_password(&self, account_id: String, secret: String) -> CoreResult<()> {
+        self.asynchronous(async move |engine| {
+            engine.update_smtp_password(&account_id, secret).await
+        })
+        .await
     }
 
     pub async fn update_password(&self, account_id: String, secret: String) -> CoreResult<()> {

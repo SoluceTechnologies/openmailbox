@@ -119,6 +119,16 @@ describe('onboarding', () => {
     expect(screen.getByPlaceholderText('smtp.example.com')).toBeOnTheScreen();
   });
 
+  it('asks for the incoming username, then suggests the address', async () => {
+    renderWithProviders(<OnboardingScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Other' }));
+    fireEvent.press(screen.getByText('Configure Servers Manually'));
+    expect(await screen.findByLabelText('Username')).toHaveProp('placeholder', 'Required');
+
+    fireEvent.changeText(screen.getByLabelText('Email'), 'jane@example.org');
+    expect(screen.getByLabelText('Username')).toHaveProp('placeholder', 'jane@example.org');
+  });
+
   it('asks which OVHcloud offer the account is on before the form', () => {
     renderWithProviders(<OnboardingScreen />);
     fireEvent.press(screen.getByRole('button', { name: 'OVHcloud' }));

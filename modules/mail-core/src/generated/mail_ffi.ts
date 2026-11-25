@@ -185,6 +185,7 @@ export type Account = {
     email: string,
     displayName: string,
     username: string,
+    smtpUsername?: string,
     imap: ServerEndpoint,
     smtp: ServerEndpoint,
     color: number,
@@ -216,6 +217,7 @@ const FfiConverterTypeAccount = (() => {
                 email: FfiConverterString.readFromCursor(c), 
                 displayName: FfiConverterString.readFromCursor(c), 
                 username: FfiConverterString.readFromCursor(c), 
+                smtpUsername: FfiConverterOptionalString.readFromCursor(c), 
                 imap: FfiConverterTypeServerEndpoint.readFromCursor(c), 
                 smtp: FfiConverterTypeServerEndpoint.readFromCursor(c), 
                 color: FfiConverterUInt32.readFromCursor(c), 
@@ -227,6 +229,7 @@ const FfiConverterTypeAccount = (() => {
             FfiConverterString.writeIntoCursor(value.email, c);
             FfiConverterString.writeIntoCursor(value.displayName, c);
             FfiConverterString.writeIntoCursor(value.username, c);
+            FfiConverterOptionalString.writeIntoCursor(value.smtpUsername, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.imap, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.smtp, c);
             FfiConverterUInt32.writeIntoCursor(value.color, c);
@@ -237,6 +240,7 @@ const FfiConverterTypeAccount = (() => {
              FfiConverterString.allocationSize(value.email) +
              FfiConverterString.allocationSize(value.displayName) +
              FfiConverterString.allocationSize(value.username) +
+             FfiConverterOptionalString.allocationSize(value.smtpUsername) +
              FfiConverterTypeServerEndpoint.allocationSize(value.imap) +
              FfiConverterTypeServerEndpoint.allocationSize(value.smtp) +
              FfiConverterUInt32.allocationSize(value.color) +
@@ -251,6 +255,7 @@ export type AccountConfig = {
     email: string,
     displayName: string,
     username: string,
+    smtpUsername?: string,
     imap: ServerEndpoint,
     smtp: ServerEndpoint
 }
@@ -279,6 +284,7 @@ const FfiConverterTypeAccountConfig = (() => {
                 email: FfiConverterString.readFromCursor(c), 
                 displayName: FfiConverterString.readFromCursor(c), 
                 username: FfiConverterString.readFromCursor(c), 
+                smtpUsername: FfiConverterOptionalString.readFromCursor(c), 
                 imap: FfiConverterTypeServerEndpoint.readFromCursor(c), 
                 smtp: FfiConverterTypeServerEndpoint.readFromCursor(c)
             };
@@ -287,6 +293,7 @@ const FfiConverterTypeAccountConfig = (() => {
             FfiConverterString.writeIntoCursor(value.email, c);
             FfiConverterString.writeIntoCursor(value.displayName, c);
             FfiConverterString.writeIntoCursor(value.username, c);
+            FfiConverterOptionalString.writeIntoCursor(value.smtpUsername, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.imap, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.smtp, c);
         }
@@ -294,6 +301,7 @@ const FfiConverterTypeAccountConfig = (() => {
             return FfiConverterString.allocationSize(value.email) +
              FfiConverterString.allocationSize(value.displayName) +
              FfiConverterString.allocationSize(value.username) +
+             FfiConverterOptionalString.allocationSize(value.smtpUsername) +
              FfiConverterTypeServerEndpoint.allocationSize(value.imap) +
              FfiConverterTypeServerEndpoint.allocationSize(value.smtp);
             
@@ -960,7 +968,8 @@ const FfiConverterTypeSearchHit = (() => {
 export type ServerConfig = {
     imap: ServerEndpoint,
     smtp: ServerEndpoint,
-    username: string
+    username: string,
+    smtpUsername?: string
 }
 
 /**
@@ -986,18 +995,21 @@ const FfiConverterTypeServerConfig = (() => {
             return {
                 imap: FfiConverterTypeServerEndpoint.readFromCursor(c), 
                 smtp: FfiConverterTypeServerEndpoint.readFromCursor(c), 
-                username: FfiConverterString.readFromCursor(c)
+                username: FfiConverterString.readFromCursor(c), 
+                smtpUsername: FfiConverterOptionalString.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.imap, c);
             FfiConverterTypeServerEndpoint.writeIntoCursor(value.smtp, c);
             FfiConverterString.writeIntoCursor(value.username, c);
+            FfiConverterOptionalString.writeIntoCursor(value.smtpUsername, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterTypeServerEndpoint.allocationSize(value.imap) +
              FfiConverterTypeServerEndpoint.allocationSize(value.smtp) +
-             FfiConverterString.allocationSize(value.username);
+             FfiConverterString.allocationSize(value.username) +
+             FfiConverterOptionalString.allocationSize(value.smtpUsername);
             
         }
     };
@@ -2883,7 +2895,7 @@ const uniffiCallbackInterfaceEventListener: { vtable: any; register: () => void;
 
 export interface MailCoreLike {
     
-    addAccount(config: AccountConfig, secret: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Account>;
+    addAccount(config: AccountConfig, secret: string, smtpSecret: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Account>;
     addOauthAccount(callbackUrl: string, displayName: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Account>;
     beginAccountSignIn(accountId: string) /*throws*/: SignInRequest;
     beginServerSignIn(email: string, servers: ServerConfig, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<SignInRequest>;
@@ -2916,8 +2928,10 @@ export interface MailCoreLike {
     syncNow(accountId: string | undefined): void;
     threadEmails(threadId: string, contextMailboxId: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<EmailSummary>>;
     unlockAccount(accountId: string, secret: string): void;
+    unlockSmtp(accountId: string, secret: string): void;
     unsubscribe(emailId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<UnsubscribeOutcome>;
     updatePassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
+    updateSmtpPassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
 }
 /**
  * @deprecated Use `MailCoreLike` instead.
@@ -2952,14 +2966,14 @@ private constructor(pointer: UniffiHandle) {
     
 
     
-    async addAccount(config: AccountConfig, secret: string, asyncOpts_?: { signal: AbortSignal }): Promise<Account> /*throws*/ {
+    async addAccount(config: AccountConfig, secret: string, smtpSecret: string | undefined, asyncOpts_?: { signal: AbortSignal }): Promise<Account> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
         return await uniffiRustCallAsync(
             /*rustCaller:*/ uniffiCaller,
             /*rustFutureFunc:*/ () => {
                 return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_add_account(
-                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterTypeAccountConfig.lower(config, nativeModule().rustbuffer_alloc),FfiConverterString.lower(secret, nativeModule().rustbuffer_alloc)
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterTypeAccountConfig.lower(config, nativeModule().rustbuffer_alloc),FfiConverterString.lower(secret, nativeModule().rustbuffer_alloc),FfiConverterOptionalString.lower(smtpSecret, nativeModule().rustbuffer_alloc)
                 );
             },
             /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
@@ -3964,6 +3978,17 @@ private constructor(pointer: UniffiHandle) {
     );
     }
     
+    unlockSmtp(accountId: string, secret: string): void {uniffiCaller.rustCall(
+            /*caller:*/ (callStatus) => { nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_unlock_smtp(
+                uniffiTypeMailCoreObjectFactory.clonePointer(this),
+        FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),
+        FfiConverterString.lower(secret, nativeModule().rustbuffer_alloc),
+                callStatus);
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+    );
+    }
+    
     async unsubscribe(emailId: string, asyncOpts_?: { signal: AbortSignal }): Promise<UnsubscribeOutcome> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -4012,6 +4037,33 @@ private constructor(pointer: UniffiHandle) {
             /*rustCaller:*/ uniffiCaller,
             /*rustFutureFunc:*/ () => {
                 return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_update_password(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),FfiConverterString.lower(secret, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_void,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_void,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_void,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_void,
+            /*liftFunc:*/ (_v) => {},
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
+    async updateSmtpPassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_update_smtp_password(
                     uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),FfiConverterString.lower(secret, nativeModule().rustbuffer_alloc)
                 );
             },
@@ -4178,7 +4230,7 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_constructor_mailcore_open() !== 57857) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_constructor_mailcore_open");
     }
-    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_add_account() !== 59215) {
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_add_account() !== 24878) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_add_account");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_add_oauth_account() !== 38929) {
@@ -4277,11 +4329,17 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_unlock_account() !== 18429) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_unlock_account");
     }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_unlock_smtp() !== 34255) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_unlock_smtp");
+    }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_unsubscribe() !== 41042) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_unsubscribe");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_password() !== 26042) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_update_password");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_smtp_password() !== 45876) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_update_smtp_password");
     }
 
     uniffiCallbackInterfaceEventListener.register();

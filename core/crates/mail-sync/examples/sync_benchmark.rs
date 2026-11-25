@@ -54,6 +54,7 @@ async fn main() {
                 email: "alice@example.com".into(),
                 display_name: "Alice".into(),
                 username: "alice@example.com".into(),
+                smtp_username: None,
                 imap: endpoint(
                     std::env::args()
                         .nth(1)
@@ -63,6 +64,7 @@ async fn main() {
                 smtp: endpoint(3465),
             },
             "secret".into(),
+            None,
         )
         .await
         .unwrap();

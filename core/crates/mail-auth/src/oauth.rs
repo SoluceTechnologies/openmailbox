@@ -422,6 +422,7 @@ pub fn servers(authentication: Authentication, identity: &Identity) -> ServerCon
         imap,
         smtp,
         username: identity.email.clone(),
+        smtp_username: None,
     }
 }
 

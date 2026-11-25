@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -18,15 +18,19 @@ function EndpointSection({
   hostPlaceholder,
   endpoint,
   onChange,
+  children,
+  footer,
 }: {
   title: string;
   hostPlaceholder: string;
   endpoint: ServerEndpoint;
   onChange: (endpoint: ServerEndpoint) => void;
+  children: ReactNode;
+  footer?: ReactNode;
 }) {
   const { t } = useTranslation();
   return (
-    <FormSection title={title}>
+    <FormSection title={title} footer={footer}>
       <FormField
         label={t('accounts.setup.host')}
         value={endpoint.host}
@@ -58,6 +62,7 @@ function EndpointSection({
           />
         </View>
       </View>
+      {children}
     </FormSection>
   );
 }
@@ -197,24 +202,48 @@ export function SignInForm({ provider, onDone }: SignInFormProps) {
     );
   }
 
+  const servers = setup.manual ? setup.servers : null;
+  const appPasswordFooter = provider.appPasswordHelp ? (
+    <View style={styles.footer}>
+      <Typography variant="caption" color={colors.textSecondary} style={styles.footerText}>
+        {t('accounts.setup.appPasswordHint', { provider: provider.name })}
+      </Typography>
+      <Pressable accessibilityRole="link" onPress={() => Linking.openURL(provider.appPasswordHelp!)}>
+        <Typography variant="caption" color="primary" weight="600" style={styles.footerText}>
+          {t('accounts.setup.appPasswordLink')}
+        </Typography>
+      </Pressable>
+    </View>
+  ) : undefined;
+  const passwordField = (
+    <FormField
+      label={t('accounts.setup.password')}
+      value={setup.password}
+      onChangeText={setup.setPassword}
+      placeholder={provider.appPasswordHelp ? t('accounts.setup.appPasswordPlaceholder') : t('accounts.setup.required')}
+      secureTextEntry={!passwordVisible}
+      autoCapitalize="none"
+      autoCorrect={false}
+      autoComplete="password"
+      textContentType="password"
+      returnKeyType="go"
+      onSubmitEditing={() => setup.canSubmit && setup.submit()}
+      trailing={
+        <IconButton
+          variant="plain"
+          size={36}
+          accessibilityLabel={passwordVisible ? t('accounts.setup.hidePassword') : t('accounts.setup.showPassword')}
+          onPress={() => setPasswordVisible((visible) => !visible)}
+        >
+          {passwordVisible ? <EyeOff size={18} color={colors.textTertiary} /> : <Eye size={18} color={colors.textTertiary} />}
+        </IconButton>
+      }
+    />
+  );
+
   return (
     <View style={styles.form}>
-      <FormSection
-        footer={
-          provider.appPasswordHelp ? (
-            <View style={styles.footer}>
-              <Typography variant="caption" color={colors.textSecondary} style={styles.footerText}>
-                {t('accounts.setup.appPasswordHint', { provider: provider.name })}
-              </Typography>
-              <Pressable accessibilityRole="link" onPress={() => Linking.openURL(provider.appPasswordHelp!)}>
-                <Typography variant="caption" color="primary" weight="600" style={styles.footerText}>
-                  {t('accounts.setup.appPasswordLink')}
-                </Typography>
-              </Pressable>
-            </View>
-          ) : undefined
-        }
-      >
+      <FormSection footer={servers ? undefined : appPasswordFooter}>
         <FormField
           label={t('accounts.setup.name')}
           value={setup.displayName}
@@ -236,57 +265,57 @@ export function SignInForm({ provider, onDone }: SignInFormProps) {
           textContentType="emailAddress"
           returnKeyType="next"
         />
-        <FormField
-          label={t('accounts.setup.password')}
-          value={setup.password}
-          onChangeText={setup.setPassword}
-          placeholder={provider.appPasswordHelp ? t('accounts.setup.appPasswordPlaceholder') : t('accounts.setup.required')}
-          secureTextEntry={!passwordVisible}
-          autoCapitalize="none"
-          autoCorrect={false}
-          autoComplete="password"
-          textContentType="password"
-          returnKeyType="go"
-          onSubmitEditing={() => setup.canSubmit && setup.submit()}
-          trailing={
-            <IconButton
-              variant="plain"
-              size={36}
-              accessibilityLabel={passwordVisible ? t('accounts.setup.hidePassword') : t('accounts.setup.showPassword')}
-              onPress={() => setPasswordVisible((visible) => !visible)}
-            >
-              {passwordVisible ? <EyeOff size={18} color={colors.textTertiary} /> : <Eye size={18} color={colors.textTertiary} />}
-            </IconButton>
-          }
-        />
+        {servers ? null : passwordField}
       </FormSection>
 
       {setup.error ? <SignInError message={setup.error} /> : null}
 
-      {setup.manual && setup.servers ? (
+      {servers ? (
         <>
           <EndpointSection
             title={t('accounts.setup.incoming')}
             hostPlaceholder="imap.example.com"
-            endpoint={setup.servers.imap}
-            onChange={(imap) => setup.setServers({ ...setup.servers!, imap })}
-          />
-          <EndpointSection
-            title={t('accounts.setup.outgoing')}
-            hostPlaceholder="smtp.example.com"
-            endpoint={setup.servers.smtp}
-            onChange={(smtp) => setup.setServers({ ...setup.servers!, smtp })}
-          />
-          <FormSection title={t('accounts.setup.authentication')}>
+            endpoint={servers.imap}
+            onChange={(imap) => setup.setServers({ ...servers, imap })}
+            footer={appPasswordFooter}
+          >
             <FormField
               label={t('accounts.setup.username')}
-              value={setup.servers.username}
-              onChangeText={(username) => setup.setServers({ ...setup.servers!, username: username.trim() })}
-              placeholder={setup.email}
+              value={servers.username}
+              onChangeText={(username) => setup.setServers({ ...servers, username: username.trim() })}
+              placeholder={setup.email || t('accounts.setup.required')}
               autoCapitalize="none"
               autoCorrect={false}
             />
-          </FormSection>
+            {passwordField}
+          </EndpointSection>
+          <EndpointSection
+            title={t('accounts.setup.outgoing')}
+            hostPlaceholder="smtp.example.com"
+            endpoint={servers.smtp}
+            onChange={(smtp) => setup.setServers({ ...servers, smtp })}
+          >
+            <FormField
+              label={t('accounts.setup.username')}
+              accessibilityLabel={t('accounts.outgoingUsername')}
+              value={servers.smtpUsername ?? ''}
+              onChangeText={(smtpUsername) => setup.setServers({ ...servers, smtpUsername: smtpUsername.trim() || undefined })}
+              placeholder={t('accounts.setup.sameAsIncoming')}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <FormField
+              label={t('accounts.setup.password')}
+              accessibilityLabel={t('accounts.outgoingPassword')}
+              value={setup.smtpPassword}
+              onChangeText={setup.setSmtpPassword}
+              placeholder={t('accounts.setup.sameAsIncoming')}
+              secureTextEntry={!passwordVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="password"
+            />
+          </EndpointSection>
         </>
       ) : null}
 

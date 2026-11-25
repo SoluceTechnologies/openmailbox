@@ -9,7 +9,7 @@ import { Authentication, CoreError, Security, type ServerEndpoint } from '@openm
 import { useAccounts } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
 import { queryClient, queryKeys } from '@/core/queryClient';
-import { deleteSecret, saveSecret } from '@/core/secrets';
+import { deleteSecret, saveSecret, smtpSecretId } from '@/core/secrets';
 import { accountName } from '@/features/accounts/accountName';
 import { describeCoreError } from '@/features/accounts/coreErrors';
 import { AccountColorRow } from '@/features/accounts/components/AccountColorRow';
@@ -40,6 +40,7 @@ export default function AccountSettingsScreen() {
   const syncFailure = useSyncFailureMessage(id);
   const [displayName, setDisplayName] = useState(account?.displayName ?? '');
   const [password, setPassword] = useState('');
+  const [smtpPassword, setSmtpPassword] = useState('');
   const signature = useSettingsStore((state) => state.signatures[id]) ?? NO_SIGNATURE;
   const setSignature = useSettingsStore((state) => state.setSignature);
   const identities = useSettingsStore((state) => state.identities[id]) ?? [];
@@ -59,10 +60,17 @@ export default function AccountSettingsScreen() {
     setUpdating(true);
     setPasswordMessage(null);
     try {
-      await mailCore().updatePassword(account.id, password);
-      await saveSecret(account.id, password);
+      if (password) {
+        await mailCore().updatePassword(account.id, password);
+        await saveSecret(account.id, password);
+        setPassword('');
+      }
+      if (smtpPassword) {
+        await mailCore().updateSmtpPassword(account.id, smtpPassword);
+        await saveSecret(smtpSecretId(account.id), smtpPassword);
+        setSmtpPassword('');
+      }
       useSyncStore.getState().setAuthRequired(account.id, false);
-      setPassword('');
       setPasswordMessage({ text: t('accounts.passwordUpdated'), failed: false });
     } catch (error) {
       setPasswordMessage({ text: describeCoreError(error, t), failed: true });
@@ -100,6 +108,7 @@ export default function AccountSettingsScreen() {
         onPress: async () => {
           await mailCore().removeAccount(account.id);
           await deleteSecret(account.id);
+          await deleteSecret(smtpSecretId(account.id));
           useSettingsStore.getState().forgetAccount(account.id);
           await queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
           goBack();
@@ -148,6 +157,7 @@ export default function AccountSettingsScreen() {
         <ListRow title={t('accounts.setup.incoming')} subtitle={describeEndpoint(account.imap)} />
         <ListRow title={t('accounts.setup.outgoing')} subtitle={describeEndpoint(account.smtp)} />
         <ListRow title={t('accounts.setup.username')} subtitle={account.username} />
+        {account.smtpUsername ? <ListRow title={t('accounts.outgoingUsername')} subtitle={account.smtpUsername} /> : null}
       </FormSection>
 
       <SignatureSection value={signature} footer={t('accounts.signatureHint')} onChange={(next) => setSignature(account.id, next)} />
@@ -204,13 +214,27 @@ export default function AccountSettingsScreen() {
             />
           </FormSection>
         )}
+        {!oauth && account.smtpUsername ? (
+          <FormSection title={t('accounts.setup.outgoing')} style={styles.outgoing}>
+            <FormField
+              label={t('accounts.newPassword')}
+              accessibilityLabel={t('accounts.outgoingPassword')}
+              value={smtpPassword}
+              onChangeText={setSmtpPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="password"
+            />
+          </FormSection>
+        ) : null}
         {passwordMessage ? (
           <Typography variant="caption" color={passwordMessage.failed ? colors.danger : colors.textSecondary} style={styles.message}>
             {passwordMessage.text}
           </Typography>
         ) : null}
         {oauth ? null : (
-          <Button title={t('accounts.updatePassword')} loading={updating} disabled={!password || updating} onPress={updatePassword} />
+          <Button title={t('accounts.updatePassword')} loading={updating} disabled={(!password && !smtpPassword) || updating} onPress={updatePassword} />
         )}
       </View>
 
@@ -223,5 +247,6 @@ export default function AccountSettingsScreen() {
 
 const styles = StyleSheet.create({
   group: { gap: 12 },
+  outgoing: { marginTop: 16 },
   message: { marginHorizontal: 16 },
 });

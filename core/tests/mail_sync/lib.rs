@@ -679,11 +679,12 @@ fn an_address_already_added_is_refused_before_connecting() {
         email: " Carol@Example.com ".into(),
         display_name: "Carol".into(),
         username: "carol".into(),
+        smtp_username: None,
         imap: unreachable.clone(),
         smtp: unreachable,
     };
     assert!(matches!(
-        runtime.block_on(engine.add_account(config, "secret".into())),
+        runtime.block_on(engine.add_account(config, "secret".into(), None)),
         Err(Error::AccountExists)
     ));
     assert_eq!(engine.list_accounts().unwrap().len(), 1);

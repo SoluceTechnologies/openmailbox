@@ -371,7 +371,7 @@ fn stored_alias_mail_gets_its_original_sender_from_headers_fetched_again() {
     let path = directory.join("mail.db");
     Connection::open(&path)
         .unwrap()
-        .pragma_update(None, "user_version", 13)
+        .execute_batch(crate::MIGRATIONS[13])
         .unwrap();
     let store = Store::open(&path).unwrap();
     assert_eq!(store.uids_with_unknown_signals(inbox, 50).unwrap(), [2, 1]);
