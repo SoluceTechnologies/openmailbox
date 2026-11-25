@@ -33,6 +33,7 @@ describe('server settings', () => {
   it('saves new servers once they sign in and keeps the typed password', async () => {
     renderWithProviders(<ServerSettingsScreen />);
     fireEvent.changeText(screen.getAllByLabelText('Server')[0], ' mail.example.org ');
+    fireEvent.changeText(screen.getByLabelText('Username'), ' alice ');
     fireEvent.changeText(screen.getByLabelText('Password'), 'new');
     fireEvent.press(screen.getByRole('button', { name: 'Save' }));
 
@@ -42,7 +43,7 @@ describe('server settings', () => {
       {
         imap: { host: 'mail.example.org', port: 993, security: Security.Tls },
         smtp: account.smtp,
-        username: account.username,
+        username: 'alice',
         smtpUsername: undefined,
       },
       'new',
@@ -74,6 +75,7 @@ describe('server settings', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Save' })).toBeNull());
+    expect(screen.getByLabelText('Connecting to imap.example.com…')).toBeOnTheScreen();
     expect(core.updateServers).toHaveBeenCalledTimes(1);
     await act(async () => finish());
   });
@@ -85,6 +87,21 @@ describe('server settings', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
     fireEvent.changeText(screen.getAllByLabelText('Port')[0], '');
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it('signs in to the outgoing server apart once an outgoing password is typed', async () => {
+    renderWithProviders(<ServerSettingsScreen />);
+    fireEvent.changeText(screen.getByLabelText('Outgoing Password'), 'smtp-new');
+    fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(mockRouter.back).toHaveBeenCalled());
+    expect(core.updateServers).toHaveBeenCalledWith(
+      'account-1',
+      expect.objectContaining({ smtpUsername: 'alice@example.com' }),
+      undefined,
+      'smtp-new',
+    );
+    expect(await readSecret(smtpSecretId('account-1'))).toBe('smtp-new');
   });
 
   it('forgets the outgoing password when the outgoing server shares the incoming sign-in', async () => {

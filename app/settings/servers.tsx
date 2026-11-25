@@ -41,7 +41,7 @@ function ServerSettingsForm({ account }: { account: Account }) {
   const [error, setError] = useState<string | null>(null);
 
   const username = servers.username.trim();
-  const smtpUsername = servers.smtpUsername?.trim() || undefined;
+  const smtpUsername = servers.smtpUsername?.trim() || (smtpPassword ? username : undefined);
   const changed =
     !sameEndpoint(servers.imap, account.imap) ||
     !sameEndpoint(servers.smtp, account.smtp) ||
@@ -73,7 +73,7 @@ function ServerSettingsForm({ account }: { account: Account }) {
       right={
         saving ? (
           <View style={styles.progress}>
-            <ActivityIndicator color={colors.textSecondary} />
+            <ActivityIndicator accessibilityLabel={t('accounts.setup.connectingTo', { host: servers.imap.host })} color={colors.textSecondary} />
           </View>
         ) : (
           <IconButton round glass size={40} accessibilityLabel={t('accounts.saveServers')} disabled={!changed || !valid} onPress={save}>
