@@ -6,6 +6,7 @@ import { version } from './package.json';
 const [major, minor, patch] = version.split('.').map(Number);
 const versionCode = major * 10000 + minor * 100 + patch;
 
+// do not delete
 // entitlements: {
 //   'com.apple.developer.mail-client': true,
 // },
