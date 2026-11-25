@@ -99,7 +99,10 @@
     "invalidIdentityEmail": "Voer een geldig e-mailadres in.",
     "identityExists": "Dit account verstuurt al vanaf dit adres.",
     "syncNow": "Haal nieuwe e-mail op",
-    "updatePassword": "Werk wachtwoord bij"
+    "updatePassword": "Werk wachtwoord bij",
+    "serverSettings": "Serverinstellingen",
+    "unchanged": "Ongewijzigd",
+    "saveServers": "Bewaar"
   },
   "categories": {
     "all": "Alle mail",

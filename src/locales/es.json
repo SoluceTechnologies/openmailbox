@@ -99,7 +99,10 @@
     "invalidIdentityEmail": "Introduce una dirección de correo válida.",
     "identityExists": "Esta cuenta ya envía desde esta dirección.",
     "syncNow": "Buscar correo nuevo",
-    "updatePassword": "Actualizar contraseña"
+    "updatePassword": "Actualizar contraseña",
+    "serverSettings": "Ajustes del servidor",
+    "unchanged": "Sin cambios",
+    "saveServers": "Guardar"
   },
   "categories": {
     "all": "Todo el correo",

@@ -99,7 +99,10 @@
     "invalidIdentityEmail": "Introduza um endereço de e-mail válido.",
     "identityExists": "Esta conta já envia a partir deste endereço.",
     "syncNow": "Verificar correio novo",
-    "updatePassword": "Atualizar palavra-passe"
+    "updatePassword": "Atualizar palavra-passe",
+    "serverSettings": "Definições do servidor",
+    "unchanged": "Inalterada",
+    "saveServers": "Guardar"
   },
   "categories": {
     "all": "Todos os e-mails",

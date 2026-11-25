@@ -99,7 +99,10 @@
     "invalidIdentityEmail": "Gib eine gültige E-Mail-Adresse ein.",
     "identityExists": "Dieser Account sendet bereits von dieser Adresse.",
     "syncNow": "Neue E-Mails abrufen",
-    "updatePassword": "Passwort aktualisieren"
+    "updatePassword": "Passwort aktualisieren",
+    "serverSettings": "Servereinstellungen",
+    "unchanged": "Unverändert",
+    "saveServers": "Sichern"
   },
   "categories": {
     "all": "Alle E-Mails",

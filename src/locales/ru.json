@@ -99,7 +99,10 @@
     "invalidIdentityEmail": "Введите правильный адрес электронной почты.",
     "identityExists": "Эта учётная запись уже отправляет с этого адреса.",
     "syncNow": "Проверить почту",
-    "updatePassword": "Обновить пароль"
+    "updatePassword": "Обновить пароль",
+    "serverSettings": "Настройки серверов",
+    "unchanged": "Без изменений",
+    "saveServers": "Сохранить"
   },
   "categories": {
     "all": "Все письма",

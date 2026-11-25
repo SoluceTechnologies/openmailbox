@@ -99,7 +99,10 @@
     "invalidIdentityEmail": "Inserisci un indirizzo email valido.",
     "identityExists": "Questo account invia già da questo indirizzo.",
     "syncNow": "Controlla nuova posta",
-    "updatePassword": "Aggiorna password"
+    "updatePassword": "Aggiorna password",
+    "serverSettings": "Impostazioni server",
+    "unchanged": "Invariata",
+    "saveServers": "Salva"
   },
   "categories": {
     "all": "Tutta la posta",

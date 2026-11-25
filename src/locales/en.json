@@ -99,7 +99,10 @@
     "invalidIdentityEmail": "Enter a valid email address.",
     "identityExists": "This account already sends from this address.",
     "syncNow": "Check for New Mail",
-    "updatePassword": "Update Password"
+    "updatePassword": "Update Password",
+    "serverSettings": "Server Settings",
+    "unchanged": "Unchanged",
+    "saveServers": "Save"
   },
   "categories": {
     "all": "All Mail",

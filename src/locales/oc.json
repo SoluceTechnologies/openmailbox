@@ -99,7 +99,10 @@
     "invalidIdentityEmail": "Picatz una adreça electronica valida.",
     "identityExists": "Aqueste compte manda ja dempuèi aquesta adreça.",
     "syncNow": "Relevar los messatges",
-    "updatePassword": "Metre a jorn lo senhal"
+    "updatePassword": "Metre a jorn lo senhal",
+    "serverSettings": "Paramètres dels servidors",
+    "unchanged": "Sens cambiament",
+    "saveServers": "Enregistrar"
   },
   "categories": {
     "all": "Totes los corrièrs",
