@@ -1,0 +1,59 @@
+diff --git a/node_modules/expo-router/ios/Toolbar/RouterToolbarItemView.swift b/node_modules/expo-router/ios/Toolbar/RouterToolbarItemView.swift
+index 47936de..6a55840 100644
+--- a/node_modules/expo-router/ios/Toolbar/RouterToolbarItemView.swift
++++ b/node_modules/expo-router/ios/Toolbar/RouterToolbarItemView.swift
+@@ -37,6 +37,8 @@ class RouterToolbarItemView: RouterViewWithLogger {
+ 
+   var host: RouterToolbarHostView?
+   private var currentBarButtonItem: UIBarButtonItem?
++  private var customViewSize: CGSize = .zero
++  private var customViewSizeObservation: NSKeyValueObservation?
+ 
+   let onSelected = EventDispatcher()
+ 
+@@ -87,7 +89,7 @@ class RouterToolbarItemView: RouterViewWithLogger {
+     var item = UIBarButtonItem()
+ 
+     if let customView {
+-      item = UIBarButtonItem(customView: customView)
++      item = UIBarButtonItem(customView: sizedContainer(for: customView))
+     } else if type == .fluidSpacer {
+       item = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+     } else if type == .fixedSpacer {
+@@ -128,6 +130,20 @@ class RouterToolbarItemView: RouterViewWithLogger {
+     currentBarButtonItem = item
+   }
+ 
++  private func sizedContainer(for view: UIView) -> UIView {
++    let size = view.bounds.size
++    customViewSize = size
++    let container = UIView(frame: CGRect(origin: .zero, size: size))
++    container.translatesAutoresizingMaskIntoConstraints = false
++    container.autoresizesSubviews = false
++    container.addSubview(view)
++    NSLayoutConstraint.activate([
++      container.widthAnchor.constraint(equalToConstant: size.width),
++      container.heightAnchor.constraint(equalToConstant: size.height),
++    ])
++    return container
++  }
++
+   private func applyContentProperties(to item: UIBarButtonItem) {
+     // Only apply content properties for normal buttons
+     if type == .normal || type == nil {
+@@ -211,10 +227,15 @@ class RouterToolbarItemView: RouterViewWithLogger {
+       return
+     }
+     customView = childComponentView
++    customViewSizeObservation = childComponentView.layer.observe(\.bounds) { [weak self] layer, _ in
++      guard let self, layer.bounds.size != self.customViewSize else { return }
++      self.performRebuild()
++    }
+   }
+ 
+   override func unmountChildComponentView(_ childComponentView: UIView, index: Int) {
+     if customView == childComponentView {
++      customViewSizeObservation = nil
+       childComponentView.removeFromSuperview()
+       customView = nil
+     }
