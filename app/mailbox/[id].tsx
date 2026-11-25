@@ -99,6 +99,7 @@ export default function MailboxScreen() {
     return () => cancelAnimationFrame(frame);
   }, [barLayout]);
   const barSettling = laidOutBar !== barLayout;
+  const [filterPillWidth, setFilterPillWidth] = useState(0);
   if (kept.current.filterKey !== filterKey) kept.current = { filterKey, threadIds: [] };
   const keep = useCallback(() => kept.current.threadIds, []);
   useEffect(() => {
@@ -309,6 +310,8 @@ export default function MailboxScreen() {
       bare={bare}
       enabled={enabled}
       summary={summary}
+      width={filterPillWidth}
+      onMeasure={setFilterPillWidth}
       onToggle={() => setFilterEnabled(!filterEnabled)}
       onOpen={() => router.push({ pathname: '/filters', params: unified ? { unified: '1' } : {} })}
     />
@@ -325,7 +328,7 @@ export default function MailboxScreen() {
         setFilterEnabled(true);
       }}
     />,
-    <Stack.Toolbar.View key="on" hidden={!filterEnabled || barSettling}>
+    <Stack.Toolbar.View key={`on:${filterPillWidth}`} hidden={!filterEnabled || barSettling || filterPillWidth === 0}>
       {filterPill(true, true)}
     </Stack.Toolbar.View>,
   ];

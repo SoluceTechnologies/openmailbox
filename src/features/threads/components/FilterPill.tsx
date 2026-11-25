@@ -17,15 +17,8 @@ const COLLAPSED_WIDTH = TOGGLE_SIZE + 2 * INSET;
 const MAX_WIDTH = 220;
 const LABEL_GAP = 10;
 const LABEL_END_PADDING = 12;
-const CHEVRON_WIDTH = 16;
-const CAPTION_CHARACTER_WIDTH = 7.8;
 const SPRING = { damping: 18, stiffness: 230, mass: 0.9 };
 const FADE = { duration: 200 };
-
-export function barePillWidth(filteredBy: string, summary: string): number {
-  const label = Math.max(filteredBy.length, summary.length + CHEVRON_WIDTH / CAPTION_CHARACTER_WIDTH) * CAPTION_CHARACTER_WIDTH;
-  return Math.min(BARE_TOGGLE_SIZE + LABEL_GAP + label + LABEL_END_PADDING, MAX_WIDTH);
-}
 
 interface FilterPillProps {
   enabled: boolean;
@@ -33,9 +26,11 @@ interface FilterPillProps {
   onToggle: () => void;
   onOpen: () => void;
   bare?: boolean;
+  width?: number;
+  onMeasure?: (width: number) => void;
 }
 
-export function FilterPill({ enabled, summary, onToggle, onOpen, bare = false }: FilterPillProps) {
+export function FilterPill({ enabled, summary, onToggle, onOpen, bare = false, width, onMeasure }: FilterPillProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const motion = !useSettingsStore((state) => state.reduceMotion);
@@ -72,13 +67,27 @@ export function FilterPill({ enabled, summary, onToggle, onOpen, bare = false }:
     </>
   );
 
+  const measure = (
+    <View
+      style={[styles.summary, styles.measure]}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      onLayout={(event) => {
+        const natural = Math.ceil(event.nativeEvent.layout.width);
+        if (bare) onMeasure?.(Math.min(BARE_TOGGLE_SIZE + LABEL_GAP + natural, MAX_WIDTH));
+        else setLabelWidth((current) => (current === natural ? current : natural));
+      }}
+    >
+      {label}
+    </View>
+  );
+
   const pill = (
     <Animated.View
       style={[
         styles.pill,
-        bare
-          ? { width: enabled ? barePillWidth(filteredBy, summary) : BARE_TOGGLE_SIZE, height: BARE_TOGGLE_SIZE, padding: 0 }
-          : [styles.raised, { backgroundColor: colors.surface, borderColor: colors.border }],
+        bare ? { width, height: BARE_TOGGLE_SIZE } : [styles.raised, { backgroundColor: colors.surface, borderColor: colors.border }],
         measured && { width: enabled ? expanded : COLLAPSED_WIDTH },
         size,
       ]}
@@ -113,6 +122,7 @@ export function FilterPill({ enabled, summary, onToggle, onOpen, bare = false }:
           </Pressable>
         </Animated.View>
       ) : null}
+      {bare ? measure : null}
     </Animated.View>
   );
 
@@ -121,18 +131,7 @@ export function FilterPill({ enabled, summary, onToggle, onOpen, bare = false }:
   return (
     <>
       {pill}
-      <View
-        style={[styles.summary, styles.measure]}
-        pointerEvents="none"
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        onLayout={(event) => {
-          const natural = Math.ceil(event.nativeEvent.layout.width);
-          setLabelWidth((current) => (current === natural ? current : natural));
-        }}
-      >
-        {label}
-      </View>
+      {measure}
     </>
   );
 }
