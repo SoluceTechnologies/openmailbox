@@ -48,6 +48,21 @@ describe('account setup', () => {
     expect(result.current.canSubmit).toBe(true);
   });
 
+  it('adds the account once when Sign In is tapped twice before the screen updates', async () => {
+    const account = makeAccount({ id: 'account-9', email: 'alice@gmail.com' });
+    core.discover.mockResolvedValue(DISCOVERED);
+    core.addAccount.mockResolvedValue(account);
+    core.listAccounts.mockResolvedValue([account]);
+    const { result, onDone } = setup(OTHER);
+    await fill(result, 'alice@gmail.com', 'app-password');
+
+    const { submit } = result.current;
+    await act(() => Promise.all([submit(), submit()]));
+
+    expect(core.addAccount).toHaveBeenCalledTimes(1);
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
   it('discovers the servers of other providers, adds the account and keeps the password in the keychain', async () => {
     const account = makeAccount({ id: 'account-9', email: 'alice@gmail.com' });
     core.discover.mockResolvedValue(DISCOVERED);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CoreError, Security, type Account, type ServerConfig } from '@openmailbox/mail-core';
 
@@ -39,6 +39,7 @@ export function useAccountSetup(provider: MailProvider, onDone: (account: Accoun
   const [error, setError] = useState<string | null>(null);
   const [oauth, setOauth] = useState<ServerOAuth | null>(null);
   const [probing, setProbing] = useState(false);
+  const submitting = useRef(false);
   const probeHost = servers?.imap.host;
   const probePort = servers?.imap.port;
 
@@ -80,6 +81,8 @@ export function useAccountSetup(provider: MailProvider, onDone: (account: Accoun
   };
 
   const submit = async () => {
+    if (submitting.current) return;
+    submitting.current = true;
     setError(null);
     try {
       let configuration = servers;
@@ -115,6 +118,7 @@ export function useAccountSetup(provider: MailProvider, onDone: (account: Accoun
         setManual(true);
       }
     } finally {
+      submitting.current = false;
       setPhase('idle');
     }
   };
