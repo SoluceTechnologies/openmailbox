@@ -39,6 +39,7 @@ function ServerSettingsForm({ account }: { account: Account }) {
   const [smtpPassword, setSmtpPassword] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const authRequired = useSyncStore((state) => state.authRequired[account.id] === true);
 
   const username = servers.username.trim();
   const smtpUsername = servers.smtpUsername?.trim() || (smtpPassword ? username : undefined);
@@ -88,6 +89,7 @@ function ServerSettingsForm({ account }: { account: Account }) {
         hostPlaceholder="imap.example.com"
         endpoint={servers.imap}
         onChange={(imap) => setServers({ ...servers, imap })}
+        footer={t('accounts.passwordHint')}
       >
         <FormField
           label={t('accounts.setup.username')}
@@ -101,7 +103,7 @@ function ServerSettingsForm({ account }: { account: Account }) {
           label={t('accounts.setup.password')}
           value={password}
           onChangeText={setPassword}
-          placeholder={t('accounts.unchanged')}
+          placeholder={authRequired ? t('accounts.setup.required') : t('accounts.unchanged')}
           secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}

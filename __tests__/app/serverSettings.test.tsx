@@ -80,6 +80,16 @@ describe('server settings', () => {
     await act(async () => finish());
   });
 
+  it('asks for the password while the server rejects the saved one', () => {
+    const { unmount } = renderWithProviders(<ServerSettingsScreen />);
+    expect(screen.getByLabelText('Password')).toHaveProp('placeholder', 'Required');
+    expect(screen.getByText(i18n.t('accounts.passwordHint'))).toBeOnTheScreen();
+    unmount();
+    useSyncStore.setState({ authRequired: {} });
+    renderWithProviders(<ServerSettingsScreen />);
+    expect(screen.getByLabelText('Password')).toHaveProp('placeholder', 'Unchanged');
+  });
+
   it('keeps Save inactive until a setting changes and every port is set', () => {
     renderWithProviders(<ServerSettingsScreen />);
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();

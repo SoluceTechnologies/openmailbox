@@ -117,55 +117,31 @@ describe('account settings', () => {
     expect(core.renameAccount).toHaveBeenCalledWith('account-1', 'Alice D.');
   });
 
-  it('stores a new password and resumes syncing once the server accepts it', async () => {
-    renderWithProviders(<AccountSettingsScreen />);
-    fireEvent.changeText(screen.getByLabelText('Password'), 'new-secret');
-    fireEvent.press(screen.getByText('Update Password'));
-
-    expect(await screen.findByText('Password updated.')).toBeOnTheScreen();
-    expect(core.updatePassword).toHaveBeenCalledWith('account-1', 'new-secret');
-    expect(await readSecret('account-1')).toBe('new-secret');
-    expect(useSyncStore.getState().authRequired['account-1']).toBe(false);
-  });
-
-  it('keeps Update Password inactive until a password is typed', () => {
-    renderWithProviders(<AccountSettingsScreen />);
-    expect(screen.queryByRole('button', { name: 'Update Password' })).toBeNull();
-    fireEvent.press(screen.getByText('Update Password'));
-    expect(core.updatePassword).not.toHaveBeenCalled();
-    fireEvent.changeText(screen.getByLabelText('Password'), 'new-secret');
-    expect(screen.getByRole('button', { name: 'Update Password' })).toBeOnTheScreen();
-  });
-
-  it('stores a new outgoing password for an account that signs in to its outgoing server apart', async () => {
+  it('shows the outgoing username of an account that signs in to its outgoing server apart', () => {
     queryClient.setQueryData(queryKeys.accounts, [makeAccount({ smtpUsername: 'alice-smtp' })]);
     renderWithProviders(<AccountSettingsScreen />);
     expect(screen.getByText('Outgoing Username')).toBeOnTheScreen();
     expect(screen.getByText('alice-smtp')).toBeOnTheScreen();
-    fireEvent.changeText(screen.getByLabelText('Outgoing Password'), 'smtp-new');
-    fireEvent.press(screen.getByText('Update Password'));
-
-    expect(await screen.findByText('Password updated.')).toBeOnTheScreen();
-    expect(core.updateSmtpPassword).toHaveBeenCalledWith('account-1', 'smtp-new');
-    expect(core.updatePassword).not.toHaveBeenCalled();
-    expect(await readSecret(smtpSecretId('account-1'))).toBe('smtp-new');
   });
 
-  it('asks for one password when the outgoing server shares the incoming credentials', () => {
+  it('shows no outgoing username when the outgoing server shares the incoming sign-in', () => {
     renderWithProviders(<AccountSettingsScreen />);
     expect(screen.queryByText('Outgoing Username')).toBeNull();
-    expect(screen.queryByLabelText('Outgoing Password')).toBeNull();
   });
 
-  it('keeps the old password when the server rejects the new one', async () => {
-    await saveSecret('account-1', 'old-secret');
-    core.updatePassword.mockRejectedValueOnce(new CoreError.Auth());
+  it('changes the password from the servers', () => {
+    useSyncStore.setState({ authRequired: {} });
     renderWithProviders(<AccountSettingsScreen />);
-    fireEvent.changeText(screen.getByLabelText('Password'), 'wrong');
-    fireEvent.press(screen.getByText('Update Password'));
+    expect(screen.queryByText('Update Password')).toBeNull();
+    expect(screen.queryByText(i18n.t('accounts.reconnectRequired'))).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Password' }));
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/settings/servers', params: { accountId: 'account-1' } });
+  });
 
-    expect(await screen.findByText(i18n.t('errors.auth'))).toBeOnTheScreen();
-    expect(await readSecret('account-1')).toBe('old-secret');
+  it('asks for the password again under the servers once the server rejects it', () => {
+    renderWithProviders(<AccountSettingsScreen />);
+    expect(screen.getByText('Required')).toBeOnTheScreen();
+    expect(screen.getByText(i18n.t('accounts.reconnectRequired'))).toBeOnTheScreen();
   });
 
   it('signs in again on the provider page for an account added that way', async () => {

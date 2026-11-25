@@ -3,13 +3,13 @@ import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
-import { KeyRound, LogIn, Plus, RefreshCw } from 'lucide-react-native';
+import { LogIn, Plus, RefreshCw } from 'lucide-react-native';
 import { Authentication, CoreError, Security, type ServerEndpoint } from '@openmailbox/mail-core';
 
 import { useAccounts } from '@/core/hooks';
 import { mailCore } from '@/core/mailCore';
 import { queryClient, queryKeys } from '@/core/queryClient';
-import { deleteSecret, saveSecret, smtpSecretId } from '@/core/secrets';
+import { deleteSecret, smtpSecretId } from '@/core/secrets';
 import { accountName } from '@/features/accounts/accountName';
 import { describeCoreError } from '@/features/accounts/coreErrors';
 import { AccountColorRow } from '@/features/accounts/components/AccountColorRow';
@@ -39,15 +39,13 @@ export default function AccountSettingsScreen() {
   const syncLabel = useSyncLabel([id]);
   const syncFailure = useSyncFailureMessage(id);
   const [displayName, setDisplayName] = useState(account?.displayName ?? '');
-  const [password, setPassword] = useState('');
-  const [smtpPassword, setSmtpPassword] = useState('');
   const signature = useSettingsStore((state) => state.signatures[id]) ?? NO_SIGNATURE;
   const setSignature = useSettingsStore((state) => state.setSignature);
   const identities = useSettingsStore((state) => state.identities[id]) ?? [];
   const accountNames = useSettingsStore((state) => state.accountNames);
   const setAccountName = useSettingsStore((state) => state.setAccountName);
   const [updating, setUpdating] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState<{ text: string; failed: boolean } | null>(null);
+  const [signInMessage, setSignInMessage] = useState<{ text: string; failed: boolean } | null>(null);
 
   if (!account) return <SettingsPage title="">{null}</SettingsPage>;
 
@@ -56,41 +54,18 @@ export default function AccountSettingsScreen() {
     if (trimmed && trimmed !== account.displayName) mailCore().renameAccount(account.id, trimmed).catch(() => undefined);
   };
 
-  const updatePassword = async () => {
-    setUpdating(true);
-    setPasswordMessage(null);
-    try {
-      if (password) {
-        await mailCore().updatePassword(account.id, password);
-        await saveSecret(account.id, password);
-        setPassword('');
-      }
-      if (smtpPassword) {
-        await mailCore().updateSmtpPassword(account.id, smtpPassword);
-        await saveSecret(smtpSecretId(account.id), smtpPassword);
-        setSmtpPassword('');
-      }
-      useSyncStore.getState().setAuthRequired(account.id, false);
-      setPasswordMessage({ text: t('accounts.passwordUpdated'), failed: false });
-    } catch (error) {
-      setPasswordMessage({ text: describeCoreError(error, t), failed: true });
-    } finally {
-      setUpdating(false);
-    }
-  };
-
   const signInAgain = async () => {
     setUpdating(true);
-    setPasswordMessage(null);
+    setSignInMessage(null);
     try {
       const request = mailCore().beginAccountSignIn(account.id);
       const answer = await WebBrowser.openAuthSessionAsync(request.url, request.redirectUri);
       if (answer.type !== 'success') return;
       await mailCore().reauthorize(account.id, answer.url);
       useSyncStore.getState().setAuthRequired(account.id, false);
-      setPasswordMessage({ text: t('accounts.signedIn'), failed: false });
+      setSignInMessage({ text: t('accounts.signedIn'), failed: false });
     } catch (error) {
-      if (!CoreError.Cancelled.instanceOf(error)) setPasswordMessage({ text: describeCoreError(error, t), failed: true });
+      if (!CoreError.Cancelled.instanceOf(error)) setSignInMessage({ text: describeCoreError(error, t), failed: true });
     } finally {
       setUpdating(false);
     }
@@ -100,8 +75,12 @@ export default function AccountSettingsScreen() {
   const openServers = oauth
     ? undefined
     : () => router.push({ pathname: '/settings/servers', params: { accountId: account.id } });
-  const passwordInactive = (!password && !smtpPassword) || updating;
   const provider = providerName(account);
+  const serversFooter = oauth
+    ? t(authRequired ? 'accounts.signInRequired' : 'accounts.oauthHint', { provider })
+    : authRequired
+      ? t('accounts.reconnectRequired')
+      : undefined;
 
   const remove = () =>
     Alert.alert(t('accounts.removeTitle'), t('accounts.removeMessage', { email: account.email }), [
@@ -151,20 +130,50 @@ export default function AccountSettingsScreen() {
         />
       </FormSection>
 
-      <FormSection title={t('accounts.servers')}>
-        <ListRow
-          title={t('accounts.provider')}
-          detail={providerName(account)}
-          leading={<ProviderMark brand={providerForAccount(account)?.provider.brand} size={28} />}
-          chevron={false}
-        />
-        <ListRow title={t('accounts.setup.incoming')} subtitle={describeEndpoint(account.imap)} onPress={openServers} />
-        <ListRow title={t('accounts.setup.outgoing')} subtitle={describeEndpoint(account.smtp)} onPress={openServers} />
-        <ListRow title={t('accounts.setup.username')} subtitle={account.username} onPress={openServers} />
-        {account.smtpUsername ? (
-          <ListRow title={t('accounts.outgoingUsername')} subtitle={account.smtpUsername} onPress={openServers} />
+      <View style={styles.group}>
+        <FormSection title={t('accounts.servers')} footer={serversFooter}>
+          <ListRow
+            title={t('accounts.provider')}
+            detail={providerName(account)}
+            leading={<ProviderMark brand={providerForAccount(account)?.provider.brand} size={28} />}
+            chevron={false}
+          />
+          <ListRow title={t('accounts.setup.incoming')} subtitle={describeEndpoint(account.imap)} onPress={openServers} />
+          <ListRow title={t('accounts.setup.outgoing')} subtitle={describeEndpoint(account.smtp)} onPress={openServers} />
+          <ListRow title={t('accounts.setup.username')} subtitle={account.username} onPress={openServers} />
+          {account.smtpUsername ? (
+            <ListRow title={t('accounts.outgoingUsername')} subtitle={account.smtpUsername} onPress={openServers} />
+          ) : null}
+          {oauth ? (
+            <ListRow
+              title={t('accounts.signInAgain')}
+              leading={<LogIn size={20} color={colors.primary} />}
+              trailing={updating ? <ActivityIndicator testID="sign-in-again-progress" size="small" color={colors.textSecondary} /> : undefined}
+              chevron={false}
+              disabled={updating}
+              onPress={signInAgain}
+            />
+          ) : (
+            <ListRow
+              title={t('accounts.password')}
+              detail={authRequired ? undefined : '••••••••'}
+              trailing={
+                authRequired ? (
+                  <Typography variant="body1" color={colors.danger}>
+                    {t('accounts.setup.required')}
+                  </Typography>
+                ) : undefined
+              }
+              onPress={openServers}
+            />
+          )}
+        </FormSection>
+        {signInMessage ? (
+          <Typography variant="caption" color={signInMessage.failed ? colors.danger : colors.textSecondary} style={styles.message}>
+            {signInMessage.text}
+          </Typography>
         ) : null}
-      </FormSection>
+      </View>
 
       <SignatureSection value={signature} footer={t('accounts.signatureHint')} onChange={(next) => setSignature(account.id, next)} />
 
@@ -189,70 +198,6 @@ export default function AccountSettingsScreen() {
         <AccountColorRow account={account} />
       </FormSection>
 
-      <View style={styles.group}>
-        {oauth ? (
-          <FormSection
-            title={provider}
-            footer={authRequired ? t('accounts.signInRequired', { provider }) : t('accounts.oauthHint', { provider })}
-          >
-            <ListRow
-              title={t('accounts.signInAgain')}
-              leading={<LogIn size={20} color={colors.primary} />}
-              trailing={updating ? <ActivityIndicator testID="sign-in-again-progress" size="small" color={colors.textSecondary} /> : undefined}
-              chevron={false}
-              disabled={updating}
-              onPress={signInAgain}
-            />
-          </FormSection>
-        ) : (
-          <FormSection
-            title={t('accounts.password')}
-            footer={authRequired ? t('accounts.reconnectRequired') : t('accounts.passwordHint')}
-          >
-            <FormField
-              label={t('accounts.newPassword')}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              textContentType="password"
-            />
-          </FormSection>
-        )}
-        {!oauth && account.smtpUsername ? (
-          <FormSection title={t('accounts.setup.outgoing')} style={styles.outgoing}>
-            <FormField
-              label={t('accounts.newPassword')}
-              accessibilityLabel={t('accounts.outgoingPassword')}
-              value={smtpPassword}
-              onChangeText={setSmtpPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              textContentType="password"
-            />
-          </FormSection>
-        ) : null}
-        {oauth ? null : (
-          <FormSection>
-            <ListRow
-              title={t('accounts.updatePassword')}
-              leading={<KeyRound size={20} color={passwordInactive ? colors.textTertiary : colors.primary} />}
-              trailing={updating ? <ActivityIndicator size="small" color={colors.textSecondary} /> : undefined}
-              chevron={false}
-              disabled={passwordInactive}
-              onPress={updatePassword}
-            />
-          </FormSection>
-        )}
-        {passwordMessage ? (
-          <Typography variant="caption" color={passwordMessage.failed ? colors.danger : colors.textSecondary} style={styles.message}>
-            {passwordMessage.text}
-          </Typography>
-        ) : null}
-      </View>
-
       <FormSection>
         <ListRow title={t('accounts.remove')} destructive chevron={false} onPress={remove} />
       </FormSection>
@@ -262,6 +207,5 @@ export default function AccountSettingsScreen() {
 
 const styles = StyleSheet.create({
   group: { gap: 12 },
-  outgoing: { marginTop: 16 },
   message: { marginHorizontal: 16 },
 });
