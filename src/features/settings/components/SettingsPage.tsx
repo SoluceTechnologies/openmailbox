@@ -10,16 +10,17 @@ const MAX_CONTENT_WIDTH = 700;
 
 interface Props {
   title: string;
+  right?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function SettingsPage({ title, children }: Props) {
+export function SettingsPage({ title, right, children }: Props) {
 
   return (
     <ViewContainer grouped>
       <SafeAreaView edges={['top']} style={styles.flex}>
         <View style={styles.column}>
-          <ScreenHeader title={title} onBack={goBack} />
+          <ScreenHeader title={title} onBack={goBack} right={right} />
         </View>
         <KeyboardAvoidingView style={styles.flex} behavior="padding">
           <ScrollView

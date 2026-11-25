@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Check } from 'lucide-react-native';
 
 import { useAccounts } from '@/core/hooks';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { SignatureSection } from '@/features/signatures/SignatureSection';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { Button, FormField, FormSection, ListRow } from '@/ui/components';
+import { FormField, FormSection, IconButton, ListRow } from '@/ui/components';
 import { isEmail } from '@/utils/addresses';
 import { goBack } from '@/utils/navigation';
 
 export default function IdentityScreen() {
   const { accountId, identityId } = useLocalSearchParams<{ accountId: string; identityId?: string }>();
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const account = useAccounts().find((candidate) => candidate.id === accountId);
   const identities = useSettingsStore((state) => state.identities[accountId]) ?? [];
   const saveIdentity = useSettingsStore((state) => state.saveIdentity);
@@ -54,7 +56,14 @@ export default function IdentityScreen() {
     ]);
 
   return (
-    <SettingsPage title={identity?.email ?? t('accounts.newIdentity')}>
+    <SettingsPage
+      title={identity?.email ?? t('accounts.newIdentity')}
+      right={
+        <IconButton round glass size={40} accessibilityLabel={t('accounts.saveIdentity')} disabled={!email.trim()} onPress={save}>
+          <Check size={20} color={colors.primary} />
+        </IconButton>
+      }
+    >
       <FormSection>
         <FormField label={t('accounts.senderName')} value={name} placeholder={account.displayName} onChangeText={setName} />
         <FormField
@@ -70,8 +79,6 @@ export default function IdentityScreen() {
       </FormSection>
 
       <SignatureSection value={signature} footer={t('accounts.identitySignatureHint')} onChange={setSignature} />
-
-      <Button title={t('accounts.saveIdentity')} disabled={!email.trim()} onPress={save} />
 
       {identity ? (
         <FormSection>
