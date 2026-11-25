@@ -328,7 +328,7 @@ export default function MailboxScreen() {
         setFilterEnabled(true);
       }}
     />,
-    <Stack.Toolbar.View key={`on:${filterPillWidth}`} hidden={!filterEnabled || barSettling || filterPillWidth === 0}>
+    <Stack.Toolbar.View key="on" hidden={!filterEnabled || barSettling || filterPillWidth === 0}>
       {filterPill(true, true)}
     </Stack.Toolbar.View>,
   ];
