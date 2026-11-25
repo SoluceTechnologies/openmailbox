@@ -314,11 +314,21 @@ export default function MailboxScreen() {
     />
   );
 
-  const toolbarFilterPills = [false, true].map((enabled) => (
-    <Stack.Toolbar.View key={String(enabled)} hidden={enabled !== filterEnabled || (enabled && barSettling)}>
-      {filterPill(true, enabled)}
-    </Stack.Toolbar.View>
-  ));
+  const toolbarFilterPills = [
+    <Stack.Toolbar.Button
+      key="off"
+      icon="line.3.horizontal.decrease"
+      accessibilityLabel={t('threads.filters.toggle')}
+      hidden={filterEnabled}
+      onPress={() => {
+        haptic();
+        setFilterEnabled(true);
+      }}
+    />,
+    <Stack.Toolbar.View key="on" hidden={!filterEnabled || barSettling}>
+      {filterPill(true, true)}
+    </Stack.Toolbar.View>,
+  ];
 
   if (NATIVE_CHROME) {
     return (
