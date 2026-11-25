@@ -14,13 +14,11 @@
     "moveDown": "Omlaag",
     "moveUp": "Omhoog",
     "namesHint": "De accountnaam is alleen zichtbaar in Open Mailbox. Ontvangers zien de naam van de afzender.",
-    "newPassword": "Wachtwoord",
     "outgoingPassword": "Wachtwoord uitgaand",
     "outgoingUsername": "Gebruikersnaam uitgaand",
     "oauthHint": "Ingelogd via {{provider}}. Log opnieuw in als de mail niet meer synchroniseert.",
     "password": "Wachtwoord",
     "passwordHint": "Gebruik het wachtwoord, of het app-wachtwoord, van deze e-mailaccount.",
-    "passwordUpdated": "Wachtwoord bijgewerkt.",
     "reconnectRequired": "De server heeft het wachtwoord geweigerd. Voer het opnieuw in om de synchronisatie te hervatten.",
     "signInAgain": "Opnieuw inloggen",
     "signInRequired": "{{provider}} vraagt je opnieuw in te loggen om verder te synchroniseren.",
@@ -99,7 +97,9 @@
     "invalidIdentityEmail": "Voer een geldig e-mailadres in.",
     "identityExists": "Dit account verstuurt al vanaf dit adres.",
     "syncNow": "Haal nieuwe e-mail op",
-    "updatePassword": "Werk wachtwoord bij"
+    "serverSettings": "Serverinstellingen",
+    "unchanged": "Ongewijzigd",
+    "saveServers": "Bewaar"
   },
   "categories": {
     "all": "Alle mail",

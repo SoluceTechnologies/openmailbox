@@ -1,4 +1,4 @@
-use mail_model::{Account, Authentication, Error, Result, Security, ServerEndpoint};
+use mail_model::{Account, Authentication, Error, Result, Security, ServerConfig, ServerEndpoint};
 use rusqlite::{OptionalExtension, Row, params};
 
 use crate::{StorageResult, Store};
@@ -188,6 +188,31 @@ impl Store {
                 .execute(
                     "UPDATE account SET display_name = ?2 WHERE id = ?1",
                     params![account_id, display_name],
+                )
+                .storage()?;
+            Ok(())
+        })
+    }
+
+    pub fn update_servers(&self, account_id: &str, servers: &ServerConfig) -> Result<()> {
+        self.write(|transaction| {
+            transaction
+                .execute(
+                    "UPDATE account SET username = ?2, smtp_username = ?3,
+                       imap_host = ?4, imap_port = ?5, imap_security = ?6,
+                       smtp_host = ?7, smtp_port = ?8, smtp_security = ?9
+                     WHERE id = ?1",
+                    params![
+                        account_id,
+                        servers.username,
+                        servers.smtp_username,
+                        servers.imap.host,
+                        servers.imap.port,
+                        servers.imap.security.as_str(),
+                        servers.smtp.host,
+                        servers.smtp.port,
+                        servers.smtp.security.as_str(),
+                    ],
                 )
                 .storage()?;
             Ok(())

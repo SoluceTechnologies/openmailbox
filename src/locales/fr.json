@@ -14,13 +14,11 @@
     "moveDown": "Descendre",
     "moveUp": "Monter",
     "namesHint": "Le nom du compte n’est affiché que dans Open Mailbox. Les destinataires voient le nom de l’expéditeur.",
-    "newPassword": "Mot de passe",
     "outgoingPassword": "Mot de passe d’envoi",
     "outgoingUsername": "Identifiant d’envoi",
     "oauthHint": "Connecté via {{provider}}. Reconnectez-vous si le courrier ne se synchronise plus.",
     "password": "Mot de passe",
     "passwordHint": "Utilisez le mot de passe, ou le mot de passe d'application, de ce compte.",
-    "passwordUpdated": "Mot de passe mis à jour.",
     "reconnectRequired": "Le serveur a refusé le mot de passe. Saisissez-le à nouveau pour reprendre la synchronisation.",
     "signInAgain": "Se reconnecter",
     "signInRequired": "{{provider}} demande de vous reconnecter pour reprendre la synchronisation.",
@@ -99,7 +97,9 @@
     "invalidIdentityEmail": "Saisissez une adresse e-mail valide.",
     "identityExists": "Ce compte envoie déjà depuis cette adresse.",
     "syncNow": "Relever les messages",
-    "updatePassword": "Mettre à jour le mot de passe"
+    "serverSettings": "Réglages des serveurs",
+    "unchanged": "Inchangé",
+    "saveServers": "Enregistrer"
   },
   "categories": {
     "all": "Tous les e-mails",

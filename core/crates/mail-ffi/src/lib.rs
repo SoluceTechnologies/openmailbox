@@ -838,16 +838,25 @@ impl MailCore {
         self.engine.unlock_smtp(&account_id, secret);
     }
 
-    pub async fn update_smtp_password(&self, account_id: String, secret: String) -> CoreResult<()> {
+    pub async fn update_servers(
+        &self,
+        account_id: String,
+        servers: ServerConfig,
+        secret: Option<String>,
+        smtp_secret: Option<String>,
+    ) -> CoreResult<()> {
+        let servers = mail_model::ServerConfig {
+            imap: servers.imap.into(),
+            smtp: servers.smtp.into(),
+            username: servers.username,
+            smtp_username: servers.smtp_username,
+        };
         self.asynchronous(async move |engine| {
-            engine.update_smtp_password(&account_id, secret).await
+            engine
+                .update_servers(&account_id, servers, secret, smtp_secret)
+                .await
         })
         .await
-    }
-
-    pub async fn update_password(&self, account_id: String, secret: String) -> CoreResult<()> {
-        self.asynchronous(async move |engine| engine.update_password(&account_id, secret).await)
-            .await
     }
 
     pub async fn list_accounts(&self) -> CoreResult<Vec<Account>> {

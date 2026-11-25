@@ -14,13 +14,11 @@
     "moveDown": "Nach unten",
     "moveUp": "Nach oben",
     "namesHint": "Der Kontoname wird nur in Open Mailbox angezeigt. Empfänger sehen den Absendernamen.",
-    "newPassword": "Passwort",
     "outgoingPassword": "Passwort Postausgang",
     "outgoingUsername": "Benutzername Postausgang",
     "oauthHint": "Über {{provider}} angemeldet. Melden Sie sich erneut an, wenn keine E-Mails mehr synchronisiert werden.",
     "password": "Passwort",
     "passwordHint": "Verwende das Passwort oder das App-Passwort dieses E-Mail-Accounts.",
-    "passwordUpdated": "Passwort aktualisiert.",
     "reconnectRequired": "Der Server hat das Passwort abgelehnt. Gib es erneut ein, um die Synchronisierung fortzusetzen.",
     "signInAgain": "Erneut anmelden",
     "signInRequired": "{{provider}} verlangt eine erneute Anmeldung, um die Synchronisierung fortzusetzen.",
@@ -99,7 +97,9 @@
     "invalidIdentityEmail": "Gib eine gültige E-Mail-Adresse ein.",
     "identityExists": "Dieser Account sendet bereits von dieser Adresse.",
     "syncNow": "Neue E-Mails abrufen",
-    "updatePassword": "Passwort aktualisieren"
+    "serverSettings": "Servereinstellungen",
+    "unchanged": "Unverändert",
+    "saveServers": "Sichern"
   },
   "categories": {
     "all": "Alle E-Mails",
