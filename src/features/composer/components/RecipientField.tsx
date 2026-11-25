@@ -67,7 +67,7 @@ export function RecipientField({ label, value, onChange, text, onTextChange, aut
                 onPress={() => onChange(value.filter((candidate) => candidate !== address))}
                 style={[styles.chip, { backgroundColor: `${colors.primary}1a` }]}
               >
-                <Typography variant="body2" weight="500" color={colors.primary} numberOfLines={1}>
+                <Typography variant="body2" weight="500" color={colors.primary} numberOfLines={1} style={styles.chipText}>
                   {shown}
                 </Typography>
                 <X size={13} color={colors.primary} />
@@ -131,6 +131,7 @@ const styles = StyleSheet.create({
   label: { alignSelf: 'flex-start', paddingTop: 14 },
   chips: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingVertical: 6 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4, maxWidth: '100%', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14 },
+  chipText: { flexShrink: 1 },
   input: { flexGrow: 1, minWidth: 90, fontSize: 16, paddingVertical: 6 },
   suggestion: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingLeft: 4, borderBottomWidth: StyleSheet.hairlineWidth },
   suggestionText: { flex: 1, gap: 2 },
