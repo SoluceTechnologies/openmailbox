@@ -6,6 +6,7 @@ import { Eye, EyeOff, Server } from 'lucide-react-native';
 import { Security, type Account, type ServerEndpoint } from '@openmailbox/mail-core';
 
 import { Button, FormField, FormSection, IconButton, SegmentedControl, Typography } from '@/ui/components';
+import { LIQUID_GLASS } from '@/ui/nativeChrome';
 
 import type { MailProvider } from '../providers';
 import { useAccountSetup } from '../useAccountSetup';
@@ -246,7 +247,12 @@ export function SignInForm({ provider, nativeChrome = false, onDone }: SignInFor
     <View style={styles.form}>
       {nativeChrome ? (
         <Stack.Toolbar placement="right">
-          <Stack.Toolbar.Button variant="prominent" disabled={!setup.canSubmit} onPress={setup.submit}>
+          <Stack.Toolbar.Button
+            variant="prominent"
+            style={LIQUID_GLASS && setup.canSubmit ? { color: colors.primaryText } : undefined}
+            disabled={!setup.canSubmit}
+            onPress={setup.submit}
+          >
             {t('accounts.setup.signIn')}
           </Stack.Toolbar.Button>
         </Stack.Toolbar>
