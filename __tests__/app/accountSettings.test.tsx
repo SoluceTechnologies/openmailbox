@@ -115,6 +115,15 @@ describe('account settings', () => {
     expect(useSyncStore.getState().authRequired['account-1']).toBe(false);
   });
 
+  it('keeps Update Password inactive until a password is typed', () => {
+    renderWithProviders(<AccountSettingsScreen />);
+    expect(screen.queryByRole('button', { name: 'Update Password' })).toBeNull();
+    fireEvent.press(screen.getByText('Update Password'));
+    expect(core.updatePassword).not.toHaveBeenCalled();
+    fireEvent.changeText(screen.getByLabelText('Password'), 'new-secret');
+    expect(screen.getByRole('button', { name: 'Update Password' })).toBeOnTheScreen();
+  });
+
   it('stores a new outgoing password for an account that signs in to its outgoing server apart', async () => {
     queryClient.setQueryData(queryKeys.accounts, [makeAccount({ smtpUsername: 'alice-smtp' })]);
     renderWithProviders(<AccountSettingsScreen />);
