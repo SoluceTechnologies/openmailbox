@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 
 use mail_model::{
     AccountConfig, Address, Category, Draft, Keyword, MailboxRole, OutgoingAttachment, Security,
-    ServerEndpoint, ThreadFilter, ThreadScope, ThreadSummary,
+    ServerConfig, ServerEndpoint, ThreadFilter, ThreadScope, ThreadSummary,
 };
 use mail_sync::{Destination, Engine};
 
@@ -819,4 +819,101 @@ async fn sends_with_its_own_outgoing_credentials() {
         .await
         .unwrap();
     wait_on_server("INBOX", &held, true).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn updates_the_servers_of_an_account_only_once_they_sign_in() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let account = mail_model::Account {
+        id: uuid::Uuid::new_v4().to_string(),
+        email: "alice@example.com".into(),
+        display_name: "Alice".into(),
+        username: "nobody@example.com".into(),
+        smtp_username: None,
+        imap: endpoint(3993),
+        smtp: endpoint(3465),
+        color: 0,
+        created_at: 0,
+        authentication: mail_model::Authentication::Password,
+        oauth_server: None,
+    };
+    mail_store::Store::open(&directory.join("mail.db"))
+        .unwrap()
+        .insert_account(&account)
+        .unwrap();
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    engine.unlock_account(&account.id, "secret".into());
+    let servers = |imap_port: u16, smtp_username: Option<&str>| ServerConfig {
+        imap: endpoint(imap_port),
+        smtp: endpoint(3465),
+        username: "alice@example.com".into(),
+        smtp_username: smtp_username.map(Into::into),
+    };
+    let stored = |engine: &Engine| {
+        engine
+            .list_accounts()
+            .unwrap()
+            .into_iter()
+            .find(|candidate| candidate.id == account.id)
+            .unwrap()
+    };
+
+    assert!(
+        engine
+            .update_servers(&account.id, servers(1, None), None, None)
+            .await
+            .is_err()
+    );
+    assert!(matches!(
+        engine
+            .update_servers(&account.id, servers(3993, None), Some("wrong".into()), None)
+            .await,
+        Err(mail_model::Error::Auth)
+    ));
+    assert!(matches!(
+        engine
+            .update_servers(
+                &account.id,
+                servers(3993, Some("bob@example.com")),
+                None,
+                Some("wrong".into())
+            )
+            .await,
+        Err(mail_model::Error::Auth)
+    ));
+    assert_eq!(stored(&engine).username, "nobody@example.com");
+    assert_eq!(stored(&engine).smtp_username, None);
+
+    engine
+        .update_servers(
+            &account.id,
+            servers(3993, Some("bob@example.com")),
+            None,
+            Some("secret".into()),
+        )
+        .await
+        .unwrap();
+    assert_eq!(stored(&engine).username, "alice@example.com");
+    assert_eq!(
+        stored(&engine).smtp_username.as_deref(),
+        Some("bob@example.com")
+    );
+
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    engine
+        .send(draft(
+            &account.id,
+            format!("Moved {token}"),
+            "Sent after new server settings",
+            None,
+        ))
+        .unwrap();
+    wait_on_server("INBOX", &token, true).await;
+    std::fs::remove_dir_all(directory).ok();
 }

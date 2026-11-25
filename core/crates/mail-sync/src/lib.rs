@@ -570,6 +570,91 @@ impl Engine {
         Ok(())
     }
 
+    pub async fn update_servers(
+        &self,
+        account_id: &str,
+        servers: ServerConfig,
+        secret: Option<String>,
+        smtp_secret: Option<String>,
+    ) -> Result<()> {
+        let account = self.store.account(account_id)?;
+        if account.authentication != Authentication::Password {
+            return Err(Error::InvalidInput(
+                "only password accounts have server settings".into(),
+            ));
+        }
+        let (held_secret, held_smtp_secret) = self
+            .accounts()
+            .get(account_id)
+            .map(|handle| (handle.secret.clone(), handle.smtp_secret.clone()))
+            .ok_or(Error::NotFound)?;
+        let read = |held: &Secret| {
+            held.read()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .clone()
+        };
+        let incoming = secret.or_else(|| read(&held_secret)).ok_or(Error::Auth)?;
+        let outgoing = match servers.smtp_username {
+            Some(_) => smtp_secret
+                .clone()
+                .or_else(|| read(&held_smtp_secret))
+                .unwrap_or_else(|| incoming.clone()),
+            None => incoming.clone(),
+        };
+        let connection = proto_imap::connect(
+            &servers.imap,
+            &servers.username,
+            &Credential::Password(incoming.clone()),
+        )
+        .await?;
+        connection.logout().await;
+        proto_smtp::verify(
+            &servers.smtp,
+            servers
+                .smtp_username
+                .as_deref()
+                .unwrap_or(&servers.username),
+            &Credential::Password(outgoing),
+        )
+        .await?;
+        self.store.update_servers(account_id, &servers)?;
+        *held_secret
+            .write()
+            .unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(incoming);
+        if servers.smtp_username.is_none() || smtp_secret.is_some() {
+            *held_smtp_secret
+                .write()
+                .unwrap_or_else(|poisoned| poisoned.into_inner()) = smtp_secret;
+        }
+        let account = self.store.account(account_id)?;
+        if let Some(handle) = self.accounts().get_mut(account_id) {
+            handle.worker.abort();
+            if let Some(idle) = handle.idle.take() {
+                idle.abort();
+            }
+            let _ = self.store.reset_in_flight_operations(Some(account_id));
+            *handle = self.spawn_worker(
+                account,
+                handle.secret.clone(),
+                handle.smtp_secret.clone(),
+                handle.tokens.clone(),
+                None,
+            );
+        }
+        if self.foreground.load(Ordering::SeqCst) {
+            self.start_idle(account_id);
+        }
+        self.dispatch(
+            account_id,
+            Command::Sync {
+                mailbox_ids: None,
+                force: true,
+            },
+        );
+        self.events.emit(CoreEvent::AccountsChanged);
+        Ok(())
+    }
+
     pub fn list_accounts(&self) -> Result<Vec<Account>> {
         self.store.list_accounts()
     }

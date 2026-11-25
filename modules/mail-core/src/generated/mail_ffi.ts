@@ -2931,6 +2931,7 @@ export interface MailCoreLike {
     unlockSmtp(accountId: string, secret: string): void;
     unsubscribe(emailId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<UnsubscribeOutcome>;
     updatePassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
+    updateServers(accountId: string, servers: ServerConfig, secret: string | undefined, smtpSecret: string | undefined, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     updateSmtpPassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
 }
 /**
@@ -4057,6 +4058,33 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
+    async updateServers(accountId: string, servers: ServerConfig, secret: string | undefined, smtpSecret: string | undefined, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_update_servers(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(accountId, nativeModule().rustbuffer_alloc),FfiConverterTypeServerConfig.lower(servers, nativeModule().rustbuffer_alloc),FfiConverterOptionalString.lower(secret, nativeModule().rustbuffer_alloc),FfiConverterOptionalString.lower(smtpSecret, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_void,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_void,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_void,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_void,
+            /*liftFunc:*/ (_v) => {},
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
     async updateSmtpPassword(accountId: string, secret: string, asyncOpts_?: { signal: AbortSignal }): Promise<void> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -4337,6 +4365,9 @@ function uniffiEnsureInitialized() {
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_password() !== 26042) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_update_password");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_servers() !== 14217) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_update_servers");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_update_smtp_password() !== 45876) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_update_smtp_password");

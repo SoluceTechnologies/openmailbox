@@ -850,6 +850,27 @@ impl MailCore {
             .await
     }
 
+    pub async fn update_servers(
+        &self,
+        account_id: String,
+        servers: ServerConfig,
+        secret: Option<String>,
+        smtp_secret: Option<String>,
+    ) -> CoreResult<()> {
+        let servers = mail_model::ServerConfig {
+            imap: servers.imap.into(),
+            smtp: servers.smtp.into(),
+            username: servers.username,
+            smtp_username: servers.smtp_username,
+        };
+        self.asynchronous(async move |engine| {
+            engine
+                .update_servers(&account_id, servers, secret, smtp_secret)
+                .await
+        })
+        .await
+    }
+
     pub async fn list_accounts(&self) -> CoreResult<Vec<Account>> {
         Ok(convert_all(
             self.blocking(|engine| engine.list_accounts()).await?,
