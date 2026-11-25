@@ -247,14 +247,20 @@ export function SignInForm({ provider, nativeChrome = false, onDone }: SignInFor
     <View style={styles.form}>
       {nativeChrome ? (
         <Stack.Toolbar placement="right">
-          <Stack.Toolbar.Button
-            variant="prominent"
-            style={LIQUID_GLASS && setup.canSubmit ? { color: colors.primaryText } : undefined}
-            disabled={!setup.canSubmit}
-            onPress={setup.submit}
-          >
-            {t('accounts.setup.signIn')}
-          </Stack.Toolbar.Button>
+          {setup.busy ? (
+            <Stack.Toolbar.View>
+              <ActivityIndicator accessibilityLabel={status ?? undefined} color={colors.textSecondary} />
+            </Stack.Toolbar.View>
+          ) : (
+            <Stack.Toolbar.Button
+              variant="prominent"
+              style={LIQUID_GLASS && setup.canSubmit ? { color: colors.primaryText } : undefined}
+              disabled={!setup.canSubmit}
+              onPress={setup.submit}
+            >
+              {t('accounts.setup.signIn')}
+            </Stack.Toolbar.Button>
+          )}
         </Stack.Toolbar>
       ) : null}
       <FormSection footer={servers ? undefined : appPasswordFooter}>
