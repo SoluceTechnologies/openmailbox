@@ -52,6 +52,13 @@ describe('identity settings', () => {
     expect(mockRouter.back).toHaveBeenCalled();
   });
 
+  it('disables Save until an address is typed', () => {
+    renderWithProviders(<IdentityScreen />);
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    fireEvent.changeText(screen.getByLabelText('Email'), 'info@example.com');
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+  });
+
   it("refuses an invalid address and the account's own one", () => {
     const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     renderWithProviders(<IdentityScreen />);

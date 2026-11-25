@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, useTheme } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
-import { LogIn, Plus, RefreshCw } from 'lucide-react-native';
+import { KeyRound, LogIn, Plus, RefreshCw } from 'lucide-react-native';
 import { Authentication, CoreError, Security, type ServerEndpoint } from '@openmailbox/mail-core';
 
 import { useAccounts } from '@/core/hooks';
@@ -20,7 +20,7 @@ import { SignatureSection } from '@/features/signatures/SignatureSection';
 import { useSyncFailureMessage, useSyncLabel } from '@/features/sync/useSyncLabel';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
-import { Button, FormField, FormSection, ListRow, Typography } from '@/ui/components';
+import { FormField, FormSection, ListRow, Typography } from '@/ui/components';
 import { goBack } from '@/utils/navigation';
 
 const NO_SIGNATURE = { html: '', text: '' };
@@ -97,6 +97,7 @@ export default function AccountSettingsScreen() {
   };
 
   const oauth = account.authentication !== Authentication.Password;
+  const passwordInactive = (!password && !smtpPassword) || updating;
   const provider = providerName(account);
 
   const remove = () =>
@@ -228,14 +229,23 @@ export default function AccountSettingsScreen() {
             />
           </FormSection>
         ) : null}
+        {oauth ? null : (
+          <FormSection>
+            <ListRow
+              title={t('accounts.updatePassword')}
+              leading={<KeyRound size={20} color={passwordInactive ? colors.textTertiary : colors.primary} />}
+              trailing={updating ? <ActivityIndicator size="small" color={colors.textSecondary} /> : undefined}
+              chevron={false}
+              disabled={passwordInactive}
+              onPress={updatePassword}
+            />
+          </FormSection>
+        )}
         {passwordMessage ? (
           <Typography variant="caption" color={passwordMessage.failed ? colors.danger : colors.textSecondary} style={styles.message}>
             {passwordMessage.text}
           </Typography>
         ) : null}
-        {oauth ? null : (
-          <Button title={t('accounts.updatePassword')} loading={updating} disabled={(!password && !smtpPassword) || updating} onPress={updatePassword} />
-        )}
       </View>
 
       <FormSection>

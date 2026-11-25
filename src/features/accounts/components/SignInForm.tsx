@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
-import { useTheme } from 'expo-router';
+import { Stack, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff, Server } from 'lucide-react-native';
 import { Security, type Account, type ServerEndpoint } from '@openmailbox/mail-core';
 
 import { Button, FormField, FormSection, IconButton, SegmentedControl, Typography } from '@/ui/components';
+import { LIQUID_GLASS } from '@/ui/nativeChrome';
 
 import type { MailProvider } from '../providers';
 import { useAccountSetup } from '../useAccountSetup';
@@ -115,10 +116,11 @@ const BRANDED_DARK = { background: '#131314', border: '#8E918F', text: '#E3E3E3'
 
 interface SignInFormProps {
   provider: MailProvider;
+  nativeChrome?: boolean;
   onDone: (account: Account) => void;
 }
 
-export function SignInForm({ provider, onDone }: SignInFormProps) {
+export function SignInForm({ provider, nativeChrome = false, onDone }: SignInFormProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const setup = useAccountSetup(provider, onDone);
@@ -243,6 +245,24 @@ export function SignInForm({ provider, onDone }: SignInFormProps) {
 
   return (
     <View style={styles.form}>
+      {nativeChrome ? (
+        <Stack.Toolbar placement="right">
+          {setup.busy ? (
+            <Stack.Toolbar.View>
+              <ActivityIndicator accessibilityLabel={status ?? undefined} color={colors.textSecondary} />
+            </Stack.Toolbar.View>
+          ) : (
+            <Stack.Toolbar.Button
+              variant="prominent"
+              style={LIQUID_GLASS && setup.canSubmit ? { color: colors.primaryText } : undefined}
+              disabled={!setup.canSubmit}
+              onPress={setup.submit}
+            >
+              {t('accounts.setup.signIn')}
+            </Stack.Toolbar.Button>
+          )}
+        </Stack.Toolbar>
+      ) : null}
       <FormSection footer={servers ? undefined : appPasswordFooter}>
         <FormField
           label={t('accounts.setup.name')}
@@ -320,7 +340,9 @@ export function SignInForm({ provider, onDone }: SignInFormProps) {
       ) : null}
 
       <View style={styles.actions}>
-        <Button title={t('accounts.setup.signIn')} size="large" disabled={!setup.canSubmit} onPress={setup.submit} />
+        {nativeChrome ? null : (
+          <Button title={t('accounts.setup.signIn')} size="large" disabled={!setup.canSubmit} onPress={setup.submit} />
+        )}
         {statusRow ?? (!setup.manual ? (
           <Button variant="link" title={t('accounts.setup.manual')} disabled={setup.busy} onPress={setup.showManualSettings} />
         ) : null)}

@@ -113,7 +113,7 @@ export function AccountSetupFlow({ onDone, onClose }: AccountSetupFlowProps) {
             {choosingOvhOffer ? (
               <OvhOfferPicker onSelect={(offer) => setProvider(ovhProvider(offer))} />
             ) : provider ? (
-              <SignInForm key={`${provider.identifier}:${provider.servers?.imap.host ?? ''}`} provider={provider} onDone={onDone} />
+              <SignInForm key={`${provider.identifier}:${provider.servers?.imap.host ?? ''}`} provider={provider} nativeChrome={nativeModal} onDone={onDone} />
             ) : (
               <ProviderList onSelect={select} pending={oauth.pending} error={oauth.error} />
             )}
