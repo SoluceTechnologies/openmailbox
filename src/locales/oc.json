@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Apondre dempuèi los contactes",
+    "andMore_one": "e {{count}} autre",
+    "andMore_other": "e {{count}} autres",
     "attach": "Jónher",
     "attachFiles": "Fichièrs",
     "attachPhotos": "Fotos e vidèos",

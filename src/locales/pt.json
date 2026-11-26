@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Adicionar dos contactos",
+    "andMore_one": "e mais {{count}}",
+    "andMore_other": "e mais {{count}}",
     "attach": "Anexar",
     "attachFiles": "Ficheiros",
     "attachPhotos": "Fotografias e vídeos",

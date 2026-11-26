@@ -136,6 +136,10 @@
   },
   "compose": {
     "addFromContacts": "Добавить из контактов",
+    "andMore_few": "и ещё {{count}}",
+    "andMore_many": "и ещё {{count}}",
+    "andMore_one": "и ещё {{count}}",
+    "andMore_other": "и ещё {{count}}",
     "attach": "Прикрепить",
     "attachFiles": "Файлы",
     "attachPhotos": "Фото и видео",

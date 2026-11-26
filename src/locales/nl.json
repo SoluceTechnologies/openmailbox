@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Toevoegen uit contacten",
+    "andMore_one": "en nog {{count}}",
+    "andMore_other": "en nog {{count}}",
     "attach": "Bijvoegen",
     "attachFiles": "Bestanden",
     "attachPhotos": "Foto's en video's",
