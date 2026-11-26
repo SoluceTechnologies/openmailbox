@@ -25,3 +25,5 @@ export const queryKeys = {
   body: (emailId: string) => ['body', emailId] as const,
   search: (query: string, mailboxIds: string[]) => ['search', query, mailboxIds.join(',')] as const,
 };
+
+queryClient.setQueryDefaults(queryKeys.accounts, { gcTime: Infinity });
