@@ -246,6 +246,8 @@
     "contactPictures": "Fòtos dels contactes",
     "contactPicturesHint": "Las fòtos venon de Gravatar, o del lògo o del site de l’entrepresa del mandaire, que pòdon saber que sètz en contacte.",
     "general": "General",
+    "inboxCategories": "Categorias de la bóstia de recepcion",
+    "inboxCategoriesHint": "Classa la bóstia de recepcion en Principal, Transaccions, Actualitats e Promocions.",
     "language": "Lenga",
     "languageHint": "Las datas e los tèxtes seguisson aquesta lenga.",
     "loadRemoteImages": "Cargar los imatges distants",

@@ -246,6 +246,8 @@
     "contactPictures": "Foto dei contatti",
     "contactPicturesHint": "Le foto provengono da Gravatar, o dal logo o dal sito dell’azienda del mittente, che possono sapere che siete in contatto.",
     "general": "Generali",
+    "inboxCategories": "Categorie della posta in arrivo",
+    "inboxCategoriesHint": "Ordina la posta in arrivo in Principale, Transazioni, Aggiornamenti e Promozioni.",
     "language": "Lingua",
     "languageHint": "Date e testi seguono questa lingua.",
     "loadRemoteImages": "Carica immagini remote",

@@ -246,6 +246,8 @@
     "contactPictures": "Photos des contacts",
     "contactPicturesHint": "Les photos viennent de Gravatar, ou du logo ou du site de l’entreprise de l’expéditeur, qui peuvent savoir que vous êtes en contact.",
     "general": "Général",
+    "inboxCategories": "Catégories de la boîte de réception",
+    "inboxCategoriesHint": "Classe la boîte de réception en Principal, Transactions, Mises à jour et Promotions.",
     "language": "Langue",
     "languageHint": "Les dates et les textes suivent cette langue.",
     "loadRemoteImages": "Charger les images distantes",

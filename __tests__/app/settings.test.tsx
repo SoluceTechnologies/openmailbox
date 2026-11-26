@@ -99,6 +99,16 @@ describe('settings', () => {
     expect(useSettingsStore.getState().loadRemoteImages).toBe(true);
   });
 
+  it('sorts the inbox into categories until switched off', () => {
+    useSettingsStore.setState({ categoriesEnabled: true });
+    renderWithProviders(<ReadingSettingsScreen />);
+    const toggle = screen.getByRole('switch', { name: 'Inbox Categories' });
+    expect(toggle).toBeChecked();
+    fireEvent(toggle, 'valueChange', false);
+    expect(useSettingsStore.getState().categoriesEnabled).toBe(false);
+    expect(screen.getByText('Sort the inbox into Primary, Transactions, Updates and Promotions.')).toBeOnTheScreen();
+  });
+
   it('shows contact pictures until switched off', () => {
     renderWithProviders(<ReadingSettingsScreen />);
     const toggle = screen.getByRole('switch', { name: 'Contact Pictures' });

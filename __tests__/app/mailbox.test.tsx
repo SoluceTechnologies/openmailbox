@@ -38,7 +38,7 @@ describe('thread list', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockParams = { id: 'unified' };
-    useSettingsStore.setState({ inboxFilter: 'primary', categorySeenAt: {}, filterEnabled: false, filterCriteria: DEFAULT_FILTER_CRITERIA });
+    useSettingsStore.setState({ inboxFilter: 'primary', categorySeenAt: {}, filterEnabled: false, filterCriteria: DEFAULT_FILTER_CRITERIA, categoriesEnabled: true });
     queryClient.clear();
     queryClient.setQueryData(queryKeys.accounts, [makeAccount()]);
     queryClient.setQueryData(queryKeys.mailboxes, [makeMailbox({ unreadCount: 1 })]);
@@ -136,6 +136,49 @@ describe('thread list', () => {
     expect(useSettingsStore.getState().inboxFilter).toBe('promotions');
     fireEvent.press(screen.getByRole('tab', { name: 'All Mail' }));
     await waitFor(() => expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), EMPTY_THREAD_FILTER, undefined, undefined, 50));
+  });
+
+  describe('with categories turned off', () => {
+    beforeEach(() => useSettingsStore.setState({ categoriesEnabled: false }));
+
+    it('lists every inbox thread without the category bar', async () => {
+      renderWithProviders(<MailboxScreen />);
+      await screen.findByText('Facture disponible');
+      expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), EMPTY_THREAD_FILTER, undefined, undefined, 50);
+      expect(core.listThreads).not.toHaveBeenCalledWith(expect.anything(), EMPTY_THREAD_FILTER, Category.Primary, undefined, 50);
+      expect(screen.queryByRole('tab', { name: 'Promotions' })).toBeNull();
+    });
+
+    it('remembers the tab for when categories come back', async () => {
+      useSettingsStore.setState({ inboxFilter: 'promotions' });
+      renderWithProviders(<MailboxScreen />);
+      await waitFor(() => expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), EMPTY_THREAD_FILTER, undefined, undefined, 50));
+      act(() => useSettingsStore.setState({ categoriesEnabled: true }));
+      await waitFor(() => expect(core.listThreads).toHaveBeenCalledWith(expect.anything(), EMPTY_THREAD_FILTER, Category.Promotions, undefined, 50));
+      expect(screen.getByRole('tab', { name: 'Promotions' })).toBeSelected();
+    });
+
+    it('applies the filters the same way', async () => {
+      useSettingsStore.setState({ filterEnabled: true });
+      renderWithProviders(<MailboxScreen />);
+      await waitFor(() => expect(screen.queryByText('Facture disponible')).toBeNull());
+      expect(core.listThreads).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ unread: true }), undefined, undefined, 50);
+    });
+
+    it('offers no category for the sender', async () => {
+      renderWithProviders(<MailboxScreen />);
+      await screen.findByText('Facture disponible');
+      fireEvent.press(screen.getAllByRole('button', { name: 'More' })[0]);
+      expect(await screen.findByText('Move…')).toBeOnTheScreen();
+      expect(screen.queryByText(i18n.t('threads.categorize'))).toBeNull();
+    });
+  });
+
+  it('offers a category for the sender of an inbox thread', async () => {
+    renderWithProviders(<MailboxScreen />);
+    await screen.findByText('Facture disponible');
+    fireEvent.press(screen.getAllByRole('button', { name: 'More' })[0]);
+    expect(await screen.findByText(i18n.t('threads.categorize'))).toBeOnTheScreen();
   });
 
   it('lists every thread of other folders, without categories', async () => {

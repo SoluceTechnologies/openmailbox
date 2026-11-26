@@ -246,6 +246,8 @@
     "contactPictures": "Contact Pictures",
     "contactPicturesHint": "Pictures come from Gravatar, or from the logo or the website of the sender’s company, which can tell that you are in touch.",
     "general": "General",
+    "inboxCategories": "Inbox Categories",
+    "inboxCategoriesHint": "Sort the inbox into Primary, Transactions, Updates and Promotions.",
     "language": "Language",
     "languageHint": "Dates and texts follow this language.",
     "loadRemoteImages": "Load Remote Images",

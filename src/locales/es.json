@@ -246,6 +246,8 @@
     "contactPictures": "Fotos de contactos",
     "contactPicturesHint": "Las fotos vienen de Gravatar, o del logotipo o el sitio web de la empresa del remitente, que pueden saber que estáis en contacto.",
     "general": "General",
+    "inboxCategories": "Categorías de la bandeja de entrada",
+    "inboxCategoriesHint": "Ordena la bandeja de entrada en Principal, Transacciones, Actualizaciones y Promociones.",
     "language": "Idioma",
     "languageHint": "Las fechas y los textos siguen este idioma.",
     "loadRemoteImages": "Cargar imágenes remotas",

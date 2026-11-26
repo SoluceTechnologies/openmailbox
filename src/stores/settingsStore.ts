@@ -55,6 +55,7 @@ interface SettingsState {
   notificationsEnabled: boolean;
   silencedAccountIds: string[];
   inboxFilter: InboxFilter;
+  categoriesEnabled: boolean;
   collapsedIds: string[];
   accountOrder: string[];
   categorySeenAt: Partial<Record<InboxFilter, number>>;
@@ -76,6 +77,7 @@ interface SettingsState {
   setNotificationsEnabled: (enabled: boolean) => void;
   setAccountNotified: (accountId: string, notified: boolean) => void;
   setInboxFilter: (filter: InboxFilter) => void;
+  setCategoriesEnabled: (enabled: boolean) => void;
   toggleCollapsed: (id: string) => void;
   setAccountOrder: (accountIds: string[]) => void;
   markCategorySeen: (filter: InboxFilter, receivedAt: number) => void;
@@ -101,6 +103,7 @@ export const useSettingsStore = create<SettingsState>()(
       notificationsEnabled: true,
       silencedAccountIds: [],
       inboxFilter: 'primary',
+      categoriesEnabled: true,
       collapsedIds: [],
       accountOrder: [],
       categorySeenAt: {},
@@ -116,6 +119,7 @@ export const useSettingsStore = create<SettingsState>()(
       setDefaultAccountId: (defaultAccountId) => set({ defaultAccountId }),
       setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
       setInboxFilter: (inboxFilter) => set({ inboxFilter }),
+      setCategoriesEnabled: (categoriesEnabled) => set({ categoriesEnabled }),
       setFilterEnabled: (filterEnabled) => set({ filterEnabled }),
       setFilterCriteria: (criteria) => set(({ filterCriteria }) => ({ filterCriteria: { ...filterCriteria, ...criteria } })),
       toggleCollapsed: (id) =>
@@ -191,6 +195,7 @@ export const useSettingsStore = create<SettingsState>()(
         notificationsEnabled,
         silencedAccountIds,
         inboxFilter,
+        categoriesEnabled,
         collapsedIds,
         accountOrder,
         categorySeenAt,
@@ -212,6 +217,7 @@ export const useSettingsStore = create<SettingsState>()(
         notificationsEnabled,
         silencedAccountIds,
         inboxFilter,
+        categoriesEnabled,
         collapsedIds,
         accountOrder,
         categorySeenAt,

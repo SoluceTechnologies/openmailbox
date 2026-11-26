@@ -77,7 +77,8 @@ export default function MailboxScreen() {
   const [searchActive, setSearchActive] = useState(false);
   const searching = searchActive || query.trim().length > 1;
   const mailbox = mailboxes.find((candidate) => candidate.id === scope);
-  const categorized = unified || mailbox?.role === MailboxRole.Inbox;
+  const categoriesEnabled = useSettingsStore((state) => state.categoriesEnabled);
+  const categorized = categoriesEnabled && (unified || mailbox?.role === MailboxRole.Inbox);
   const inboxFilter = useSettingsStore((state) => state.inboxFilter);
   const setInboxFilter = useSettingsStore((state) => state.setInboxFilter);
   const accountNames = useSettingsStore((state) => state.accountNames);

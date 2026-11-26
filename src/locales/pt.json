@@ -246,6 +246,8 @@
     "contactPictures": "Fotos dos contactos",
     "contactPicturesHint": "As fotos vêm do Gravatar, ou do logótipo ou do site da empresa do remetente, que podem saber que estão em contacto.",
     "general": "Geral",
+    "inboxCategories": "Categorias da caixa de entrada",
+    "inboxCategoriesHint": "Organiza a caixa de entrada em Principal, Transações, Atualizações e Promoções.",
     "language": "Idioma",
     "languageHint": "As datas e os textos seguem este idioma.",
     "loadRemoteImages": "Carregar imagens remotas",
