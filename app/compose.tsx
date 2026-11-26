@@ -103,6 +103,7 @@ export default function ComposeScreen() {
   const [signatureRemoved, setSignatureRemoved] = useState(false);
   const [signatureReady, setSignatureReady] = useState(false);
   const [showCopies, setShowCopies] = useState(false);
+  const [copiesTapped, setCopiesTapped] = useState(false);
   const [prefilled, setPrefilled] = useState(mode === 'new');
   const [sending, setSending] = useState(false);
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
@@ -197,6 +198,14 @@ export default function ComposeScreen() {
       hasBody ||
       (mode !== 'forward' && attachments.length > 0));
   const hasRecipient = to.length + cc.length + bcc.length > 0 || (toText + ccText + bccText).trim().length > 0;
+  const copiesEmpty = cc.length + bcc.length === 0 && (ccText + bccText).trim() === '';
+  const foldCopies = () => {
+    if (copiesEmpty) setShowCopies(false);
+  };
+
+  useEffect(() => {
+    if (bodyFocused && copiesEmpty) setShowCopies(false);
+  }, [bodyFocused, copiesEmpty]);
 
   const onBodyText = useCallback((text: string) => {
     bodyText.current = text;
@@ -380,10 +389,19 @@ export default function ComposeScreen() {
               onTextChange={setToText}
               autoFocus={mode === 'new' || mode === 'forward'}
               inputAccessoryViewID={sharedAccessory}
+              onFocus={foldCopies}
             />
             {showCopies ? (
               <>
-                <RecipientField label={t('compose.cc')} value={cc} onChange={setCc} text={ccText} onTextChange={setCcText} inputAccessoryViewID={sharedAccessory} />
+                <RecipientField
+                  label={t('compose.cc')}
+                  value={cc}
+                  onChange={setCc}
+                  text={ccText}
+                  onTextChange={setCcText}
+                  autoFocus={copiesTapped}
+                  inputAccessoryViewID={sharedAccessory}
+                />
                 <RecipientField label={t('compose.bcc')} value={bcc} onChange={setBcc} text={bccText} onTextChange={setBccText} inputAccessoryViewID={sharedAccessory} />
                 <FieldRow label={t('compose.from')}>
                   {NATIVE_CHROME ? (
@@ -425,7 +443,13 @@ export default function ComposeScreen() {
                 </FieldRow>
               </>
             ) : (
-              <Pressable onPress={() => setShowCopies(true)} style={[styles.field, { borderBottomColor: colors.border }]}>
+              <Pressable
+                onPress={() => {
+                  setCopiesTapped(true);
+                  setShowCopies(true);
+                }}
+                style={[styles.field, { borderBottomColor: colors.border }]}
+              >
                 <Typography color="secondary" numberOfLines={1}>
                   {t('compose.copiesAndFrom', { from: sender?.email ?? '' })}
                 </Typography>
@@ -435,6 +459,7 @@ export default function ComposeScreen() {
               <TextInput
                 value={subject}
                 onChangeText={setSubject}
+                onFocus={foldCopies}
                 accessibilityLabel={fieldName(t('compose.subject'))}
                 inputAccessoryViewID={sharedAccessory}
                 style={[styles.input, { color: colors.text }]}

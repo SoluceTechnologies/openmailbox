@@ -163,6 +163,61 @@ describe('composer', () => {
     });
   });
 
+  describe('copies', () => {
+    const openCopies = () => fireEvent.press(screen.getByText('Cc/Bcc, From: alice@example.com'));
+
+    it('opens the copies on Cc', () => {
+      renderWithProviders(<ComposeScreen />);
+      openCopies();
+      expect(screen.getByLabelText('Cc').props.autoFocus).toBe(true);
+      expect(screen.getByLabelText('Bcc').props.autoFocus).toBeFalsy();
+    });
+
+    it('folds empty copies when the subject is focused', () => {
+      renderWithProviders(<ComposeScreen />);
+      openCopies();
+      fireEvent(screen.getByLabelText('Subject'), 'focus');
+      expect(screen.queryByLabelText('Cc')).toBeNull();
+      expect(screen.getByText('Cc/Bcc, From: alice@example.com')).toBeOnTheScreen();
+    });
+
+    it('folds empty copies when To is focused', () => {
+      renderWithProviders(<ComposeScreen />);
+      openCopies();
+      act(() => screen.getByLabelText('To').props.onFocus());
+      expect(screen.queryByLabelText('Cc')).toBeNull();
+    });
+
+    it('folds empty copies when the body is focused', () => {
+      renderWithProviders(<ComposeScreen />);
+      openCopies();
+      bodyEvent('focus');
+      expect(screen.queryByLabelText('Cc')).toBeNull();
+    });
+
+    it('keeps copies open while one has a recipient', () => {
+      renderWithProviders(<ComposeScreen />);
+      openCopies();
+      fireEvent.changeText(screen.getByLabelText('Bcc'), 'bob@x.org,');
+      fireEvent(screen.getByLabelText('Subject'), 'focus');
+      expect(screen.getByLabelText('Cc')).toBeOnTheScreen();
+    });
+
+    it('keeps copies open while one has typed text', () => {
+      renderWithProviders(<ComposeScreen />);
+      openCopies();
+      fireEvent.changeText(screen.getByLabelText('Cc'), 'bob');
+      fireEvent(screen.getByLabelText('Subject'), 'focus');
+      expect(screen.getByLabelText('Cc')).toBeOnTheScreen();
+    });
+
+    it('opens with the copies of a mailto link without taking the focus', () => {
+      mockParams = { mailto: 'mailto:claire@atlas.example?cc=bob@x.org' };
+      renderWithProviders(<ComposeScreen />);
+      expect(screen.getByLabelText('Cc').props.autoFocus).toBeFalsy();
+    });
+  });
+
   describe('mailto links', () => {
     it('fills in the message a mailto link describes', async () => {
       mockParams = { mailto: 'mailto:bob@example.com?cc=carol@example.com&subject=Hello&body=Hi%0D%0A%0D%0ASee%20https%3A%2F%2Fopenmailbox.eu' };
