@@ -3,6 +3,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 import * as Notifications from 'expo-notifications';
 import { Security } from '@openmailbox/mail-core';
 
+import AccessibilitySettingsScreen from '../../app/settings/accessibility';
 import AccountsSettingsScreen from '../../app/settings/accounts';
 import SettingsScreen from '../../app/settings/index';
 import NotificationSettingsScreen from '../../app/settings/notifications';
@@ -38,6 +39,22 @@ describe('settings', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Reading' }));
     expect(mockRouter.push.mock.calls).toEqual([['/settings/accounts'], ['/settings/notifications'], ['/settings/reading']]);
     expect(screen.getByRole('button', { name: 'Accounts' })).toHaveTextContent(/2/);
+  });
+
+  it('opens the accessibility page', () => {
+    renderWithProviders(<SettingsScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Accessibility' }));
+    expect(mockRouter.push).toHaveBeenCalledWith('/settings/accessibility');
+  });
+
+  it('vibrates on taps until switched off', () => {
+    useSettingsStore.setState({ hapticsEnabled: true });
+    renderWithProviders(<AccessibilitySettingsScreen />);
+    const toggle = screen.getByRole('switch', { name: 'Haptic Feedback' });
+    expect(toggle).toBeChecked();
+    fireEvent(toggle, 'valueChange', false);
+    expect(useSettingsStore.getState().hapticsEnabled).toBe(false);
+    expect(screen.getByText('Vibrate on taps and interactions.')).toBeOnTheScreen();
   });
 
   it('lists accounts by name with their provider, without repeating an address used as the name', () => {
