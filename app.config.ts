@@ -81,7 +81,7 @@ const config: ExpoConfig = {
     'expo-localization',
     'expo-font',
     'expo-background-task',
-    ['expo-notifications', { color: '#109be6' }],
+    ['expo-notifications', { icon: './assets/notification-icon.png', color: '#109be6' }],
     [
       'expo-contacts',
       {
