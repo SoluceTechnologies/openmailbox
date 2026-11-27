@@ -16,11 +16,22 @@ jest.mock('expo-router', () => ({
 const PDF = { uri: 'file:///cache/attachments/email-1-0/Facture.pdf', name: 'Facture.pdf', mimeType: 'application/pdf' };
 let mockParams = PDF;
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => undefined) }));
+const mockWrite = jest.fn();
+jest.mock('expo-file-system', () => ({
+  File: class {
+    uri: string;
+    write = mockWrite;
+    constructor(uri: string) {
+      this.uri = uri;
+    }
+  },
+}));
 
 describe('attachment viewer', () => {
   beforeAll(() => i18n.changeLanguage('en'));
   beforeEach(() => {
     mockParams = PDF;
+    mockWrite.mockClear();
   });
 
   it('shows a photo whole, centred, instead of in the web view', () => {
@@ -30,18 +41,31 @@ describe('attachment viewer', () => {
     expect(screen.getByLabelText('IMG_0005.jpeg').props.source).toEqual({ uri: mockParams.uri });
   });
 
-  it('draws a vector image in the web view, which the image view cannot', () => {
+  it('fits a vector image to the screen without running its scripts', () => {
     mockParams = { uri: 'file:///cache/attachments/email-1-2/logo.svg', name: 'logo.svg', mimeType: 'image/svg+xml' };
     renderWithProviders(<AttachmentScreen />);
     const webView = screen.getByTestId('web-view');
-    expect(webView.props.source).toEqual({ uri: mockParams.uri });
+    expect(webView.props.source).toEqual({ uri: 'file:///cache/attachments/email-1-2/logo.svg.view.html' });
     expect(webView.props.javaScriptEnabled).toBe(false);
+    expect(mockWrite).toHaveBeenCalledWith(expect.stringContaining('<img src="file:///cache/attachments/email-1-2/logo.svg">'));
+    expect(mockWrite).toHaveBeenCalledWith(expect.stringContaining('width=device-width'));
   });
 
-  it('plays a video in place', () => {
-    mockParams = { uri: 'file:///cache/attachments/email-1-3/clip.mp4', name: 'clip.mp4', mimeType: 'video/mp4' };
+  it.each([
+    ['export.csv', 'text/csv'],
+    ['notes.txt', 'text/plain'],
+    ['data.json', 'application/json'],
+  ])('shows %s at a readable size', (name, mimeType) => {
+    mockParams = { uri: `file:///cache/attachments/email-1-4/${name}`, name, mimeType };
     renderWithProviders(<AttachmentScreen />);
-    expect(screen.getByTestId('web-view').props.allowsInlineMediaPlayback).toBe(true);
+    expect(screen.getByTestId('web-view').props.source).toEqual({ uri: `${mockParams.uri}.view.html` });
+    expect(mockWrite).toHaveBeenCalledWith(expect.stringContaining(`<iframe src="${mockParams.uri}"></iframe>`));
+  });
+
+  it('leaves web pages at their own layout', () => {
+    mockParams = { uri: 'file:///cache/attachments/email-1-5/page.html', name: 'page.html', mimeType: 'text/html' };
+    renderWithProviders(<AttachmentScreen />);
+    expect(screen.getByTestId('web-view').props.source).toEqual({ uri: mockParams.uri });
   });
 
   it('shows the file without running scripts', () => {
