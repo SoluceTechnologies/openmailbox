@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Adicionar dos contactos",
+    "andMore_one": "e mais {{count}}",
+    "andMore_other": "e mais {{count}}",
     "attach": "Anexar",
     "attachFiles": "Ficheiros",
     "attachPhotos": "Fotografias e vídeos",
@@ -144,8 +146,6 @@
     "bodyPlaceholder": "Mensagem",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Bcc, De: {{from}}",
-    "discard": "Descartar",
-    "discardTitle": "Descartar este rascunho?",
     "forward": "Reencaminhar",
     "forwardedAttachmentsFailed": "Não foi possível transferir os anexos originais, por isso não serão reencaminhados.",
     "forwardedHeader": "---------- Mensagem reencaminhada ----------",
@@ -171,7 +171,14 @@
     "to": "Para:",
     "wrote": "Em {{date}}, {{author}} escreveu:",
     "formatting": "Formatação",
-    "hideFormatting": "Ocultar formatação"
+    "hideFormatting": "Ocultar formatação",
+    "draftTitle": "Guardar esta mensagem como rascunho?",
+    "saveDraft": "Guardar rascunho",
+    "deleteDraft": "Apagar rascunho",
+    "draftSaved": "Rascunho guardado",
+    "draftFailed": "Não foi possível guardar o rascunho",
+    "draftAttachmentsFailed": "Não foi possível transferir os anexos do rascunho.",
+    "attachmentsLoading": "Os anexos ainda estão a ser transferidos."
   },
   "dates": {
     "yesterday": "Ontem"
@@ -184,6 +191,49 @@
     "network": "Não é possível contactar o servidor ({{message}}).",
     "operationFailed": "Não foi possível aplicar uma alteração no servidor",
     "server": "O servidor devolveu um erro: {{message}}"
+  },
+  "invites": {
+    "accept": "Aceitar",
+    "addToCalendar": "Adicionar ao calendário",
+    "allDay": "Todo o dia",
+    "answer": {
+      "ACCEPTED": "Aceitou",
+      "DECLINED": "Recusou",
+      "TENTATIVE": "Respondeu talvez"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} aceitou o convite.",
+      "DECLINED": "{{name}} recusou o convite.",
+      "TENTATIVE": "{{name}} talvez participe."
+    },
+    "cancelled": "Este evento foi cancelado.",
+    "decline": "Recusar",
+    "from": "de {{name}}",
+    "maybe": "Talvez",
+    "notAdded": "Não foi possível adicionar o evento ao calendário.",
+    "removeFromCalendar": "Remover do calendário",
+    "repeats": {
+      "daily_one": "Todos os dias",
+      "daily_other": "A cada {{count}} dias",
+      "monthly_one": "Todos os meses",
+      "monthly_other": "A cada {{count}} meses",
+      "weekly_one": "Todas as semanas",
+      "weekly_other": "A cada {{count}} semanas",
+      "yearly_one": "Todos os anos",
+      "yearly_other": "A cada {{count}} anos"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} aceitou.",
+      "DECLINED": "{{name}} recusou.",
+      "TENTATIVE": "{{name}} talvez participe."
+    },
+    "sendFailed": "Não foi possível enviar a resposta.",
+    "subject": {
+      "ACCEPTED": "Aceite: {{summary}}",
+      "DECLINED": "Recusado: {{summary}}",
+      "TENTATIVE": "Talvez: {{summary}}"
+    },
+    "updated": "Este convite foi atualizado."
   },
   "mailboxes": {
     "allInboxes": "Todas as caixas",
@@ -205,7 +255,8 @@
     "newMessages_other": "{{count}} novas mensagens"
   },
   "offline": {
-    "banner": "Está offline. As alterações serão enviadas quando a ligação voltar."
+    "banner": "Está offline. As alterações serão enviadas quando a ligação voltar.",
+    "detail": "As alterações seguem quando voltar a ligação."
   },
   "reader": {
     "attachmentFailed": "Não foi possível abrir o anexo.",
@@ -241,11 +292,16 @@
   },
   "settings": {
     "about": "Acerca",
+    "accessibility": "Acessibilidade",
     "accounts": "Contas",
     "appearance": "Aspeto e idioma",
     "contactPictures": "Fotos dos contactos",
     "contactPicturesHint": "As fotos vêm do Gravatar, ou do logótipo ou do site da empresa do remetente, que podem saber que estão em contacto.",
     "general": "Geral",
+    "haptics": "Retorno háptico",
+    "hapticsHint": "Vibrar ao tocar e interagir.",
+    "inboxCategories": "Categorias da caixa de entrada",
+    "inboxCategoriesHint": "Organiza a caixa de entrada em Principal, Transações, Atualizações e Promoções.",
     "language": "Idioma",
     "languageHint": "As datas e os textos seguem este idioma.",
     "loadRemoteImages": "Carregar imagens remotas",
@@ -352,7 +408,8 @@
     "unknownSender": "Remetente desconhecido",
     "unread": "Por ler",
     "unreadCount_one": "{{count}} por ler",
-    "unreadCount_other": "{{count}} por ler"
+    "unreadCount_other": "{{count}} por ler",
+    "noRecipients": "Sem destinatários"
   },
   "undo": {
     "archived": "Arquivado",

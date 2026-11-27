@@ -37,8 +37,10 @@ export function sortAccounts(accounts: Account[], order: string[]): Account[] {
   return [...accounts].sort((first, second) => rank(first) - rank(second));
 }
 
+export const accountsQuery = { queryKey: queryKeys.accounts, queryFn: () => mailCore().listAccounts() };
+
 export function useAccounts(): Account[] {
-  const accounts = useQuery({ queryKey: queryKeys.accounts, queryFn: () => mailCore().listAccounts() }).data ?? EMPTY_ACCOUNTS;
+  const accounts = useQuery(accountsQuery).data ?? EMPTY_ACCOUNTS;
   const order = useSettingsStore((state) => state.accountOrder);
   return useMemo(() => sortAccounts(accounts, order), [accounts, order]);
 }

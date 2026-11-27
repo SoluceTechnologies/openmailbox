@@ -4,9 +4,9 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { ThreadScope } from '@openmailbox/mail-core';
 
 import { EMPTY_THREAD_FILTER, useSearch, useThreads } from '@/core/hooks';
-import { queryClient } from '@/core/queryClient';
+import { queryClient, queryKeys } from '@/core/queryClient';
 
-import { core, makeEmail, makeThread } from '../helpers/fixtures';
+import { core, makeAccount, makeEmail, makeThread } from '../helpers/fixtures';
 
 function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
@@ -16,6 +16,11 @@ describe('core hooks', () => {
   beforeEach(() => {
     queryClient.clear();
     jest.clearAllMocks();
+  });
+
+  it('keeps the accounts cached with nobody reading them', () => {
+    queryClient.setQueryData(queryKeys.accounts, [makeAccount()]);
+    expect(queryClient.getQueryCache().find({ queryKey: queryKeys.accounts })?.gcTime).toBe(Infinity);
   });
 
   it('reads the unified inbox page by page and flattens the pages', async () => {

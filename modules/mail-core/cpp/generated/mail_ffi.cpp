@@ -256,6 +256,14 @@ extern "C" {
         RustBuffer email, 
         RustBuffer imap
     );
+    /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_read_message_file(
+        /*handle*/ uint64_t ptr, 
+        RustBuffer path
+    );
+    /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_readable_image(
+        /*handle*/ uint64_t ptr, 
+        RustBuffer path
+    );
     /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_reauthorize(
         /*handle*/ uint64_t ptr, 
         RustBuffer account_id, 
@@ -275,6 +283,16 @@ extern "C" {
         RustBuffer email_id, 
         uint32_t index, 
         RustBuffer directory
+    );
+    /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_save_attachment_from_file(
+        /*handle*/ uint64_t ptr, 
+        RustBuffer path, 
+        uint32_t index, 
+        RustBuffer directory
+    );
+    /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_save_draft(
+        /*handle*/ uint64_t ptr, 
+        RustBuffer draft
     );
     /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_search(
         /*handle*/ uint64_t ptr, 
@@ -587,6 +605,10 @@ extern "C" {
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_probe_oauth(
     );
+    uint16_t uniffi_mail_ffi_checksum_method_mailcore_read_message_file(
+    );
+    uint16_t uniffi_mail_ffi_checksum_method_mailcore_readable_image(
+    );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_reauthorize(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_remove_account(
@@ -594,6 +616,10 @@ extern "C" {
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_rename_account(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_save_attachment(
+    );
+    uint16_t uniffi_mail_ffi_checksum_method_mailcore_save_attachment_from_file(
+    );
+    uint16_t uniffi_mail_ffi_checksum_method_mailcore_save_draft(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_search(
     );
@@ -2733,6 +2759,22 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_probe_oauth(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_fn_method_mailcore_read_message_file"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_read_message_file"),
+        2,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_fn_method_mailcore_read_message_file(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_mail_ffi_fn_method_mailcore_readable_image"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_readable_image"),
+        2,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_fn_method_mailcore_readable_image(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_fn_method_mailcore_reauthorize"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_reauthorize"),
@@ -2763,6 +2805,22 @@ NativeMailFfi::NativeMailFfi(
         4,
         [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_save_attachment(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_mail_ffi_fn_method_mailcore_save_attachment_from_file"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_save_attachment_from_file"),
+        4,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_fn_method_mailcore_save_attachment_from_file(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_mail_ffi_fn_method_mailcore_save_draft"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_save_draft"),
+        2,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_fn_method_mailcore_save_draft(rt, thisVal, args, count);
         }
     );
     props["ubrn_uniffi_mail_ffi_fn_method_mailcore_search"] = jsi::Function::createFromHostFunction(
@@ -3413,6 +3471,22 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_probe_oauth(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_read_message_file"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_read_message_file"),
+        0,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_read_message_file(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_readable_image"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_readable_image"),
+        0,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_readable_image(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_reauthorize"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_reauthorize"),
@@ -3443,6 +3517,22 @@ NativeMailFfi::NativeMailFfi(
         0,
         [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
             return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_save_attachment(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_attachment_from_file"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_attachment_from_file"),
+        0,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_save_attachment_from_file(rt, thisVal, args, count);
+        }
+    );
+    props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_draft"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_draft"),
+        0,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_save_draft(rt, thisVal, args, count);
         }
     );
     props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_search"] = jsi::Function::createFromHostFunction(
@@ -3980,6 +4070,20 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_probe_oauth(jsi
         
         return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
 }
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_read_message_file(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_fn_method_mailcore_read_message_file(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1])
+        );
+
+        
+        return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_readable_image(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_fn_method_mailcore_readable_image(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1])
+        );
+
+        
+        return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
+}
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_reauthorize(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_fn_method_mailcore_reauthorize(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[2])
         );
@@ -4003,6 +4107,20 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_rename_account(
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_save_attachment(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_fn_method_mailcore_save_attachment(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi_jsi::Bridging<uint32_t>::fromJs(rt, callInvoker, args[2]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[3])
+        );
+
+        
+        return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_save_attachment_from_file(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_fn_method_mailcore_save_attachment_from_file(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi_jsi::Bridging<uint32_t>::fromJs(rt, callInvoker, args[2]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[3])
+        );
+
+        
+        return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_save_draft(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_fn_method_mailcore_save_draft(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1])
         );
 
         
@@ -4623,6 +4741,20 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_probe_oau
         
         return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
 }
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_read_message_file(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_checksum_method_mailcore_read_message_file(
+        );
+
+        
+        return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_readable_image(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_checksum_method_mailcore_readable_image(
+        );
+
+        
+        return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_reauthorize(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_checksum_method_mailcore_reauthorize(
         );
@@ -4646,6 +4778,20 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_rename_ac
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_save_attachment(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_checksum_method_mailcore_save_attachment(
+        );
+
+        
+        return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_save_attachment_from_file(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_checksum_method_mailcore_save_attachment_from_file(
+        );
+
+        
+        return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_save_draft(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_checksum_method_mailcore_save_draft(
         );
 
         

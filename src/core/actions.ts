@@ -17,3 +17,7 @@ export function setThreadFlagged(thread: ThreadReference, flagged: boolean): Pro
 export function sendDraft(draft: Draft): Promise<void> {
   return mailCore().send(draft);
 }
+
+export function saveDraft(draft: Draft): Promise<void> {
+  return mailCore().saveDraft(draft);
+}

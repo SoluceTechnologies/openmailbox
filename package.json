@@ -33,6 +33,7 @@
     "dayjs": "^1.11.20",
     "expo": "^57.0.0",
     "expo-background-task": "~57.0.0",
+    "expo-calendar": "~57.0.7",
     "expo-constants": "~57.0.6",
     "expo-contacts": "~57.0.0",
     "expo-dev-client": "~57.0.9",
@@ -55,8 +56,10 @@
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
     "expo-task-manager": "~57.0.0",
+    "expo-video": "~57.0.5",
     "expo-web-browser": "~57.0.3",
     "i18next": "^26.3.1",
+    "ical.js": "2.2.1",
     "lucide-react-native": "^1.25.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -108,7 +111,7 @@
       "<rootDir>/__tests__/helpers/"
     ],
     "transformIgnorePatterns": [
-      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@shopify/flash-list))",
+      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@shopify/flash-list|ical\\.js))",
       "/node_modules/react-native-reanimated/plugin/",
       "/node_modules/@react-native/babel-preset/"
     ]

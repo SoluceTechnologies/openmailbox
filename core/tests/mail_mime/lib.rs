@@ -111,6 +111,8 @@ fn built_reply_keeps_bcc_out_of_the_headers() {
         in_reply_to: Some("reply@example.com"),
         references: &["root@example.com".into(), "reply@example.com".into()],
         attachments: vec![],
+        calendar: None,
+        draft: false,
     })
     .unwrap();
     let raw = String::from_utf8(built.raw).unwrap();
@@ -148,6 +150,8 @@ fn bcc_recipients_become_a_header_only_when_asked() {
         in_reply_to: None,
         references: &[],
         attachments: vec![],
+        calendar: None,
+        draft: false,
     })
     .unwrap();
     let raw = String::from_utf8(with_bcc_header(&built.raw, &built.recipients)).unwrap();
@@ -180,6 +184,8 @@ fn with_attachments(attachments: Vec<AttachmentContent>) -> Vec<u8> {
         in_reply_to: None,
         references: &[],
         attachments,
+        calendar: None,
+        draft: false,
     })
     .unwrap()
     .raw
@@ -203,6 +209,8 @@ fn a_reply_with_html_keeps_the_quoted_formatting() {
         in_reply_to: None,
         references: &[],
         attachments: vec![],
+        calendar: None,
+        draft: false,
     })
     .unwrap();
     let rendered = render(&built.raw).unwrap();
@@ -355,5 +363,199 @@ fn a_server_preview_is_trimmed_like_a_computed_one() {
     assert_eq!(
         server_preview(&"word ".repeat(100)).map(|preview| preview.chars().count()),
         Some(PREVIEW_LENGTH)
+    );
+}
+
+const INVITATION: &str = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nMETHOD:REQUEST\r\nBEGIN:VEVENT\r\nUID:kickoff@atlas\r\nSUMMARY:Atlas kickoff\r\nDTSTART:20261203T090000Z\r\nDTEND:20261203T100000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+#[test]
+fn render_keeps_the_invitation_of_an_outlook_mail() {
+    let raw = format!(
+        "From: c@atlas.example\r\nTo: b@example.com\r\nSubject: Kickoff\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=\"a\"\r\n\r\n--a\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nWhen: Thursday\r\n--a\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<p>When: Thursday</p>\r\n--a\r\nContent-Type: text/calendar; charset=UTF-8; method=REQUEST\r\n\r\n{INVITATION}\r\n--a--\r\n"
+    );
+    let body = render(raw.as_bytes()).unwrap();
+    assert!(
+        body.calendar
+            .as_deref()
+            .unwrap()
+            .starts_with("BEGIN:VCALENDAR")
+    );
+    assert!(
+        body.calendar
+            .as_deref()
+            .unwrap()
+            .contains("SUMMARY:Atlas kickoff")
+    );
+    assert_eq!(
+        body.attachments
+            .iter()
+            .map(|attachment| attachment.mime_type.as_str())
+            .collect::<Vec<_>>(),
+        ["text/calendar"]
+    );
+}
+
+#[test]
+fn render_reads_an_ics_attachment() {
+    let raw = format!(
+        "From: c@atlas.example\r\nTo: b@example.com\r\nSubject: Kickoff\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"m\"\r\n\r\n--m\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nSee attached\r\n--m\r\nContent-Type: application/ics; name=\"invite.ics\"\r\nContent-Disposition: attachment; filename=\"invite.ics\"\r\n\r\n{INVITATION}\r\n--m--\r\n"
+    );
+    assert!(
+        render(raw.as_bytes())
+            .unwrap()
+            .calendar
+            .unwrap()
+            .contains("UID:kickoff@atlas")
+    );
+}
+
+#[test]
+fn render_without_invitation_has_no_calendar() {
+    let raw = b"From: a@example.com\r\nSubject: Hi\r\nContent-Type: text/plain\r\n\r\nHello\r\n";
+    assert_eq!(render(raw).unwrap().calendar, None);
+}
+
+const REPLY: &str = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nMETHOD:REPLY\r\nBEGIN:VEVENT\r\nUID:kickoff@atlas\r\nATTENDEE;PARTSTAT=ACCEPTED:mailto:bob@example.com\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+fn calendar_reply(attachments: Vec<AttachmentContent>) -> String {
+    let bob = Address {
+        name: Some("Bob".into()),
+        email: "bob@example.com".into(),
+    };
+    let claire = Address {
+        name: None,
+        email: "claire@atlas.example".into(),
+    };
+    let built = build_message(OutgoingMessage {
+        message_id: "answer@example.com",
+        from: &bob,
+        to: &[claire],
+        cc: &[],
+        bcc: &[],
+        subject: "Accepted: Atlas kickoff",
+        body_text: "Bob accepted the invitation.",
+        body_html: None,
+        in_reply_to: Some("invite@atlas.example"),
+        references: &[],
+        attachments,
+        calendar: Some(REPLY),
+        draft: false,
+    })
+    .unwrap();
+    String::from_utf8(built.raw).unwrap()
+}
+
+#[test]
+fn builds_a_calendar_reply_as_an_alternative() {
+    let raw = calendar_reply(vec![]);
+    assert!(raw.contains("Content-Type: multipart/alternative"), "{raw}");
+    assert!(!raw.contains("multipart/mixed"));
+    assert!(
+        raw.contains("Content-Type: text/calendar; charset=utf-8; method=REPLY"),
+        "{raw}"
+    );
+    let body = render(raw.as_bytes()).unwrap();
+    assert_eq!(body.text.trim(), "Bob accepted the invitation.");
+    assert_eq!(body.calendar.as_deref(), Some(REPLY));
+}
+
+#[test]
+fn keeps_the_calendar_reply_next_to_attachments() {
+    let raw = calendar_reply(vec![AttachmentContent {
+        filename: "agenda.pdf".into(),
+        mime_type: "application/pdf".into(),
+        bytes: b"%PDF-1.7".to_vec(),
+    }]);
+    assert!(raw.contains("Content-Type: multipart/mixed"));
+    let body = render(raw.as_bytes()).unwrap();
+    assert!(body.calendar.unwrap().contains("PARTSTAT=ACCEPTED"));
+    assert!(
+        body.attachments
+            .iter()
+            .any(|attachment| attachment.filename == "agenda.pdf")
+    );
+}
+
+const QUOTE: &str = "From: Claire <claire@atlas.example>\r\nTo: bob@example.com\r\nCc: Nadia <nadia@atlas.example>\r\nSubject: Original quote\r\nDate: Tue, 24 Nov 2026 10:00:00 +0100\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"i\"\r\n\r\n--i\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<p>Here is the <b>quote</b>.</p>\r\n--i\r\nContent-Type: application/pdf; name=\"quote.pdf\"\r\nContent-Disposition: attachment; filename=\"quote.pdf\"\r\n\r\n%PDF-1.7\r\n--i--\r\n";
+
+fn forwarding(part_headers: &str, inner: &str) -> String {
+    format!(
+        "From: Bob <bob@example.com>\r\nTo: alice@example.com\r\nSubject: Fwd: quote\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"o\"\r\n\r\n--o\r\nContent-Type: text/plain\r\n\r\nSee attached.\r\n--o\r\n{part_headers}\r\n\r\n{inner}\r\n--o--\r\n"
+    )
+}
+
+#[test]
+fn names_an_attached_message_after_its_subject() {
+    let raw = forwarding(
+        "Content-Type: message/rfc822\r\nContent-Disposition: attachment",
+        QUOTE,
+    );
+    let body = render(raw.as_bytes()).unwrap();
+    assert_eq!(body.attachments[0].filename, "Original quote.eml");
+    assert_eq!(body.attachments[0].mime_type, "message/rfc822");
+    assert_eq!(
+        crate::attachment(raw.as_bytes(), 0).unwrap().0,
+        "Original quote.eml"
+    );
+}
+
+#[test]
+fn names_a_message_without_subject_message_eml() {
+    let raw = forwarding(
+        "Content-Type: message/rfc822",
+        "From: a@example.com\r\nTo: b@example.com\r\n\r\nHi\r\n",
+    );
+    assert_eq!(
+        render(raw.as_bytes()).unwrap().attachments[0].filename,
+        "message.eml"
+    );
+}
+
+#[test]
+fn reports_an_eml_file_as_a_message() {
+    let raw = forwarding(
+        "Content-Type: application/octet-stream; name=\"old.EML\"\r\nContent-Disposition: attachment; filename=\"old.EML\"",
+        QUOTE,
+    );
+    let body = render(raw.as_bytes()).unwrap();
+    assert_eq!(
+        (
+            body.attachments[0].filename.as_str(),
+            body.attachments[0].mime_type.as_str()
+        ),
+        ("old.EML", "message/rfc822")
+    );
+}
+
+#[test]
+fn reads_a_saved_message() {
+    let message = crate::read_message(QUOTE.as_bytes()).unwrap();
+    assert_eq!(message.subject, "Original quote");
+    assert_eq!(message.from[0].email, "claire@atlas.example");
+    assert_eq!(message.to[0].email, "bob@example.com");
+    assert_eq!(message.cc[0].name.as_deref(), Some("Nadia"));
+    assert_eq!(message.date, Some(1_795_510_800_000));
+    assert!(message.body.html.unwrap().contains("<b>quote</b>"));
+    assert_eq!(message.body.attachments[0].filename, "quote.pdf");
+}
+
+#[test]
+fn previews_a_message_whose_attachment_is_cut_by_the_partial_fetch() {
+    let header = b"Content-Type: multipart/mixed; boundary=\"==b==\"\r\nMIME-Version: 1.0\r\n\
+From: Claire Dubois <claire@atlas.example>\r\nSubject: Scan from the copier\r\n\r\n";
+    let mut text = b"--==b==\r\nContent-Type: text/plain; charset=\"us-ascii\"\r\n\
+MIME-Version: 1.0\r\nContent-Transfer-Encoding: 7bit\r\n\r\nScanned page attached.\r\n\
+--==b==\r\nContent-Type: image/tiff\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: base64\r\n\
+Content-Disposition: attachment; filename=\"Scan copier.tif\"\r\n\r\n"
+        .to_vec();
+    while text.len() < 2048 {
+        text.extend_from_slice(
+            b"SUkqAAgAAAAJAAABAwABAAAAoAAAAAEBAwABAAAAZAAAAAIBAwABAAAACAAAAAMBAwAB\r\n",
+        );
+    }
+    text.truncate(2048);
+    assert_eq!(
+        parse_summary(header, &text).preview.as_deref(),
+        Some("Scanned page attached.")
     );
 }

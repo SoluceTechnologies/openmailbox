@@ -16,7 +16,7 @@ describe('MessageBody links', () => {
   beforeAll(() => i18n.changeLanguage('en'));
 
   it('opens links of plain-text mail after asking', async () => {
-    core.body.mockResolvedValue({ text: 'Docs: https://openmailbox.eu/help.', hasRemoteContent: false, attachments: [] });
+    core.body.mockResolvedValue({ text: 'Docs: https://openmailbox.eu/help.', bcc: [], hasRemoteContent: false, attachments: [] });
     const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     renderWithProviders(<MessageBody emailId="email-links" />);
 
@@ -30,7 +30,7 @@ describe('MessageBody attachments', () => {
   beforeAll(() => i18n.changeLanguage('en'));
   beforeEach(() => {
     jest.clearAllMocks();
-    core.body.mockResolvedValue({ text: 'Ci-joint la facture.', hasRemoteContent: false, attachments: [PDF] });
+    core.body.mockResolvedValue({ text: 'Ci-joint la facture.', bcc: [], hasRemoteContent: false, attachments: [PDF] });
   });
 
   it('lists attachments with their size and opens them in place', async () => {

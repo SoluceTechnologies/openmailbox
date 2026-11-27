@@ -48,6 +48,9 @@ pub enum Operation {
     AppendSent {
         raw: String,
     },
+    AppendDraft {
+        raw: String,
+    },
 }
 
 impl Operation {
@@ -58,6 +61,7 @@ impl Operation {
             Operation::Delete { .. } => "delete",
             Operation::Send { .. } => "send",
             Operation::AppendSent { .. } => "append_sent",
+            Operation::AppendDraft { .. } => "append_draft",
         }
     }
 }

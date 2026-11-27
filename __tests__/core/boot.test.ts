@@ -25,6 +25,23 @@ describe('boot', () => {
     });
   });
 
+  it('reads All Inboxes without a category when categories are off', async () => {
+    jest.resetModules();
+    const fresh = {
+      ...(require('@/core/boot') as typeof import('@/core/boot')),
+      ...(require('@/core/hooks') as typeof import('@/core/hooks')),
+      ...(require('@/stores/settingsStore') as typeof import('@/stores/settingsStore')),
+      ...(require('../helpers/fixtures') as typeof import('../helpers/fixtures')),
+    };
+    fresh.useSettingsStore.setState({ inboxFilter: 'transactions', categoriesEnabled: false });
+    fresh.core.listAccounts.mockResolvedValue([fresh.makeAccount()]);
+    fresh.core.listThreads.mockResolvedValue({ threads: [], nextCursor: undefined });
+
+    await fresh.boot();
+
+    expect(fresh.core.listThreads).toHaveBeenCalledWith(expect.anything(), fresh.EMPTY_THREAD_FILTER, undefined, undefined, 50);
+  });
+
   it('hands the core the outgoing password of an account that keeps one', async () => {
     jest.resetModules();
     const fresh = {

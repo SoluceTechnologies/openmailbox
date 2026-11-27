@@ -1,6 +1,6 @@
 import { useRouter, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { AtSign, Bell, BookOpen, Info, Palette, TriangleAlert } from 'lucide-react-native';
+import { Accessibility, AtSign, Bell, BookOpen, Info, Palette, TriangleAlert } from 'lucide-react-native';
 
 import { useAccounts } from '@/core/hooks';
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
@@ -41,6 +41,11 @@ export default function SettingsScreen() {
           detail={LANGUAGES.find((option) => option.code === language)?.label}
           leading={<Palette size={22} color={colors.primary} />}
           onPress={() => router.push('/settings/appearance')}
+        />
+        <ListRow
+          title={t('settings.accessibility')}
+          leading={<Accessibility size={22} color={colors.primary} />}
+          onPress={() => router.push('/settings/accessibility')}
         />
         <ListRow title={t('settings.about')} leading={<Info size={22} color={colors.primary} />} onPress={() => router.push('/settings/about')} />
       </FormSection>

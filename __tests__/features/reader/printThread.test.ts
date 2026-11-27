@@ -21,7 +21,7 @@ function email(overrides: Partial<EmailSummary>): EmailSummary {
 }
 
 function body(overrides: Partial<RenderedBody>): RenderedBody {
-  return { text: '', hasRemoteContent: false, attachments: [], ...overrides };
+  return { text: '', bcc: [], hasRemoteContent: false, attachments: [], ...overrides };
 }
 
 describe('threadPrintHtml', () => {

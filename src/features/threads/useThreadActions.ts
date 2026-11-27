@@ -5,6 +5,7 @@ import { Destination, type Mailbox, type ThreadSummary } from '@openmailbox/mail
 
 import { setThreadFlagged, setThreadRead } from '@/core/actions';
 import { useMailboxes } from '@/core/hooks';
+import { useSettingsStore } from '@/stores/settingsStore';
 import type { ComposeMode } from '@/features/composer/prefill';
 import { mailboxName } from '@/features/mailboxes/mailboxPresentation';
 import { printThread } from '@/features/reader/printThread';
@@ -18,9 +19,14 @@ export function useThreadActions(onMove?: (thread: ThreadSummary) => void, onCat
   const mailboxes = useMailboxes();
   const index = useMemo(() => indexMailboxes(mailboxes), [mailboxes]);
 
+  const categoriesEnabled = useSettingsStore((state) => state.categoriesEnabled);
+
   const actionsFor = useCallback(
-    (thread: ThreadSummary) => availableThreadActions(threadActionContext(thread, index)),
-    [index],
+    (thread: ThreadSummary) => {
+      const actions = availableThreadActions(threadActionContext(thread, index));
+      return categoriesEnabled ? actions : actions.filter((action) => action !== 'categorize');
+    },
+    [index, categoriesEnabled],
   );
 
   const run = useCallback(

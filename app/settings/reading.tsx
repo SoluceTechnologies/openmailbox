@@ -1,6 +1,6 @@
 import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { CircleUserRound, ImageOff } from 'lucide-react-native';
+import { CircleUserRound, ImageOff, Tags } from 'lucide-react-native';
 
 import { SettingsPage } from '@/features/settings/components/SettingsPage';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -11,11 +11,21 @@ export default function ReadingSettingsScreen() {
   const { colors } = useTheme();
   const loadRemoteImages = useSettingsStore((state) => state.loadRemoteImages);
   const setLoadRemoteImages = useSettingsStore((state) => state.setLoadRemoteImages);
+  const categoriesEnabled = useSettingsStore((state) => state.categoriesEnabled);
+  const setCategoriesEnabled = useSettingsStore((state) => state.setCategoriesEnabled);
   const contactPictures = useSettingsStore((state) => state.contactPictures);
   const setContactPictures = useSettingsStore((state) => state.setContactPictures);
 
   return (
     <SettingsPage title={t('settings.reading')}>
+      <FormSection footer={t('settings.inboxCategoriesHint')}>
+        <ListRow
+          title={t('settings.inboxCategories')}
+          leading={<Tags size={22} color={colors.primary} />}
+          trailing={<Toggle value={categoriesEnabled} onValueChange={setCategoriesEnabled} accessibilityLabel={t('settings.inboxCategories')} />}
+        />
+      </FormSection>
+
       <FormSection footer={t('settings.loadRemoteImagesHint')}>
         <ListRow
           title={t('settings.loadRemoteImages')}

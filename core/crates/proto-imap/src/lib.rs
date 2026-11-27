@@ -748,7 +748,15 @@ impl ImapConnection {
     pub async fn append(&mut self, remote_name: &str, raw: &[u8]) -> Result<()> {
         timed_within(
             transfer_timeout(raw.len()),
-            append_seen(&mut self.session, remote_name, raw),
+            append_flagged(&mut self.session, remote_name, "\\Seen", raw),
+        )
+        .await
+    }
+
+    pub async fn append_draft(&mut self, remote_name: &str, raw: &[u8]) -> Result<()> {
+        timed_within(
+            transfer_timeout(raw.len()),
+            append_flagged(&mut self.session, remote_name, "\\Seen \\Draft", raw),
         )
         .await
     }
@@ -1045,9 +1053,10 @@ fn item_value(raw: &[u8], at: usize) -> Option<(Option<Vec<u8>>, usize)> {
     }
 }
 
-async fn append_seen<T>(
+async fn append_flagged<T>(
     session: &mut async_imap::Session<T>,
     remote_name: &str,
+    flags: &str,
     raw: &[u8],
 ) -> std::result::Result<(), async_imap::error::Error>
 where
@@ -1061,7 +1070,7 @@ where
         remote_name.replace('\\', "\\\\").replace('"', "\\\"")
     );
     let tag = session
-        .run_command(format!("APPEND {mailbox} (\\Seen) {{{}}}", raw.len()))
+        .run_command(format!("APPEND {mailbox} ({flags}) {{{}}}", raw.len()))
         .await?;
     let mut literal_sent = false;
     loop {

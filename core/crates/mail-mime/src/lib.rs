@@ -2,17 +2,23 @@ use std::collections::HashSet;
 use std::sync::LazyLock;
 
 use base64::Engine;
+use lettre::address::Envelope;
 use lettre::message::header::ContentType;
 use lettre::message::{
     Attachment as LettreAttachment, Mailbox as LettreMailbox, MessageBuilder, MultiPart, SinglePart,
 };
 use mail_model::{
-    Address, Attachment, Error, ParsedHeaders, RenderedBody, Result, SendingSignals, Unsubscribe,
+    Address, Attachment, Error, ParsedHeaders, RenderedBody, Result, SavedMessage, SendingSignals,
+    Unsubscribe,
 };
-use mail_parser::{AddressList, HeaderForm, Message};
+use mail_parser::{AddressList, HeaderForm, Message, MessagePart};
 
 mod charsets;
 mod code_pages;
+mod images;
+mod tnef;
+
+pub use images::readable_png;
 
 const PREVIEW_LENGTH: usize = 180;
 const INLINE_IMAGE_LIMIT: usize = 2 * 1024 * 1024;
@@ -228,29 +234,43 @@ pub fn render(raw: &[u8]) -> Result<RenderedBody> {
                 .content_id()
                 .is_some_and(|content_id| inline_content_ids.contains(content_id))
         })
-        .map(|(index, part)| Attachment {
-            index: index as u32,
-            filename: part
-                .attachment_name()
-                .map(str::to_owned)
-                .unwrap_or_else(|| format!("attachment-{}", index + 1)),
-            mime_type: part
-                .content_type()
-                .map(|content_type| match content_type.subtype() {
-                    Some(subtype) => format!("{}/{}", content_type.ctype(), subtype),
-                    None => content_type.ctype().to_owned(),
-                })
-                .unwrap_or_else(|| "application/octet-stream".into())
-                .to_ascii_lowercase(),
-            size: part.decoded_len() as u64,
+        .map(|(index, part)| {
+            let filename = attachment_filename(&part, index);
+            Attachment {
+                index: index as u32,
+                mime_type: attachment_mime_type(&part, &filename),
+                filename,
+                size: part.decoded_len() as u64,
+            }
         })
         .collect();
     Ok(RenderedBody {
         html,
         text,
+        bcc: addresses(message.bcc()),
         has_remote_content,
         attachments,
         unsubscribe: unsubscribe(&message),
+        calendar: calendar(&message),
+    })
+}
+
+fn calendar(message: &Message) -> Option<String> {
+    let inline = message
+        .parts()
+        .find(|part| part.is_content_type("text", "calendar"));
+    let attached = || {
+        message.attachments().find(|part| {
+            part.is_content_type("application", "ics")
+                || part
+                    .attachment_name()
+                    .is_some_and(|name| name.to_ascii_lowercase().ends_with(".ics"))
+        })
+    };
+    let part = inline.or_else(attached)?;
+    Some(match part.text() {
+        Some(text) => text.into_owned(),
+        None => String::from_utf8_lossy(&part.decoded()).into_owned(),
     })
 }
 
@@ -304,8 +324,15 @@ fn embed_inline_images(
         if !content_type.ctype().eq_ignore_ascii_case("image") {
             continue;
         }
-        let mime_type = format!("image/{}", content_type.subtype().unwrap_or("png"));
-        let encoded = base64::engine::general_purpose::STANDARD.encode(part.decoded());
+        let decoded = part.decoded();
+        let (mime_type, bytes) = match readable_png(&decoded) {
+            Some(png) => ("image/png".to_owned(), png),
+            None => (
+                format!("image/{}", content_type.subtype().unwrap_or("png")),
+                decoded.into_owned(),
+            ),
+        };
+        let encoded = base64::engine::general_purpose::STANDARD.encode(bytes);
         html = html.replace(&reference, &format!("data:{mime_type};base64,{encoded}"));
         inline_content_ids.insert(content_id.to_owned());
     }
@@ -327,14 +354,99 @@ fn references_remote_content(html: &str) -> bool {
     .any(|pattern| lowercase.contains(pattern))
 }
 
+fn attachment_filename(part: &MessagePart, index: usize) -> String {
+    if let Some(name) = part.attachment_name() {
+        return name.to_owned();
+    }
+    match part.nested() {
+        Some(nested) => {
+            let subject = nested
+                .subject()
+                .map(str::trim)
+                .filter(|subject| !subject.is_empty())
+                .unwrap_or("message");
+            format!("{}.eml", subject.replace(['/', '\\'], "-"))
+        }
+        None => format!("attachment-{}", index + 1),
+    }
+}
+
+fn attachment_mime_type(part: &MessagePart, filename: &str) -> String {
+    let declared = part
+        .content_type()
+        .map(|content_type| match content_type.subtype() {
+            Some(subtype) => format!("{}/{}", content_type.ctype(), subtype),
+            None => content_type.ctype().to_owned(),
+        })
+        .unwrap_or_else(|| "application/octet-stream".into())
+        .to_ascii_lowercase();
+    if declared == "application/octet-stream" && filename.to_ascii_lowercase().ends_with(".eml") {
+        return "message/rfc822".into();
+    }
+    declared
+}
+
 pub fn attachment(raw: &[u8], index: u32) -> Option<(String, Vec<u8>)> {
+    if let Some(tnef) = tnef::read(raw) {
+        let file = tnef.files.into_iter().nth(index as usize)?;
+        return Some((file.filename, file.data));
+    }
     let message = charsets::parse(raw)?;
     let part = message.attachments().nth(index as usize)?;
-    let filename = part
-        .attachment_name()
-        .map(str::to_owned)
-        .unwrap_or_else(|| format!("attachment-{}", index + 1));
-    Some((filename, part.decoded().into_owned()))
+    Some((
+        attachment_filename(&part, index as usize),
+        part.decoded().into_owned(),
+    ))
+}
+
+pub fn read_message(raw: &[u8]) -> Result<SavedMessage> {
+    if let Some(tnef) = tnef::read(raw) {
+        return tnef_message(tnef);
+    }
+    let headers = parse_summary(raw, b"");
+    Ok(SavedMessage {
+        subject: headers.subject.unwrap_or_default(),
+        from: headers.from,
+        to: headers.to,
+        cc: headers.cc,
+        date: headers.date,
+        body: render(raw)?,
+    })
+}
+
+fn tnef_message(tnef: tnef::Tnef) -> Result<SavedMessage> {
+    if tnef.files.is_empty() {
+        return Err(Error::NotFound);
+    }
+    let attachments = tnef
+        .files
+        .into_iter()
+        .enumerate()
+        .map(|(index, file)| Attachment {
+            index: index as u32,
+            mime_type: file
+                .mime_type
+                .unwrap_or_else(|| tnef::guessed_mime_type(&file.filename).to_owned()),
+            size: file.data.len() as u64,
+            filename: file.filename,
+        })
+        .collect();
+    Ok(SavedMessage {
+        subject: tnef.subject.unwrap_or_default(),
+        from: Vec::new(),
+        to: Vec::new(),
+        cc: Vec::new(),
+        date: None,
+        body: RenderedBody {
+            html: None,
+            text: String::new(),
+            bcc: Vec::new(),
+            has_remote_content: false,
+            attachments,
+            unsubscribe: None,
+            calendar: None,
+        },
+    })
 }
 
 pub struct OutgoingMessage<'a> {
@@ -349,6 +461,8 @@ pub struct OutgoingMessage<'a> {
     pub in_reply_to: Option<&'a str>,
     pub references: &'a [String],
     pub attachments: Vec<AttachmentContent>,
+    pub calendar: Option<&'a str>,
+    pub draft: bool,
 }
 
 pub struct AttachmentContent {
@@ -363,11 +477,50 @@ pub struct BuiltMessage {
     pub recipients: Vec<String>,
 }
 
+fn alternative_body(
+    text: &str,
+    html: Option<&str>,
+    calendar: Option<&str>,
+) -> Result<Option<MultiPart>> {
+    let Some(calendar) = calendar else {
+        return Ok(
+            html.map(|html| MultiPart::alternative_plain_html(text.to_owned(), html.to_owned()))
+        );
+    };
+    let method = calendar
+        .lines()
+        .find_map(|line| line.strip_prefix("METHOD:"))
+        .map(str::trim)
+        .filter(|method| !method.is_empty())
+        .unwrap_or("REQUEST");
+    let content_type =
+        ContentType::parse(&format!("text/calendar; charset=UTF-8; method={method}"))
+            .map_err(|error| Error::InvalidInput(error.to_string()))?;
+    let mut alternative = MultiPart::alternative().singlepart(SinglePart::plain(text.to_owned()));
+    if let Some(html) = html {
+        alternative = alternative.singlepart(SinglePart::html(html.to_owned()));
+    }
+    Ok(Some(
+        alternative.singlepart(
+            SinglePart::builder()
+                .header(content_type)
+                .body(calendar.to_owned()),
+        ),
+    ))
+}
+
 pub fn build_message(outgoing: OutgoingMessage) -> Result<BuiltMessage> {
+    let from = mailbox(outgoing.from)?;
     let mut builder = MessageBuilder::new()
-        .from(mailbox(outgoing.from)?)
+        .from(from.clone())
         .subject(outgoing.subject)
         .message_id(Some(format!("<{}>", outgoing.message_id)));
+    if outgoing.draft {
+        builder = builder.keep_bcc().envelope(
+            Envelope::new(Some(from.email.clone()), vec![from.email])
+                .map_err(|error| Error::InvalidInput(error.to_string()))?,
+        );
+    }
     for address in outgoing.to {
         builder = builder.to(mailbox(address)?);
     }
@@ -390,17 +543,15 @@ pub fn build_message(outgoing: OutgoingMessage) -> Result<BuiltMessage> {
         builder = builder.references(references);
     }
     let text = outgoing.body_text.to_owned();
+    let alternative = alternative_body(&text, outgoing.body_html, outgoing.calendar)?;
     let message = if outgoing.attachments.is_empty() {
-        match outgoing.body_html {
-            Some(html) => {
-                builder.multipart(MultiPart::alternative_plain_html(text, html.to_owned()))
-            }
+        match alternative {
+            Some(alternative) => builder.multipart(alternative),
             None => builder.header(ContentType::TEXT_PLAIN).body(text),
         }
     } else {
-        let body = match outgoing.body_html {
-            Some(html) => MultiPart::mixed()
-                .multipart(MultiPart::alternative_plain_html(text, html.to_owned())),
+        let body = match alternative {
+            Some(alternative) => MultiPart::mixed().multipart(alternative),
             None => MultiPart::mixed().singlepart(SinglePart::plain(text)),
         };
         let parts = outgoing

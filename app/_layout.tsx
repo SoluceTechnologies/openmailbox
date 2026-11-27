@@ -3,6 +3,7 @@ import '@/utils/i18n';
 import { Stack, useTheme } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
+import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import FakeSplash from '@/components/FakeSplash';
@@ -48,6 +49,7 @@ function Navigator() {
         options={{ ...modalHeader(t('accounts.signature')), headerTransparent: false, headerStyle: { backgroundColor: colors.background } }}
       />
       <Stack.Screen name="attachment" options={({ route }) => modalHeader((route.params as { name?: string } | undefined)?.name ?? '')} />
+      <Stack.Screen name="message" options={modalHeader('')} />
       <Stack.Screen
         name="filters"
         options={{
@@ -74,7 +76,13 @@ export default function RootLayout() {
       <View style={{ flex: 1 }}>
         <ThemedStatusBar />
         {isReady ? <OfflineBanner /> : null}
-        {isReady ? <Navigator /> : <FakeSplash />}
+        {isReady ? (
+          <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+            <Navigator />
+          </SafeAreaProvider>
+        ) : (
+          <FakeSplash />
+        )}
         {isReady ? <UndoToast /> : null}
         {isReady ? <NotificationBridge /> : null}
       </View>

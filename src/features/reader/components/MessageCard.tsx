@@ -19,7 +19,7 @@ interface MessageCardProps {
   onToggle: (emailId: string) => void;
 }
 
-function AddressLine({ label, addresses }: { label: string; addresses: MailAddress[] }) {
+export function AddressLine({ label, addresses }: { label: string; addresses: MailAddress[] }) {
   const { colors } = useTheme();
   if (addresses.length === 0) return null;
   return (
@@ -89,7 +89,7 @@ function MessageCardImpl({ email, expanded, onToggle }: MessageCardProps) {
       {expanded ? (
         <View style={[styles.separator, { backgroundColor: colors.border }]} />
       ) : null}
-      {expanded ? <MessageBody emailId={email.id} /> : null}
+      {expanded ? <MessageBody emailId={email.id} accountId={email.accountId} /> : null}
     </View>
   );
 }

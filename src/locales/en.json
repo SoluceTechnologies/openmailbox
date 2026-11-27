@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Add from Contacts",
+    "andMore_one": "& {{count}} more",
+    "andMore_other": "& {{count}} more",
     "attach": "Attach",
     "attachFiles": "Files",
     "attachPhotos": "Photos and Videos",
@@ -144,8 +146,6 @@
     "bodyPlaceholder": "Message",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Bcc, From: {{from}}",
-    "discard": "Discard",
-    "discardTitle": "Discard this draft?",
     "forward": "Forward",
     "forwardedAttachmentsFailed": "The original attachments couldn't be downloaded, so they won't be forwarded.",
     "forwardedHeader": "---------- Forwarded message ----------",
@@ -171,7 +171,14 @@
     "to": "To:",
     "wrote": "On {{date}}, {{author}} wrote:",
     "formatting": "Formatting",
-    "hideFormatting": "Hide Formatting"
+    "hideFormatting": "Hide Formatting",
+    "draftTitle": "Keep this message as a draft?",
+    "saveDraft": "Save Draft",
+    "deleteDraft": "Delete Draft",
+    "draftSaved": "Draft saved",
+    "draftFailed": "The draft couldn't be saved",
+    "draftAttachmentsFailed": "The draft's attachments couldn't be downloaded.",
+    "attachmentsLoading": "Attachments are still downloading."
   },
   "dates": {
     "yesterday": "Yesterday"
@@ -184,6 +191,49 @@
     "network": "The server can't be reached ({{message}}).",
     "operationFailed": "A change couldn't be applied on the server",
     "server": "The server returned an error: {{message}}"
+  },
+  "invites": {
+    "accept": "Accept",
+    "addToCalendar": "Add to Calendar",
+    "allDay": "All day",
+    "answer": {
+      "ACCEPTED": "You accepted",
+      "DECLINED": "You declined",
+      "TENTATIVE": "You said maybe"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} accepted the invitation.",
+      "DECLINED": "{{name}} declined the invitation.",
+      "TENTATIVE": "{{name}} might attend."
+    },
+    "cancelled": "This event was cancelled.",
+    "decline": "Decline",
+    "from": "from {{name}}",
+    "maybe": "Maybe",
+    "notAdded": "The event couldn't be added to your calendar.",
+    "removeFromCalendar": "Remove from Calendar",
+    "repeats": {
+      "daily_one": "Every day",
+      "daily_other": "Every {{count}} days",
+      "monthly_one": "Every month",
+      "monthly_other": "Every {{count}} months",
+      "weekly_one": "Every week",
+      "weekly_other": "Every {{count}} weeks",
+      "yearly_one": "Every year",
+      "yearly_other": "Every {{count}} years"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} accepted.",
+      "DECLINED": "{{name}} declined.",
+      "TENTATIVE": "{{name}} might attend."
+    },
+    "sendFailed": "The answer couldn't be sent.",
+    "subject": {
+      "ACCEPTED": "Accepted: {{summary}}",
+      "DECLINED": "Declined: {{summary}}",
+      "TENTATIVE": "Maybe: {{summary}}"
+    },
+    "updated": "This invitation was updated."
   },
   "mailboxes": {
     "allInboxes": "All Inboxes",
@@ -205,7 +255,8 @@
     "newMessages_other": "{{count}} new messages"
   },
   "offline": {
-    "banner": "You're offline. Changes will be sent when the connection is back."
+    "banner": "You're offline. Changes will be sent when the connection is back.",
+    "detail": "Changes will be sent when you reconnect."
   },
   "reader": {
     "attachmentFailed": "The attachment couldn't be opened.",
@@ -241,11 +292,16 @@
   },
   "settings": {
     "about": "About",
+    "accessibility": "Accessibility",
     "accounts": "Accounts",
     "appearance": "Appearance and Language",
     "contactPictures": "Contact Pictures",
     "contactPicturesHint": "Pictures come from Gravatar, or from the logo or the website of the sender’s company, which can tell that you are in touch.",
     "general": "General",
+    "haptics": "Haptic Feedback",
+    "hapticsHint": "Vibrate on taps and interactions.",
+    "inboxCategories": "Inbox Categories",
+    "inboxCategoriesHint": "Sort the inbox into Primary, Transactions, Updates and Promotions.",
     "language": "Language",
     "languageHint": "Dates and texts follow this language.",
     "loadRemoteImages": "Load Remote Images",
@@ -352,7 +408,8 @@
     "unknownSender": "Unknown sender",
     "unread": "Unread",
     "unreadCount_one": "{{count}} unread",
-    "unreadCount_other": "{{count}} unread"
+    "unreadCount_other": "{{count}} unread",
+    "noRecipients": "No Recipients"
   },
   "undo": {
     "archived": "Archived",

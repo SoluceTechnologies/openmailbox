@@ -123,10 +123,11 @@ interface SwipeableThreadRowProps {
   onAction: (action: ThreadActionId, thread: ThreadSummary) => void;
   onMore: (thread: ThreadSummary) => void;
   selected?: boolean;
+  showRecipients?: boolean;
   children?: ReactNode;
 }
 
-function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, menuActions, onOpen, onLongPress, onAction, onMore, selected, children }: SwipeableThreadRowProps) {
+function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, menuActions, onOpen, onLongPress, onAction, onMore, selected, showRecipients, children }: SwipeableThreadRowProps) {
   const { t } = useTranslation();
   const swipeable = useRef<SwipeableMethods>(null);
   const selecting = selected !== undefined;
@@ -193,7 +194,7 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, menuActions
       {NATIVE_CHROME && menuActions ? (
         <Link href={{ pathname: '/thread/[threadId]', params: { threadId: thread.threadId, mailboxId: thread.mailboxId } }} asChild>
           <Link.Trigger>
-            {children ?? <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} />}
+            {children ?? <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} showRecipients={showRecipients} />}
           </Link.Trigger>
           <Link.Preview />
           <Link.Menu>
@@ -212,7 +213,16 @@ function SwipeableThreadRowImpl({ thread, accountAccent, canArchive, menuActions
           </Link.Menu>
         </Link>
       ) : (
-        children ?? <ThreadRow thread={thread} accountAccent={accountAccent} onOpen={onOpen} onLongPress={selecting ? undefined : onLongPress} selected={selected} />
+        children ?? (
+          <ThreadRow
+            thread={thread}
+            accountAccent={accountAccent}
+            onOpen={onOpen}
+            onLongPress={selecting ? undefined : onLongPress}
+            selected={selected}
+            showRecipients={showRecipients}
+          />
+        )
       )}
     </ReanimatedSwipeable>
   );

@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Toevoegen uit contacten",
+    "andMore_one": "en nog {{count}}",
+    "andMore_other": "en nog {{count}}",
     "attach": "Bijvoegen",
     "attachFiles": "Bestanden",
     "attachPhotos": "Foto's en video's",
@@ -144,8 +146,6 @@
     "bodyPlaceholder": "Bericht",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Bcc, Van: {{from}}",
-    "discard": "Gooi weg",
-    "discardTitle": "Dit concept weggooien?",
     "forward": "Stuur door",
     "forwardedAttachmentsFailed": "De oorspronkelijke bijlagen konden niet worden gedownload en worden dus niet doorgestuurd.",
     "forwardedHeader": "---------- Doorgestuurd bericht ----------",
@@ -171,7 +171,14 @@
     "to": "Aan:",
     "wrote": "Op {{date}} schreef {{author}}:",
     "formatting": "Opmaak",
-    "hideFormatting": "Opmaak verbergen"
+    "hideFormatting": "Opmaak verbergen",
+    "draftTitle": "Dit bericht als concept bewaren?",
+    "saveDraft": "Concept bewaren",
+    "deleteDraft": "Concept verwijderen",
+    "draftSaved": "Concept bewaard",
+    "draftFailed": "Het concept kon niet worden bewaard",
+    "draftAttachmentsFailed": "De bijlagen van het concept konden niet worden gedownload.",
+    "attachmentsLoading": "De bijlagen worden nog gedownload."
   },
   "dates": {
     "yesterday": "Gisteren"
@@ -184,6 +191,49 @@
     "network": "De server is niet bereikbaar ({{message}}).",
     "operationFailed": "Een wijziging kon niet op de server worden toegepast",
     "server": "De server gaf een fout terug: {{message}}"
+  },
+  "invites": {
+    "accept": "Accepteren",
+    "addToCalendar": "Aan agenda toevoegen",
+    "allDay": "Hele dag",
+    "answer": {
+      "ACCEPTED": "Je hebt geaccepteerd",
+      "DECLINED": "Je hebt geweigerd",
+      "TENTATIVE": "Je hebt misschien geantwoord"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} heeft de uitnodiging geaccepteerd.",
+      "DECLINED": "{{name}} heeft de uitnodiging geweigerd.",
+      "TENTATIVE": "{{name}} komt misschien."
+    },
+    "cancelled": "Deze afspraak is geannuleerd.",
+    "decline": "Weigeren",
+    "from": "van {{name}}",
+    "maybe": "Misschien",
+    "notAdded": "De afspraak kon niet aan je agenda worden toegevoegd.",
+    "removeFromCalendar": "Uit agenda verwijderen",
+    "repeats": {
+      "daily_one": "Elke dag",
+      "daily_other": "Elke {{count}} dagen",
+      "monthly_one": "Elke maand",
+      "monthly_other": "Elke {{count}} maanden",
+      "weekly_one": "Elke week",
+      "weekly_other": "Elke {{count}} weken",
+      "yearly_one": "Elk jaar",
+      "yearly_other": "Elke {{count}} jaar"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} heeft geaccepteerd.",
+      "DECLINED": "{{name}} heeft geweigerd.",
+      "TENTATIVE": "{{name}} komt misschien."
+    },
+    "sendFailed": "Het antwoord kon niet worden verzonden.",
+    "subject": {
+      "ACCEPTED": "Geaccepteerd: {{summary}}",
+      "DECLINED": "Geweigerd: {{summary}}",
+      "TENTATIVE": "Misschien: {{summary}}"
+    },
+    "updated": "Deze uitnodiging is gewijzigd."
   },
   "mailboxes": {
     "allInboxes": "Alle inkomende",
@@ -205,7 +255,8 @@
     "newMessages_other": "{{count}} nieuwe berichten"
   },
   "offline": {
-    "banner": "Je bent offline. Wijzigingen worden verstuurd zodra er weer verbinding is."
+    "banner": "Je bent offline. Wijzigingen worden verstuurd zodra er weer verbinding is.",
+    "detail": "Wijzigingen gaan mee zodra je weer online bent."
   },
   "reader": {
     "attachmentFailed": "De bijlage kon niet worden geopend.",
@@ -241,11 +292,16 @@
   },
   "settings": {
     "about": "Over",
+    "accessibility": "Toegankelijkheid",
     "accounts": "Accounts",
     "appearance": "Weergave en taal",
     "contactPictures": "Contactfoto's",
     "contactPicturesHint": "Foto's komen van Gravatar, of van het logo of de website van het bedrijf van de afzender, die zo kunnen zien dat u contact hebt.",
     "general": "Algemeen",
+    "haptics": "Haptische feedback",
+    "hapticsHint": "Trillen bij tikken en interacties.",
+    "inboxCategories": "Inboxcategorieën",
+    "inboxCategoriesHint": "Sorteert de inbox in Primair, Transacties, Updates en Promoties.",
     "language": "Taal",
     "languageHint": "Datums en teksten volgen deze taal.",
     "loadRemoteImages": "Laad externe afbeeldingen",
@@ -352,7 +408,8 @@
     "unknownSender": "Onbekende afzender",
     "unread": "Ongelezen",
     "unreadCount_one": "{{count}} ongelezen",
-    "unreadCount_other": "{{count}} ongelezen"
+    "unreadCount_other": "{{count}} ongelezen",
+    "noRecipients": "Geen ontvangers"
   },
   "undo": {
     "archived": "Gearchiveerd",
