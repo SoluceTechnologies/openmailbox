@@ -250,7 +250,8 @@
     "newMessages_other": "{{count}} nieuwe berichten"
   },
   "offline": {
-    "banner": "Je bent offline. Wijzigingen worden verstuurd zodra er weer verbinding is."
+    "banner": "Je bent offline. Wijzigingen worden verstuurd zodra er weer verbinding is.",
+    "detail": "Wijzigingen gaan mee zodra je weer online bent."
   },
   "reader": {
     "attachmentFailed": "De bijlage kon niet worden geopend.",

@@ -250,7 +250,8 @@
     "newMessages_other": "{{count}} new messages"
   },
   "offline": {
-    "banner": "You're offline. Changes will be sent when the connection is back."
+    "banner": "You're offline. Changes will be sent when the connection is back.",
+    "detail": "Changes will be sent when you reconnect."
   },
   "reader": {
     "attachmentFailed": "The attachment couldn't be opened.",

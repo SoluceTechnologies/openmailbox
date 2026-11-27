@@ -250,7 +250,8 @@
     "newMessages_other": "{{count}} mensajes nuevos"
   },
   "offline": {
-    "banner": "Estás sin conexión. Los cambios se enviarán cuando vuelva la conexión."
+    "banner": "Estás sin conexión. Los cambios se enviarán cuando vuelva la conexión.",
+    "detail": "Los cambios se enviarán al volver la conexión."
   },
   "reader": {
     "attachmentFailed": "No se ha podido abrir el archivo adjunto.",

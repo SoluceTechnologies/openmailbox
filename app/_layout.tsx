@@ -3,6 +3,7 @@ import '@/utils/i18n';
 import { Stack, useTheme } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
+import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import FakeSplash from '@/components/FakeSplash';
@@ -75,7 +76,13 @@ export default function RootLayout() {
       <View style={{ flex: 1 }}>
         <ThemedStatusBar />
         {isReady ? <OfflineBanner /> : null}
-        {isReady ? <Navigator /> : <FakeSplash />}
+        {isReady ? (
+          <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+            <Navigator />
+          </SafeAreaProvider>
+        ) : (
+          <FakeSplash />
+        )}
         {isReady ? <UndoToast /> : null}
         {isReady ? <NotificationBridge /> : null}
       </View>

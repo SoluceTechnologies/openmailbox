@@ -250,7 +250,8 @@
     "newMessages_other": "{{count}} novas mensagens"
   },
   "offline": {
-    "banner": "Está offline. As alterações serão enviadas quando a ligação voltar."
+    "banner": "Está offline. As alterações serão enviadas quando a ligação voltar.",
+    "detail": "As alterações seguem quando voltar a ligação."
   },
   "reader": {
     "attachmentFailed": "Não foi possível abrir o anexo.",

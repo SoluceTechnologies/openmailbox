@@ -250,7 +250,8 @@
     "newMessages_other": "{{count}} neue Nachrichten"
   },
   "offline": {
-    "banner": "Du bist offline. Änderungen werden gesendet, sobald die Verbindung wieder besteht."
+    "banner": "Du bist offline. Änderungen werden gesendet, sobald die Verbindung wieder besteht.",
+    "detail": "Änderungen werden gesendet, sobald du online bist."
   },
   "reader": {
     "attachmentFailed": "Der Anhang konnte nicht geöffnet werden.",

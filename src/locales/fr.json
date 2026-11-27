@@ -250,7 +250,8 @@
     "newMessages_other": "{{count}} nouveaux messages"
   },
   "offline": {
-    "banner": "Vous êtes hors ligne. Les modifications seront envoyées au retour de la connexion."
+    "banner": "Vous êtes hors ligne. Les modifications seront envoyées au retour de la connexion.",
+    "detail": "Les modifications partiront à la reconnexion."
   },
   "reader": {
     "attachmentFailed": "La pièce jointe n'a pas pu être ouverte.",

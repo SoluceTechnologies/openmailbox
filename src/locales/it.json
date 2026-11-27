@@ -250,7 +250,8 @@
     "newMessages_other": "{{count}} nuovi messaggi"
   },
   "offline": {
-    "banner": "Sei offline. Le modifiche verranno inviate al ritorno della connessione."
+    "banner": "Sei offline. Le modifiche verranno inviate al ritorno della connessione.",
+    "detail": "Le modifiche partiranno alla riconnessione."
   },
   "reader": {
     "attachmentFailed": "Impossibile aprire l'allegato.",

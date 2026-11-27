@@ -250,7 +250,8 @@
     "newMessages_other": "{{count}} messatges novèls"
   },
   "offline": {
-    "banner": "Sètz fòra linha. Las modificacions seràn mandadas quand la connexion tornarà."
+    "banner": "Sètz fòra linha. Las modificacions seràn mandadas quand la connexion tornarà.",
+    "detail": "Las modificacions partiràn a la reconnexion."
   },
   "reader": {
     "attachmentFailed": "La pèça junta a pas pogut èsser dobèrta.",
