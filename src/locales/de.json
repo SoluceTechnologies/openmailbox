@@ -146,8 +146,6 @@
     "bodyPlaceholder": "Nachricht",
     "cc": "Kopie:",
     "copiesAndFrom": "Kopie/Blindkopie, Von: {{from}}",
-    "discard": "Verwerfen",
-    "discardTitle": "Entwurf verwerfen?",
     "forward": "Weiterleiten",
     "forwardedAttachmentsFailed": "Die ursprünglichen Anhänge konnten nicht geladen werden und werden nicht weitergeleitet.",
     "forwardedHeader": "---------- Weitergeleitete Nachricht ----------",
@@ -173,7 +171,14 @@
     "to": "An:",
     "wrote": "Am {{date}} schrieb {{author}}:",
     "formatting": "Formatierung",
-    "hideFormatting": "Formatierung ausblenden"
+    "hideFormatting": "Formatierung ausblenden",
+    "draftTitle": "Diese Nachricht als Entwurf behalten?",
+    "saveDraft": "Entwurf sichern",
+    "deleteDraft": "Entwurf löschen",
+    "draftSaved": "Entwurf gesichert",
+    "draftFailed": "Der Entwurf konnte nicht gesichert werden",
+    "draftAttachmentsFailed": "Die Anhänge des Entwurfs konnten nicht geladen werden.",
+    "attachmentsLoading": "Die Anhänge werden noch geladen."
   },
   "dates": {
     "yesterday": "Gestern"
@@ -403,7 +408,8 @@
     "unknownSender": "Unbekannter Absender",
     "unread": "Ungelesen",
     "unreadCount_one": "{{count}} ungelesen",
-    "unreadCount_other": "{{count}} ungelesen"
+    "unreadCount_other": "{{count}} ungelesen",
+    "noRecipients": "Keine Empfänger"
   },
   "undo": {
     "archived": "Archiviert",

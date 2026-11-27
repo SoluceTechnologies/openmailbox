@@ -146,8 +146,6 @@
     "bodyPlaceholder": "Messaggio",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Ccn, Da: {{from}}",
-    "discard": "Elimina",
-    "discardTitle": "Eliminare questa bozza?",
     "forward": "Inoltra",
     "forwardedAttachmentsFailed": "Non è stato possibile scaricare gli allegati originali, quindi non verranno inoltrati.",
     "forwardedHeader": "---------- Messaggio inoltrato ----------",
@@ -173,7 +171,14 @@
     "to": "A:",
     "wrote": "Il {{date}}, {{author}} ha scritto:",
     "formatting": "Formattazione",
-    "hideFormatting": "Nascondi formattazione"
+    "hideFormatting": "Nascondi formattazione",
+    "draftTitle": "Conservare questo messaggio come bozza?",
+    "saveDraft": "Salva bozza",
+    "deleteDraft": "Elimina bozza",
+    "draftSaved": "Bozza salvata",
+    "draftFailed": "Impossibile salvare la bozza",
+    "draftAttachmentsFailed": "Impossibile scaricare gli allegati della bozza.",
+    "attachmentsLoading": "Gli allegati sono ancora in download."
   },
   "dates": {
     "yesterday": "Ieri"
@@ -403,7 +408,8 @@
     "unknownSender": "Mittente sconosciuto",
     "unread": "Da leggere",
     "unreadCount_one": "{{count}} da leggere",
-    "unreadCount_other": "{{count}} da leggere"
+    "unreadCount_other": "{{count}} da leggere",
+    "noRecipients": "Nessun destinatario"
   },
   "undo": {
     "archived": "Archiviato",

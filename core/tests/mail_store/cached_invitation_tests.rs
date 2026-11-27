@@ -52,6 +52,7 @@ fn keeps_the_invitation_with_the_cached_body() {
     let body = RenderedBody {
         html: None,
         text: "Invite".into(),
+        bcc: Vec::new(),
         has_remote_content: false,
         attachments: Vec::new(),
         unsubscribe: None,
@@ -59,5 +60,30 @@ fn keeps_the_invitation_with_the_cached_body() {
     };
     store.save_body(7, &body).unwrap();
     assert_eq!(store.body(7).unwrap().unwrap().calendar, body.calendar);
+    std::fs::remove_dir_all(path.parent().unwrap()).ok();
+}
+
+#[test]
+fn keeps_the_hidden_recipients_with_the_cached_body() {
+    let path = fresh_path("bcc-roundtrip");
+    let store = Store::open(&path).unwrap();
+    store
+        .write(|transaction| transaction.execute_batch(SEED).storage())
+        .unwrap();
+    let carol = mail_model::Address {
+        name: Some("Carol".into()),
+        email: "carol@example.org".into(),
+    };
+    let body = RenderedBody {
+        html: None,
+        text: "Draft".into(),
+        bcc: vec![carol.clone()],
+        has_remote_content: false,
+        attachments: Vec::new(),
+        unsubscribe: None,
+        calendar: None,
+    };
+    store.save_body(7, &body).unwrap();
+    assert_eq!(store.body(7).unwrap().unwrap().bcc, vec![carol]);
     std::fs::remove_dir_all(path.parent().unwrap()).ok();
 }

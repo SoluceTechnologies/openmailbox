@@ -42,6 +42,10 @@ async function pickFiles(picked: typeof DEVIS[]) {
   await act(async () => fireEvent.press(await screen.findByText(i18n.t('compose.attachFiles'))));
 }
 
+type AlertButtons = { text?: string; onPress?: () => void }[];
+const alertButtons = (alert: jest.SpyInstance) => alert.mock.calls[0][2] as AlertButtons;
+const pressAlertButton = (alert: jest.SpyInstance, text: string) => alertButtons(alert).find((button) => button.text === text)?.onPress?.();
+
 async function sendTo(address: string) {
   fireEvent.changeText(screen.getByLabelText('To'), address);
   await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Send' })));
@@ -86,7 +90,7 @@ describe('composer', () => {
       mockParams = { mode: 'forward', emailId: 'email-1', threadId: 'thread-1', mailboxId: 'mailbox-inbox' };
       core.threadEmails.mockResolvedValue([makeEmail({ hasAttachment: true })]);
       const original = [{ index: 0, filename: 'Plan.pdf', mimeType: 'application/pdf', size: 1_000 }];
-      core.body.mockResolvedValue({ text: 'Voici le plan.', hasRemoteContent: false, attachments: original });
+      core.body.mockResolvedValue({ text: 'Voici le plan.', bcc: [], hasRemoteContent: false, attachments: original });
       (forwardedAttachments as jest.Mock).mockResolvedValue([{ ...DEVIS, filename: 'Plan.pdf', size: 1_000 }]);
       renderWithProviders(<ComposeScreen />);
 
@@ -98,7 +102,7 @@ describe('composer', () => {
       mockParams = { mode: 'forward', emailId: 'email-1', threadId: 'thread-1', mailboxId: 'mailbox-inbox' };
       core.threadEmails.mockResolvedValue([makeEmail({ hasAttachment: true })]);
       const original = [{ index: 0, filename: 'Plan.pdf', mimeType: 'application/pdf', size: 1_000 }];
-      core.body.mockResolvedValue({ text: 'Voici le plan.', hasRemoteContent: false, attachments: original });
+      core.body.mockResolvedValue({ text: 'Voici le plan.', bcc: [], hasRemoteContent: false, attachments: original });
       let finish: (attachments: (typeof DEVIS)[]) => void = () => undefined;
       (forwardedAttachments as jest.Mock).mockReturnValue(new Promise((resolve) => (finish = resolve)));
       renderWithProviders(<ComposeScreen />);
@@ -119,7 +123,7 @@ describe('composer', () => {
       mockParams = { mode: 'forward', emailId: 'email-1', threadId: 'thread-1', mailboxId: 'mailbox-inbox' };
       core.threadEmails.mockResolvedValue([makeEmail({ hasAttachment: true })]);
       const original = [{ index: 0, filename: 'Plan.pdf', mimeType: 'application/pdf', size: 1_000 }];
-      core.body.mockResolvedValue({ text: 'Voici le plan.', hasRemoteContent: false, attachments: original });
+      core.body.mockResolvedValue({ text: 'Voici le plan.', bcc: [], hasRemoteContent: false, attachments: original });
       (forwardedAttachments as jest.Mock).mockRejectedValue(new Error('offline'));
       renderWithProviders(<ComposeScreen />);
 
@@ -252,7 +256,9 @@ describe('composer', () => {
       const draft = await sendTo('bob@example.org');
       expect(draft.bodyText).toBe(`Hi https://soluce.eu\n\n-- \nCharles\n\n${FOOTER}`);
       expect(draft.bodyHtml).toMatch(/^<div style="font-family: /);
-      expect(draft.bodyHtml).toContain('<p style="margin: 0">Hi <a href="https://soluce.eu">https://soluce.eu</a></p><br><br><div><b>Charles</b></div>');
+      expect(draft.bodyHtml).toContain(
+        '<p style="margin: 0">Hi <a href="https://soluce.eu">https://soluce.eu</a></p><div class="openmailbox-signature"><br><br><div><b>Charles</b></div>',
+      );
       expect(draft.bodyHtml).toContain(FOOTER_LINK);
     });
 
@@ -281,7 +287,7 @@ describe('composer', () => {
     it('puts the quote of a plain-text reply in the HTML part too', async () => {
       mockParams = { mode: 'reply', emailId: 'email-1', threadId: 'thread-1', mailboxId: 'mailbox-inbox' };
       core.threadEmails.mockResolvedValue([makeEmail()]);
-      core.body.mockResolvedValue({ text: 'Bonjour', hasRemoteContent: false, attachments: [] });
+      core.body.mockResolvedValue({ text: 'Bonjour', bcc: [], hasRemoteContent: false, attachments: [] });
       renderWithProviders(<ComposeScreen />);
       await screen.findByText(/> Bonjour/);
       await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Send' })));
@@ -294,7 +300,7 @@ describe('composer', () => {
     it('focuses the start of the body when replying', async () => {
       mockParams = { mode: 'reply', emailId: 'email-1', threadId: 'thread-1', mailboxId: 'mailbox-inbox' };
       core.threadEmails.mockResolvedValue([makeEmail()]);
-      core.body.mockResolvedValue({ text: 'Bonjour', hasRemoteContent: false, attachments: [] });
+      core.body.mockResolvedValue({ text: 'Bonjour', bcc: [], hasRemoteContent: false, attachments: [] });
       renderWithProviders(<ComposeScreen />);
       await screen.findByText(/> Bonjour/);
       await waitFor(() => expect(enriched.setSelection).toHaveBeenCalledWith(0, 0));
@@ -310,12 +316,30 @@ describe('composer', () => {
       expect(draft.bodyHtml).toContain('<p style="margin: 0">Hello</p>');
     });
 
-    it('asks before discarding typed text', () => {
+    it('offers to save or delete the draft when closing with typed text', () => {
       const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
       renderWithProviders(<ComposeScreen />);
       type('Hi');
       fireEvent.press(screen.getByRole('button', { name: 'Close' }));
-      expect(alert).toHaveBeenCalledWith(i18n.t('compose.discardTitle'), undefined, expect.any(Array));
+      expect(alert).toHaveBeenCalledWith(i18n.t('compose.draftTitle'), undefined, expect.any(Array));
+      expect(alertButtons(alert).map((button) => button.text)).toEqual([
+        i18n.t('common.cancel'),
+        i18n.t('compose.deleteDraft'),
+        i18n.t('compose.saveDraft'),
+      ]);
+    });
+
+    it('saves what was typed as a draft, even before any recipient', async () => {
+      const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+      renderWithProviders(<ComposeScreen />);
+      type('Hello');
+      enriched.getHTML.mockResolvedValue('<html><p>Hello</p></html>');
+      fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+      await act(async () => pressAlertButton(alert, i18n.t('compose.saveDraft')));
+
+      expect(core.saveDraft).toHaveBeenCalledWith(expect.objectContaining({ to: [], bodyText: 'Hello', draftEmailId: undefined }));
+      expect(core.send).not.toHaveBeenCalled();
+      expect(mockRouter.back).toHaveBeenCalled();
     });
 
     it('closes without asking once the body is emptied again', () => {
@@ -326,6 +350,110 @@ describe('composer', () => {
       fireEvent.press(screen.getByRole('button', { name: 'Close' }));
       expect(alert).not.toHaveBeenCalled();
       expect(mockRouter.back).toHaveBeenCalled();
+    });
+  });
+
+  describe('drafts', () => {
+    const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    const SAVED =
+      '<div style="font-family: -apple-system, Roboto, Helvetica, Arial, sans-serif; font-size: 15px"><p>Encore</p>' +
+      '<div class="openmailbox-signature"><br><br><div>Sent from <a href="https://openmailbox.eu">Open Mailbox</a></div></div>' +
+      '<div class="openmailbox-quote"><blockquote type="cite"><h1>Bonjour</h1></blockquote></div></div>';
+
+    beforeEach(() => {
+      mockParams = { mode: 'draft', emailId: 'draft-1', threadId: 'thread-9', mailboxId: 'mailbox-drafts', accountId: 'account-1' };
+      core.threadEmails.mockResolvedValue([
+        makeEmail({
+          id: 'draft-1',
+          threadId: 'thread-9',
+          subject: 'Budget',
+          from: [{ name: 'Alice Martin', email: 'alice@example.com' }],
+          to: [{ name: 'Bob', email: 'bob@example.org' }],
+          cc: [{ email: 'carol@example.org' }],
+        }),
+      ]);
+      core.body.mockResolvedValue({ html: SAVED, text: 'Encore', bcc: [{ email: 'dave@example.org' }], hasRemoteContent: false, attachments: [] });
+      enriched.getHTML.mockResolvedValue('<html><p>Encore</p></html>');
+    });
+
+    it('opens the saved draft to keep writing it', async () => {
+      renderWithProviders(<ComposeScreen />);
+      await waitFor(() => expect(enriched.setValue).toHaveBeenCalledWith('<p>Encore</p>'));
+      expect(screen.getByDisplayValue('Budget')).toBeOnTheScreen();
+    });
+
+    it('counts removing the signature as a change to keep', async () => {
+      const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+      useSettingsStore.setState({ sentFromFooter: true });
+      renderWithProviders(<ComposeScreen />);
+      await waitFor(() => expect(enriched.setValue).toHaveBeenCalled());
+      await settle();
+      fireEvent.press(await screen.findByRole('button', { name: i18n.t('compose.removeSignature') }));
+      await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Close' })));
+      expect(alert).toHaveBeenCalledWith(i18n.t('compose.draftTitle'), undefined, expect.any(Array));
+    });
+
+    it('keeps the signature and the quote out of the editor so they come back as they were', async () => {
+      useSettingsStore.setState({ sentFromFooter: true });
+      renderWithProviders(<ComposeScreen />);
+      await waitFor(() => expect(enriched.setValue).toHaveBeenCalledWith('<p>Encore</p>'));
+      await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Send' })));
+
+      const sent = core.send.mock.calls[0][0];
+      expect((sent.bodyHtml ?? '').split('https://openmailbox.eu').length).toBe(2);
+      expect(sent.bodyHtml).toContain('<div class="openmailbox-quote"><blockquote type="cite"><h1>Bonjour</h1></blockquote></div>');
+      expect(sent.bodyText).toContain('Bonjour');
+    });
+
+    it('sends the draft in place of its saved copy', async () => {
+      renderWithProviders(<ComposeScreen />);
+      await waitFor(() => expect(enriched.setValue).toHaveBeenCalled());
+      await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Send' })));
+
+      const sent = core.send.mock.calls[0][0];
+      expect(sent).toMatchObject({
+        draftEmailId: 'draft-1',
+        inReplyToEmailId: undefined,
+        subject: 'Budget',
+        to: [{ email: 'bob@example.org' }],
+        cc: [{ email: 'carol@example.org' }],
+        bcc: [{ email: 'dave@example.org' }],
+      });
+    });
+
+    it('closes an untouched draft without asking', async () => {
+      const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+      renderWithProviders(<ComposeScreen />);
+      await waitFor(() => expect(enriched.setValue).toHaveBeenCalled());
+      await settle();
+      await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Close' })));
+      expect(alert).not.toHaveBeenCalled();
+      expect(mockRouter.back).toHaveBeenCalled();
+    });
+
+    it('moves the saved copy to the trash when an edited draft is deleted', async () => {
+      const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+      renderWithProviders(<ComposeScreen />);
+      await waitFor(() => expect(enriched.setValue).toHaveBeenCalled());
+      await settle();
+      enriched.getHTML.mockResolvedValue('<html><p>Encore et encore</p></html>');
+      await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Close' })));
+      await act(async () => pressAlertButton(alert, i18n.t('compose.deleteDraft')));
+
+      expect(core.moveEmails).toHaveBeenCalledWith(['draft-1'], 'mailbox-drafts', expect.anything(), 0);
+      expect(core.saveDraft).not.toHaveBeenCalled();
+    });
+
+    it('saves an edited draft over its saved copy', async () => {
+      const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+      renderWithProviders(<ComposeScreen />);
+      await waitFor(() => expect(enriched.setValue).toHaveBeenCalled());
+      await settle();
+      enriched.getHTML.mockResolvedValue('<html><p>Encore et encore</p></html>');
+      await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Close' })));
+      await act(async () => pressAlertButton(alert, i18n.t('compose.saveDraft')));
+
+      expect(core.saveDraft).toHaveBeenCalledWith(expect.objectContaining({ draftEmailId: 'draft-1', subject: 'Budget' }));
     });
   });
 
@@ -558,7 +686,7 @@ describe('composer', () => {
       core.threadEmails.mockResolvedValue([
         makeEmail({ to: [{ name: undefined, email: 'INFO@example.com' }, { name: 'Carol', email: 'carol@example.org' }] }),
       ]);
-      core.body.mockResolvedValue({ text: 'Bonjour', hasRemoteContent: false, attachments: [] });
+      core.body.mockResolvedValue({ text: 'Bonjour', bcc: [], hasRemoteContent: false, attachments: [] });
       renderWithProviders(<ComposeScreen />);
 
       expect(await screen.findByText('Cc/Bcc, From: info@example.com')).toBeOnTheScreen();

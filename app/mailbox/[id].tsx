@@ -171,12 +171,21 @@ export default function MailboxScreen() {
     [markKept, toggle],
   );
 
+  const drafts = mailbox?.role === MailboxRole.Drafts;
+  const showRecipients = drafts || mailbox?.role === MailboxRole.Sent;
   const openThread = useCallback(
     (thread: ThreadSummary) => {
       markKept([thread.threadId]);
+      if (drafts) {
+        router.push({
+          pathname: '/compose',
+          params: { mode: 'draft', emailId: thread.latest.id, threadId: thread.threadId, mailboxId: thread.mailboxId, accountId: thread.accountId },
+        });
+        return;
+      }
       router.push({ pathname: '/thread/[threadId]', params: { threadId: thread.threadId, mailboxId: thread.mailboxId } });
     },
-    [markKept, router],
+    [markKept, router, drafts],
   );
 
   const renderItem = useCallback(
@@ -185,15 +194,16 @@ export default function MailboxScreen() {
         thread={item}
         accountAccent={showAccountAccent ? accentByAccount.get(item.accountId) : undefined}
         canArchive={actionsFor(item).includes('archive')}
-        menuActions={selection.active ? undefined : actionsFor(item)}
+        menuActions={selection.active || drafts ? undefined : actionsFor(item)}
         onOpen={selection.active ? toggleSelected : openThread}
         onLongPress={setPreviewed}
         onAction={runThreadAction}
         onMore={setSheetThread}
         selected={selection.active ? selection.selected.has(item.key) : undefined}
+        showRecipients={showRecipients}
       />
     ),
-    [showAccountAccent, accentByAccount, actionsFor, openThread, runThreadAction, selection.active, selection.selected, toggleSelected],
+    [showAccountAccent, accentByAccount, actionsFor, openThread, runThreadAction, selection.active, selection.selected, toggleSelected, drafts, showRecipients],
   );
 
   const title = unified ? t('mailboxes.allInboxes') : mailbox ? mailboxName(mailbox, t) : '';

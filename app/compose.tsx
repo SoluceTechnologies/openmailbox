@@ -7,16 +7,30 @@ import { HStack, Host, Image, Menu, Picker, Text } from '@expo/ui/swift-ui';
 import { foregroundStyle, frame, lineLimit, tag } from '@expo/ui/swift-ui/modifiers';
 import { ArrowUp, ChevronDown, FolderOpen, Images, Paperclip, X } from 'lucide-react-native';
 import type { EnrichedTextInputInstance, OnLinkDetected } from 'react-native-enriched-html';
+import { Destination, type Draft } from '@openmailbox/mail-core';
 
-import { sendDraft } from '@/core/actions';
+import { saveDraft, sendDraft } from '@/core/actions';
 import { useAccounts, useBody, useThreadEmails } from '@/core/hooks';
+import { mailCore } from '@/core/mailCore';
 import { canAdd, forwardedAttachments, pickAttachments, type ComposerAttachment } from '@/features/composer/attachments';
 import { AttachmentList } from '@/features/composer/components/AttachmentList';
 import { RecipientField } from '@/features/composer/components/RecipientField';
 import { FORMAT_BAR_HEIGHT, KeyboardFormatBar } from '@/features/composer/components/KeyboardFormatBar';
 import { RichBody } from '@/features/composer/components/RichBody';
 import { editorHtml } from '@/features/composer/editorHtml';
-import { composeTitleKey, linkedHtml, linkedParagraphs, parseMailto, prefill, quoteHtml, type ComposeMode } from '@/features/composer/prefill';
+import {
+  composeTitleKey,
+  draftParts,
+  htmlText,
+  linkedHtml,
+  linkedParagraphs,
+  parseMailto,
+  prefill,
+  quoteBlock,
+  quoteHtml,
+  signatureBlock,
+  type ComposeMode,
+} from '@/features/composer/prefill';
 import { replySender, sendersOf } from '@/features/composer/senders';
 import { readSharedContent } from '@/features/composer/shared';
 import { HtmlBody } from '@/features/reader/components/HtmlBody';
@@ -67,7 +81,7 @@ export default function ComposeScreen() {
   const threadEmails = useThreadEmails(params.threadId ?? '', params.mailboxId || undefined, !!params.threadId);
   const original = threadEmails.data?.find((email) => email.id === params.emailId);
   const originalBody = useBody(params.emailId ?? '', !!params.emailId);
-  const originalHtml = mode === 'new' ? undefined : originalBody.data?.html;
+  const originalHtml = mode === 'new' || mode === 'draft' ? undefined : originalBody.data?.html;
 
   const initialAccountId = params.accountId ?? defaultAccountId ?? accounts[0]?.id;
   const pickAccountId = () => (accounts.some((account) => account.id === initialAccountId) ? initialAccountId : accounts[0]?.id);
@@ -107,7 +121,11 @@ export default function ComposeScreen() {
   const [prefilled, setPrefilled] = useState(mode === 'new');
   const [sending, setSending] = useState(false);
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  const [attachmentsTouched, setAttachmentsTouched] = useState(false);
   const [forwarding, setForwarding] = useState(false);
+  const draftHtml = useRef<string | null>(null);
+  const draftSigned = useRef<boolean | null>(null);
+  const [draftQuote, setDraftQuote] = useState('');
   const [quote, setQuote] = useState('');
   const [attachMenuVisible, setAttachMenuVisible] = useState(false);
   const [initialContent, setInitialContent] = useState(() => snapshot('', '', '', ''));
@@ -119,6 +137,40 @@ export default function ComposeScreen() {
 
   useEffect(() => {
     if (prefilled || !original || originalBody.isLoading) return;
+    if (mode === 'draft') {
+      const saved = originalBody.data;
+      const bccAddresses = saved?.bcc ?? [];
+      setAccountId(original.accountId);
+      setIdentityId(replySender(senders, original)?.key);
+      setTo(original.to);
+      setCc(original.cc);
+      setBcc(bccAddresses);
+      setShowCopies(original.cc.length + bccAddresses.length > 0);
+      setSubject(original.subject ?? '');
+      const parts = saved?.html ? draftParts(saved.html) : { body: linkedParagraphs(saved?.text ?? ''), hasSignature: false, quote: '' };
+      draftSigned.current = parts.hasSignature;
+      setSignatureRemoved(!parts.hasSignature);
+      setDraftQuote(parts.quote);
+      setInitialContent(
+        snapshot(formatAddressList(original.to), formatAddressList(original.cc), formatAddressList(bccAddresses), original.subject ?? ''),
+      );
+      body.current?.setValue(parts.body);
+      setTimeout(() => {
+        body.current
+          ?.getHTML()
+          .then((html) => (draftHtml.current = editorHtml(html)))
+          .catch(() => undefined);
+      }, 0);
+      setPrefilled(true);
+      if (params.emailId && saved && saved.attachments.length > 0) {
+        setForwarding(true);
+        forwardedAttachments(params.emailId, saved.attachments)
+          .then(setAttachments)
+          .catch(() => Alert.alert(t('compose.draftAttachmentsFailed')))
+          .finally(() => setForwarding(false));
+      }
+      return;
+    }
     const ownAddresses = senders.map((candidate) => candidate.email);
     const content = prefill(mode, original, originalBody.data?.text ?? original.preview ?? '', ownAddresses, formatFullDate(original.receivedAt), {
       wrote: (date, author) => t('compose.wrote', { date, author }),
@@ -174,6 +226,7 @@ export default function ComposeScreen() {
           return;
         }
         setAttachments(shared.attachments);
+        setAttachmentsTouched(true);
       })
       .catch(() => Alert.alert(t('compose.sharedFilesFailed')));
   }, [params.shared, t]);
@@ -195,8 +248,8 @@ export default function ComposeScreen() {
   const dirty =
     prefilled &&
     (snapshot(recipientsText(to, toText), recipientsText(cc, ccText), recipientsText(bcc, bccText), subject) !== initialContent ||
-      hasBody ||
-      (mode !== 'forward' && attachments.length > 0));
+      (mode !== 'draft' && hasBody) ||
+      attachmentsTouched);
   const hasRecipient = to.length + cc.length + bcc.length > 0 || (toText + ccText + bccText).trim().length > 0;
   const copiesEmpty = cc.length + bcc.length === 0 && (ccText + bccText).trim() === '';
   const foldCopies = () => {
@@ -271,56 +324,90 @@ export default function ComposeScreen() {
       return;
     }
     setAttachments((current) => [...current, ...picked]);
+    setAttachmentsTouched(true);
   };
 
-  const close = () => {
-    if (!dirty) {
+  const recipients = () => {
+    const typed = [toText, ccText, bccText].map(parseAddressList);
+    const [toAddresses, ccAddresses, bccAddresses] = [to, cc, bcc].map((addresses, index) =>
+      [...addresses, ...typed[index].addresses].map((address: MailAddress) => ({ name: address.name, email: address.email })),
+    );
+    return { to: toAddresses, cc: ccAddresses, bcc: bccAddresses, invalid: typed.flatMap((parsed) => parsed.invalid) };
+  };
+
+  const message = async (accountId: string, addresses: Pick<Draft, 'to' | 'cc' | 'bcc'>): Promise<Draft> => {
+    const signature = signatureRemoved || !sender ? { html: '', text: '' } : sender.signature;
+    const signatureFooter = signatureRemoved ? '' : footer;
+    const html = editorHtml((await body.current?.getHTML()) ?? '');
+    const quoted = mode === 'draft' ? draftQuote : quoteBlock(originalHtml ? quoteHtml(mode, quote, originalHtml) : linkedHtml(quote));
+    const quotedText = mode === 'draft' ? (draftQuote ? `\n\n${htmlText(draftQuote)}` : '') : quote;
+    return {
+      accountId,
+      ...addresses,
+      subject: subject.trim(),
+      bodyText: bodyText.current + signatureText(signature, signatureFooter) + quotedText,
+      bodyHtml: mailHtml(html + signatureBlock(signatureHtml(signature, signatureFooter)) + quoted),
+      inReplyToEmailId: mode === 'reply' || mode === 'replyAll' ? params.emailId : undefined,
+      draftEmailId: mode === 'draft' ? params.emailId : undefined,
+      attachments: attachments.map(({ path, filename, mimeType }) => ({ path, filename, mimeType })),
+      from: sender?.identity ? { name: sender.name, email: sender.email } : undefined,
+    };
+  };
+
+  const keepDraft = async () => {
+    if (!accountId) return;
+    if (forwarding) {
+      Alert.alert(t('compose.attachmentsLoading'));
+      return;
+    }
+    const { to: toAddresses, cc: ccAddresses, bcc: bccAddresses } = recipients();
+    try {
+      await saveDraft(await message(accountId, { to: toAddresses, cc: ccAddresses, bcc: bccAddresses }));
+      goBack();
+      showToast({ label: t('compose.draftSaved'), moves: [] });
+    } catch (error) {
+      Alert.alert(t('compose.draftFailed'), String(error));
+    }
+  };
+
+  const deleteDraft = () => {
+    goBack();
+    if (mode !== 'draft' || !params.emailId || !params.mailboxId) return;
+    mailCore()
+      .moveEmails([params.emailId], params.mailboxId, new Destination.Trash(), 0)
+      .catch(() => undefined);
+  };
+
+  const close = async () => {
+    const editedDraft =
+      mode === 'draft' &&
+      draftHtml.current !== null &&
+      (signatureRemoved === draftSigned.current || editorHtml((await body.current?.getHTML()) ?? '') !== draftHtml.current);
+    if (!dirty && !editedDraft) {
       goBack();
       return;
     }
-    Alert.alert(t('compose.discardTitle'), undefined, [
+    Alert.alert(t('compose.draftTitle'), undefined, [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('compose.discard'), style: 'destructive', onPress: goBack },
+      { text: t('compose.deleteDraft'), style: 'destructive', onPress: deleteDraft },
+      { text: t('compose.saveDraft'), onPress: () => void keepDraft() },
     ]);
   };
 
   const send = async () => {
     if (!accountId) return;
-    const typed = [toText, ccText, bccText].map(parseAddressList);
-    const invalid = typed.flatMap((parsed) => parsed.invalid);
+    const { invalid, ...addresses } = recipients();
     if (invalid.length > 0) {
       Alert.alert(t('compose.invalidAddresses'), invalid.join(', '));
       return;
     }
-    const [toAddresses, ccAddresses, bccAddresses] = [to, cc, bcc].map((addresses, index) =>
-      [...addresses, ...typed[index].addresses].map((address: MailAddress) => ({ name: address.name, email: address.email })),
-    );
-    if (toAddresses.length + ccAddresses.length + bccAddresses.length === 0) {
+    if (addresses.to.length + addresses.cc.length + addresses.bcc.length === 0) {
       Alert.alert(t('compose.noRecipient'));
       return;
     }
-    const signature = signatureRemoved || !sender ? { html: '', text: '' } : sender.signature;
-    const signatureFooter = signatureRemoved ? '' : footer;
-    const signatureMarkup = signatureHtml(signature, signatureFooter);
     setSending(true);
     try {
-      const html = editorHtml((await body.current?.getHTML()) ?? '');
-      await sendDraft({
-        accountId,
-        to: toAddresses,
-        cc: ccAddresses,
-        bcc: bccAddresses,
-        subject: subject.trim(),
-        bodyText: bodyText.current + signatureText(signature, signatureFooter) + quote,
-        bodyHtml: mailHtml(
-          html +
-            (signatureMarkup ? `<br><br>${signatureMarkup}` : '') +
-            (originalHtml ? quoteHtml(mode, quote, originalHtml) : linkedHtml(quote)),
-        ),
-        inReplyToEmailId: mode === 'reply' || mode === 'replyAll' ? params.emailId : undefined,
-        attachments: attachments.map(({ path, filename, mimeType }) => ({ path, filename, mimeType })),
-        from: sender?.identity ? { name: sender.name, email: sender.email } : undefined,
-      });
+      await sendDraft(await message(accountId, addresses));
       goBack();
       showToast({ label: t('compose.messageSent'), moves: [] });
     } catch (error) {
@@ -350,7 +437,7 @@ export default function ComposeScreen() {
         <KeyboardAvoidingView style={styles.flex} behavior="padding" enabled={!ios}>
           {NATIVE_CHROME ? null : (
           <View style={styles.header}>
-            <IconButton round glass size={40} accessibilityLabel={t('common.close')} onPress={close}>
+            <IconButton round glass size={40} accessibilityLabel={t('common.close')} onPress={() => void close()}>
               <X size={20} color={colors.text} />
             </IconButton>
             <View style={styles.headerActions}>
@@ -469,7 +556,10 @@ export default function ComposeScreen() {
             </FieldRow>
             <AttachmentList
               attachments={attachments}
-              onRemove={(removed) => setAttachments((current) => current.filter((attachment) => attachment !== removed))}
+              onRemove={(removed) => {
+                setAttachments((current) => current.filter((attachment) => attachment !== removed));
+                setAttachmentsTouched(true);
+              }}
             />
             <RichBody
               ref={body}
@@ -506,6 +596,11 @@ export default function ComposeScreen() {
                   {quote.trim()}
                 </Typography>
               )
+            ) : null}
+            {draftQuote ? (
+              <View style={styles.quote}>
+                <HtmlBody html={draftQuote} allowRemoteContent={loadRemoteImages} />
+              </View>
             ) : null}
           </ScrollView>
           {ios ? (
@@ -549,7 +644,7 @@ export default function ComposeScreen() {
       {NATIVE_CHROME ? (
         <>
           <Stack.Toolbar placement="left">
-            <Stack.Toolbar.Button icon="xmark" accessibilityLabel={t('common.close')} onPress={close} />
+            <Stack.Toolbar.Button icon="xmark" accessibilityLabel={t('common.close')} onPress={() => void close()} />
           </Stack.Toolbar>
           <Stack.Toolbar placement="right">
             <Stack.Toolbar.Menu icon="paperclip" accessibilityLabel={t('compose.attach')}>

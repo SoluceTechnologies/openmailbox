@@ -112,6 +112,7 @@ fn built_reply_keeps_bcc_out_of_the_headers() {
         references: &["root@example.com".into(), "reply@example.com".into()],
         attachments: vec![],
         calendar: None,
+        draft: false,
     })
     .unwrap();
     let raw = String::from_utf8(built.raw).unwrap();
@@ -150,6 +151,7 @@ fn bcc_recipients_become_a_header_only_when_asked() {
         references: &[],
         attachments: vec![],
         calendar: None,
+        draft: false,
     })
     .unwrap();
     let raw = String::from_utf8(with_bcc_header(&built.raw, &built.recipients)).unwrap();
@@ -183,6 +185,7 @@ fn with_attachments(attachments: Vec<AttachmentContent>) -> Vec<u8> {
         references: &[],
         attachments,
         calendar: None,
+        draft: false,
     })
     .unwrap()
     .raw
@@ -207,6 +210,7 @@ fn a_reply_with_html_keeps_the_quoted_formatting() {
         references: &[],
         attachments: vec![],
         calendar: None,
+        draft: false,
     })
     .unwrap();
     let rendered = render(&built.raw).unwrap();
@@ -435,6 +439,7 @@ fn calendar_reply(attachments: Vec<AttachmentContent>) -> String {
         references: &[],
         attachments,
         calendar: Some(REPLY),
+        draft: false,
     })
     .unwrap();
     String::from_utf8(built.raw).unwrap()

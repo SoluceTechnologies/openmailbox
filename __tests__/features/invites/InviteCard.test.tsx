@@ -24,7 +24,7 @@ const CHIPS = [
 ];
 
 function showInvite(ics: string) {
-  core.body.mockResolvedValue({ text: 'You are invited', hasRemoteContent: false, attachments: CHIPS, calendar: ics });
+  core.body.mockResolvedValue({ text: 'You are invited', bcc: [], hasRemoteContent: false, attachments: CHIPS, calendar: ics });
   return renderWithProviders(<MessageBody emailId="email-1" accountId="account-1" />);
 }
 

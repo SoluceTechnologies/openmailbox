@@ -199,6 +199,24 @@ describe('thread list', () => {
     });
   });
 
+  it('opens a draft in the composer to keep writing it, listed under its recipients', async () => {
+    mockParams = { id: 'mailbox-drafts' };
+    queryClient.setQueryData(queryKeys.mailboxes, [makeMailbox({ id: 'mailbox-drafts', role: MailboxRole.Drafts, name: 'Drafts' })]);
+    const draft = makeThread({
+      key: 'mailbox-drafts:thread-9',
+      mailboxId: 'mailbox-drafts',
+      threadId: 'thread-9',
+      latest: makeEmail({ id: 'draft-1', threadId: 'thread-9', subject: 'Budget', to: [{ name: 'Bob Martin', email: 'bob@example.org' }] }),
+    });
+    core.listThreads.mockResolvedValue({ threads: [draft] });
+    renderWithProviders(<MailboxScreen />);
+    fireEvent.press(await screen.findByText('Bob Martin'));
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: '/compose',
+      params: { mode: 'draft', emailId: 'draft-1', threadId: 'thread-9', mailboxId: 'mailbox-drafts', accountId: 'account-1' },
+    });
+  });
+
   it('says so when there is no mail', async () => {
     core.listThreads.mockResolvedValue({ threads: [] });
     renderWithProviders(<MailboxScreen />);
@@ -206,7 +224,7 @@ describe('thread list', () => {
   });
 
   it('previews a thread on long press without marking it read', async () => {
-    core.body.mockResolvedValue({ text: 'Bonjour, voici la facture du mois.', hasRemoteContent: false, attachments: [] });
+    core.body.mockResolvedValue({ text: 'Bonjour, voici la facture du mois.', bcc: [], hasRemoteContent: false, attachments: [] });
     renderWithProviders(<MailboxScreen />);
     fireEvent(await screen.findByText('Facture disponible'), 'longPress');
 

@@ -290,6 +290,7 @@ fn draft_with(attachments: Vec<OutgoingAttachment>) -> Draft {
         body_text: "Voici.".into(),
         body_html: None,
         in_reply_to_email_id: None,
+        draft_email_id: None,
         attachments,
         from: None,
         calendar: None,
@@ -388,6 +389,114 @@ fn send_from_an_identity_uses_it_as_sender_and_envelope() {
     );
 }
 
+const WITH_DRAFTS: &[(&str, MailboxRole)] = &[
+    ("INBOX", MailboxRole::Inbox),
+    ("Drafts", MailboxRole::Drafts),
+    ("Trash", MailboxRole::Trash),
+];
+
+fn queued_raw(fixture: &Fixture, kind: &str) -> String {
+    let queued = fixture
+        .engine
+        .store
+        .waiting_operations("alice", kind)
+        .unwrap();
+    match serde_json::from_str(&queued.last().unwrap().payload).unwrap() {
+        Operation::AppendDraft { raw } | Operation::Send { raw, .. } => raw,
+        _ => panic!("no message in {kind}"),
+    }
+}
+
+#[test]
+fn a_draft_without_recipients_is_queued_for_the_drafts_mailbox_with_its_bcc() {
+    let fixture = Fixture::new(WITH_DRAFTS);
+    let mut draft = draft_with(vec![]);
+    draft.to.clear();
+    draft.bcc = vec![Address {
+        name: None,
+        email: "carol@example.org".into(),
+    }];
+    fixture.engine.save_draft(draft).unwrap();
+    let rendered = mail_mime::render(queued_raw(&fixture, "append_draft").as_bytes()).unwrap();
+    assert_eq!(rendered.bcc[0].email, "carol@example.org");
+    assert!(rendered.text.contains("Voici."));
+}
+
+#[test]
+fn saving_a_draft_needs_a_drafts_mailbox() {
+    let fixture = Fixture::new(STANDARD);
+    assert!(matches!(
+        fixture.engine.save_draft(draft_with(vec![])),
+        Err(Error::InvalidInput(_))
+    ));
+}
+
+#[test]
+fn saving_or_sending_a_resumed_draft_removes_the_previous_copy() {
+    for send in [false, true] {
+        let fixture = Fixture::new(WITH_DRAFTS);
+        let drafts = fixture.id(MailboxRole::Drafts);
+        let (_, email_ids) = fixture.deliver(drafts, 4);
+        let mut draft = draft_with(vec![]);
+        draft.draft_email_id = Some(email_ids[0]);
+        if send {
+            fixture.engine.send(draft).unwrap();
+        } else {
+            fixture.engine.save_draft(draft).unwrap();
+        }
+        assert!(fixture.threads(drafts).is_empty());
+        let deletions = fixture
+            .engine
+            .store
+            .waiting_operations("alice", "delete")
+            .unwrap();
+        let Operation::Delete { sources } = serde_json::from_str(&deletions[0].payload).unwrap()
+        else {
+            panic!("not a deletion");
+        };
+        assert_eq!(sources[0].uid, Some(4));
+    }
+}
+
+#[test]
+fn a_resumed_reply_is_sent_in_its_conversation() {
+    let fixture = Fixture::new(WITH_DRAFTS);
+    let drafts = fixture.id(MailboxRole::Drafts);
+    fixture
+        .engine
+        .store
+        .insert_messages(
+            "alice",
+            drafts,
+            &[FetchedMessage {
+                uid: 4,
+                flags: Flags::default(),
+                internal_date: Some(1),
+                size: 1,
+                headers: ParsedHeaders {
+                    message_id: Some("draft@example.org".into()),
+                    in_reply_to: Some("question@example.org".into()),
+                    references: vec!["root@example.org".into(), "question@example.org".into()],
+                    ..ParsedHeaders::default()
+                },
+            }],
+        )
+        .unwrap();
+    let thread_id = fixture.threads(drafts)[0];
+    let mut draft = draft_with(vec![]);
+    draft.draft_email_id = Some(
+        fixture
+            .engine
+            .store
+            .thread_email_ids(drafts, thread_id)
+            .unwrap()[0],
+    );
+    fixture.engine.send(draft).unwrap();
+    let raw = queued_raw(&fixture, "send");
+    assert!(raw.contains("In-Reply-To: <question@example.org>"));
+    assert!(raw.contains("References: <root@example.org> <question@example.org>"));
+}
+
 fn newsletter(fixture: &Fixture, unsubscribe: Unsubscribe) -> i64 {
     let (_, email_ids) = fixture.deliver(fixture.id(MailboxRole::Inbox), 9);
     fixture
@@ -398,6 +507,7 @@ fn newsletter(fixture: &Fixture, unsubscribe: Unsubscribe) -> i64 {
             &RenderedBody {
                 html: None,
                 text: "News".into(),
+                bcc: Vec::new(),
                 has_remote_content: false,
                 attachments: vec![],
                 unsubscribe: Some(unsubscribe),

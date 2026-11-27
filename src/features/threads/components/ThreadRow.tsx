@@ -17,13 +17,17 @@ interface ThreadRowProps {
   onOpen: (thread: ThreadSummary) => void;
   onLongPress?: (thread: ThreadSummary) => void;
   selected?: boolean;
+  showRecipients?: boolean;
 }
 
-function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress, selected }: ThreadRowProps) {
+function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress, selected, showRecipients }: ThreadRowProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const sender = thread.latest.from[0];
-  const senderName = displayName(sender) || t('threads.unknownSender');
+  const recipients = [...thread.latest.to, ...thread.latest.cc];
+  const sender = showRecipients ? recipients[0] : thread.latest.from[0];
+  const senderName = showRecipients
+    ? recipients.map(displayName).filter(Boolean).join(', ') || t('threads.noRecipients')
+    : displayName(sender) || t('threads.unknownSender');
   const unread = thread.unreadCount > 0;
 
   return (
@@ -54,7 +58,7 @@ function ThreadRowImpl({ thread, accountAccent, onOpen, onLongPress, selected }:
           <Reply size={15} strokeWidth={2.5} color={colors.primary} />
         ) : null}
       </View>
-      <ContactAvatar email={thread.latest.originalSender ?? sender?.email} name={senderName} size={40} />
+      <ContactAvatar email={showRecipients ? sender?.email : (thread.latest.originalSender ?? sender?.email)} name={senderName} size={40} />
       <View style={[styles.content, { borderBottomColor: colors.border }]}>
         <View style={styles.line}>
           {accountAccent ? <View style={[styles.accountDot, { backgroundColor: accountAccent }]} /> : null}

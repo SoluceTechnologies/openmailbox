@@ -320,6 +320,7 @@ fn search_finds_words_inside_text_written_without_spaces() {
             &RenderedBody {
                 html: None,
                 text: "年末年始の営業日についてご案内します".into(),
+                bcc: Vec::new(),
                 has_remote_content: false,
                 attachments: Vec::new(),
                 unsubscribe: None,

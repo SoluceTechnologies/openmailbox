@@ -99,7 +99,7 @@ describe('reader', () => {
   describe('mailing lists', () => {
     const LIST_BODY = {
       text: 'Les nouvelles de la semaine.',
-      hasRemoteContent: false,
+      bcc: [], hasRemoteContent: false,
       attachments: [],
       unsubscribe: { httpsUrl: 'https://lists.example/leave', mailto: undefined, oneClick: false },
     };

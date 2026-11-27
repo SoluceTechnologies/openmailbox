@@ -330,6 +330,7 @@ pub struct Attachment {
 pub struct RenderedBody {
     pub html: Option<String>,
     pub text: String,
+    pub bcc: Vec<Address>,
     pub has_remote_content: bool,
     pub attachments: Vec<Attachment>,
     pub unsubscribe: Option<Unsubscribe>,
@@ -378,6 +379,7 @@ pub struct Draft {
     pub body_text: String,
     pub body_html: Option<String>,
     pub in_reply_to_email_id: Option<i64>,
+    pub draft_email_id: Option<i64>,
     pub attachments: Vec<OutgoingAttachment>,
     pub from: Option<Address>,
     pub calendar: Option<String>,

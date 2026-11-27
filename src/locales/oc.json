@@ -146,8 +146,6 @@
     "bodyPlaceholder": "Messatge",
     "cc": "Cc :",
     "copiesAndFrom": "Cc/Cci, De : {{from}}",
-    "discard": "Suprimir",
-    "discardTitle": "Suprimir aqueste borrolhon ?",
     "forward": "Transferir",
     "forwardedAttachmentsFailed": "Las pèças juntas d’origina an pas pogut èsser telecargadas : seràn pas transferidas.",
     "forwardedHeader": "---------- Messatge transferit ----------",
@@ -173,7 +171,14 @@
     "to": "A :",
     "wrote": "Lo {{date}}, {{author}} a escrich :",
     "formatting": "Mesa en forma",
-    "hideFormatting": "Amagar la mesa en forma"
+    "hideFormatting": "Amagar la mesa en forma",
+    "draftTitle": "Gardar aqueste messatge coma borrolhon ?",
+    "saveDraft": "Enregistrar lo borrolhon",
+    "deleteDraft": "Suprimir lo borrolhon",
+    "draftSaved": "Borrolhon enregistrat",
+    "draftFailed": "Lo borrolhon a pas pogut èsser enregistrat",
+    "draftAttachmentsFailed": "Las pèças juntas del borrolhon an pas pogut èsser telecargadas.",
+    "attachmentsLoading": "Las pèças juntas son encara en telecargament."
   },
   "dates": {
     "yesterday": "Ièr"
@@ -403,7 +408,8 @@
     "unknownSender": "Expeditor desconegut",
     "unread": "Pas legit",
     "unreadCount_one": "{{count}} pas legit",
-    "unreadCount_other": "{{count}} pas legits"
+    "unreadCount_other": "{{count}} pas legits",
+    "noRecipients": "Pas cap de destinatari"
   },
   "undo": {
     "archived": "Archivat",

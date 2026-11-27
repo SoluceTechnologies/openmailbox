@@ -237,6 +237,7 @@ pub struct Attachment {
 pub struct RenderedBody {
     pub html: Option<String>,
     pub text: String,
+    pub bcc: Vec<Address>,
     pub has_remote_content: bool,
     pub attachments: Vec<Attachment>,
     pub unsubscribe: Option<Unsubscribe>,
@@ -266,6 +267,7 @@ pub struct Draft {
     pub body_text: String,
     pub body_html: Option<String>,
     pub in_reply_to_email_id: Option<String>,
+    pub draft_email_id: Option<String>,
     pub attachments: Vec<OutgoingAttachment>,
     pub from: Option<Address>,
     pub calendar: Option<String>,
@@ -555,6 +557,32 @@ impl From<Address> for mail_model::Address {
     }
 }
 
+fn model_draft(draft: Draft) -> CoreResult<mail_model::Draft> {
+    let optional_id = |id: Option<String>| id.as_deref().map(parse_id).transpose();
+    Ok(mail_model::Draft {
+        account_id: draft.account_id,
+        to: convert_all(draft.to),
+        cc: convert_all(draft.cc),
+        bcc: convert_all(draft.bcc),
+        subject: draft.subject,
+        body_text: draft.body_text,
+        body_html: draft.body_html,
+        in_reply_to_email_id: optional_id(draft.in_reply_to_email_id)?,
+        draft_email_id: optional_id(draft.draft_email_id)?,
+        attachments: draft
+            .attachments
+            .into_iter()
+            .map(|attachment| mail_model::OutgoingAttachment {
+                path: attachment.path,
+                filename: attachment.filename,
+                mime_type: attachment.mime_type,
+            })
+            .collect(),
+        from: draft.from.map(Into::into),
+        calendar: draft.calendar,
+    })
+}
+
 fn convert_all<From, To: std::convert::From<From>>(addresses: Vec<From>) -> Vec<To> {
     addresses.into_iter().map(Into::into).collect()
 }
@@ -603,6 +631,7 @@ impl From<mail_model::RenderedBody> for RenderedBody {
         RenderedBody {
             html: body.html,
             text: body.text,
+            bcc: convert_all(body.bcc),
             has_remote_content: body.has_remote_content,
             attachments: body
                 .attachments
@@ -1123,32 +1152,13 @@ impl MailCore {
     }
 
     pub async fn send(&self, draft: Draft) -> CoreResult<()> {
-        let draft = mail_model::Draft {
-            account_id: draft.account_id,
-            to: convert_all(draft.to),
-            cc: convert_all(draft.cc),
-            bcc: convert_all(draft.bcc),
-            subject: draft.subject,
-            body_text: draft.body_text,
-            body_html: draft.body_html,
-            in_reply_to_email_id: draft
-                .in_reply_to_email_id
-                .as_deref()
-                .map(parse_id)
-                .transpose()?,
-            attachments: draft
-                .attachments
-                .into_iter()
-                .map(|attachment| mail_model::OutgoingAttachment {
-                    path: attachment.path,
-                    filename: attachment.filename,
-                    mime_type: attachment.mime_type,
-                })
-                .collect(),
-            from: draft.from.map(Into::into),
-            calendar: draft.calendar,
-        };
+        let draft = model_draft(draft)?;
         self.blocking(move |engine| engine.send(draft)).await
+    }
+
+    pub async fn save_draft(&self, draft: Draft) -> CoreResult<()> {
+        let draft = model_draft(draft)?;
+        self.blocking(move |engine| engine.save_draft(draft)).await
     }
 
     pub fn sync_now(&self, account_id: Option<String>) {

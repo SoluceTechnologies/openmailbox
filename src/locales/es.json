@@ -146,8 +146,6 @@
     "bodyPlaceholder": "Mensaje",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Cco, De: {{from}}",
-    "discard": "Descartar",
-    "discardTitle": "¿Descartar este borrador?",
     "forward": "Reenviar",
     "forwardedAttachmentsFailed": "No se han podido descargar los adjuntos originales, así que no se reenviarán.",
     "forwardedHeader": "---------- Mensaje reenviado ----------",
@@ -173,7 +171,14 @@
     "to": "Para:",
     "wrote": "El {{date}}, {{author}} escribió:",
     "formatting": "Formato",
-    "hideFormatting": "Ocultar formato"
+    "hideFormatting": "Ocultar formato",
+    "draftTitle": "¿Guardar este mensaje como borrador?",
+    "saveDraft": "Guardar borrador",
+    "deleteDraft": "Eliminar borrador",
+    "draftSaved": "Borrador guardado",
+    "draftFailed": "No se pudo guardar el borrador",
+    "draftAttachmentsFailed": "No se pudieron descargar los adjuntos del borrador.",
+    "attachmentsLoading": "Los adjuntos aún se están descargando."
   },
   "dates": {
     "yesterday": "Ayer"
@@ -403,7 +408,8 @@
     "unknownSender": "Remitente desconocido",
     "unread": "No leído",
     "unreadCount_one": "{{count}} sin leer",
-    "unreadCount_other": "{{count}} sin leer"
+    "unreadCount_other": "{{count}} sin leer",
+    "noRecipients": "Sin destinatarios"
   },
   "undo": {
     "archived": "Archivado",

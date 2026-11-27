@@ -37,6 +37,7 @@ fn draft(
         body_text: body_text.into(),
         body_html: None,
         in_reply_to_email_id,
+        draft_email_id: None,
         attachments: vec![],
         from: None,
         calendar: None,
@@ -81,6 +82,7 @@ async fn ensure_mailboxes() {
     let mailboxes = connection.list_mailboxes().await.unwrap();
     for (name, role) in [
         ("Sent", MailboxRole::Sent),
+        ("Drafts", MailboxRole::Drafts),
         ("Trash", MailboxRole::Trash),
         ("Junk", MailboxRole::Junk),
     ] {
@@ -939,4 +941,119 @@ async fn updates_the_servers_of_an_account_only_once_they_sign_in() {
         .unwrap();
     wait_on_server("INBOX", &shared, true).await;
     std::fs::remove_dir_all(directory).ok();
+}
+
+async fn server_drafts_with(token: &str) -> Vec<(String, bool)> {
+    let mut connection = proto_imap::connect(
+        &endpoint(3993),
+        "bob@example.com",
+        &mail_model::Credential::Password("secret".into()),
+    )
+    .await
+    .unwrap();
+    connection.select("Drafts").await.unwrap();
+    let uids = connection.search_since(0).await.unwrap();
+    if uids.is_empty() {
+        return Vec::new();
+    }
+    connection
+        .fetch_summaries(&uids)
+        .await
+        .unwrap_or_default()
+        .iter()
+        .filter(|summary| !summary.flags.deleted)
+        .filter_map(|summary| {
+            let subject = mail_mime::parse_summary(&summary.header, &summary.text).subject?;
+            subject
+                .contains(token)
+                .then_some((subject, summary.flags.draft))
+        })
+        .collect()
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "requires tools/mail-server/mail-server.sh and the test-ca feature"]
+async fn saves_a_draft_and_replaces_it_when_saved_again() {
+    ensure_mailboxes().await;
+    let directory =
+        std::env::temp_dir().join(format!("openmailbox-greenmail-{}", uuid::Uuid::new_v4()));
+    let engine = Engine::open(&directory, tokio::runtime::Handle::current()).unwrap();
+    engine.set_event_sink(Arc::new(|_| {}));
+    engine.on_foreground();
+    let account = engine
+        .add_account(
+            AccountConfig {
+                email: "bob@example.com".into(),
+                display_name: "Bob".into(),
+                username: "bob@example.com".into(),
+                smtp_username: None,
+                imap: endpoint(3993),
+                smtp: endpoint(3465),
+            },
+            "secret".into(),
+            None,
+        )
+        .await
+        .unwrap();
+    let drafts = eventually(&engine, || {
+        engine
+            .list_mailboxes(Some(&account.id))
+            .unwrap()
+            .into_iter()
+            .find(|mailbox| mailbox.role == Some(MailboxRole::Drafts))
+    })
+    .await;
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    let mut first = draft(&account.id, format!("Draft {token}"), "First", None);
+    first.to.clear();
+    engine.save_draft(first).unwrap();
+    wait_on_server("Drafts", &token, true).await;
+    assert_eq!(
+        server_drafts_with(&token).await,
+        [(format!("Draft {token}"), true)]
+    );
+
+    engine.open_mailbox(drafts.id).unwrap();
+    let saved = eventually(&engine, || {
+        engine
+            .list_threads(
+                ThreadScope::Mailbox(drafts.id),
+                &ThreadFilter::default(),
+                None,
+                None,
+                100,
+            )
+            .unwrap()
+            .threads
+            .into_iter()
+            .find(|thread| {
+                thread
+                    .latest
+                    .subject
+                    .as_deref()
+                    .is_some_and(|subject| subject.contains(&token))
+            })
+    })
+    .await;
+    let mut second = draft(&account.id, format!("Draft {token} again"), "Second", None);
+    second.draft_email_id = Some(saved.latest.id);
+    engine.save_draft(second).unwrap();
+    let started = Instant::now();
+    while server_drafts_with(&token).await != [(format!("Draft {token} again"), true)] {
+        assert!(
+            started.elapsed() < Duration::from_secs(20),
+            "the draft was not replaced on the server"
+        );
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+    let mut connection = proto_imap::connect(
+        &endpoint(3993),
+        "bob@example.com",
+        &mail_model::Credential::Password("secret".into()),
+    )
+    .await
+    .unwrap();
+    connection.select("Drafts").await.unwrap();
+    let uids = connection.search_since(0).await.unwrap();
+    connection.delete_messages(&uids).await.unwrap();
 }

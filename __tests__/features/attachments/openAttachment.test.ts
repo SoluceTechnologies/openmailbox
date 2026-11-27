@@ -61,7 +61,7 @@ describe('openAttachment', () => {
       from: [],
       to: [],
       cc: [],
-      body: { text: '', hasRemoteContent: false, attachments: [PDF] },
+      body: { text: '', bcc: [], hasRemoteContent: false, attachments: [PDF] },
     };
 
     beforeEach(() => core.readMessageFile.mockResolvedValue(SAVED));

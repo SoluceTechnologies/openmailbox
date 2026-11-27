@@ -25,6 +25,19 @@ describe('ThreadRow', () => {
     expect(screen.getByText("Voici l'ordre du jour de jeudi.")).toBeOnTheScreen();
   });
 
+  it('names the recipients instead of the sender for sent mail and drafts', () => {
+    const latest = makeEmail({ to: [{ name: 'Bob Martin', email: 'bob@example.org' }], cc: [{ email: 'carol@example.org' }] });
+    renderWithProviders(<ThreadRow thread={makeThread({ latest })} onOpen={jest.fn()} showRecipients />);
+    expect(screen.getByText('Bob Martin, carol@example.org')).toBeOnTheScreen();
+    expect(screen.queryByText('Claire Dubois')).toBeNull();
+  });
+
+  it('says when a draft has no recipient yet', () => {
+    const latest = makeEmail({ to: [], cc: [] });
+    renderWithProviders(<ThreadRow thread={makeThread({ latest })} onOpen={jest.fn()} showRecipients />);
+    expect(screen.getByText(i18n.t('threads.noRecipients'))).toBeOnTheScreen();
+  });
+
   it('reads out unread threads as such', () => {
     renderWithProviders(<ThreadRow thread={makeThread()} onOpen={jest.fn()} />);
     expect(screen.getByRole('button').props.accessibilityLabel).toMatch(/^Unread, Claire Dubois, Lancement du projet Atlas, /);

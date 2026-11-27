@@ -1,6 +1,6 @@
 import type { EmailSummary } from '@openmailbox/mail-core';
 
-import { linkedHtml, linkedParagraphs, parseMailto, prefill, quoteHtml } from '@/features/composer/prefill';
+import { draftParts, htmlText, linkedHtml, linkedParagraphs, parseMailto, prefill, quoteBlock, quoteHtml, signatureBlock } from '@/features/composer/prefill';
 
 const labels = {
   wrote: (date: string, author: string) => `On ${date}, ${author} wrote:`,
@@ -103,5 +103,31 @@ describe('parseMailto', () => {
 describe('linkedParagraphs', () => {
   it('puts each line in a paragraph of the editor and keeps blank lines', () => {
     expect(linkedParagraphs('Hi\n\nSee https://openmailbox.eu')).toBe('<p>Hi</p><br><p>See <a href="https://openmailbox.eu">https://openmailbox.eu</a></p>');
+  });
+
+  describe('drafts', () => {
+    const WRAP = (inner: string) => `<div style="font-family: -apple-system, Roboto, Helvetica, Arial, sans-serif; font-size: 15px">${inner}</div>`;
+
+    it('splits a saved draft into what was typed, its signature and its quote', () => {
+      const html = WRAP(`<p>Salut</p>${signatureBlock('<div><h1>Charles</h1></div>')}${quoteBlock('<blockquote>Avant</blockquote>')}`);
+      expect(draftParts(html)).toEqual({
+        body: '<p>Salut</p>',
+        hasSignature: true,
+        quote: '<div class="openmailbox-quote"><blockquote>Avant</blockquote></div>',
+      });
+    });
+
+    it('ignores a signature quoted from an earlier Open Mailbox message', () => {
+      const html = WRAP(`<p>Salut</p>${quoteBlock(`<blockquote><p>Hi</p>${signatureBlock('<div>Bob</div>')}</blockquote>`)}`);
+      expect(draftParts(html)).toMatchObject({ body: '<p>Salut</p>', hasSignature: false });
+    });
+
+    it('keeps a draft from another app whole', () => {
+      expect(draftParts('<p>Hello</p><div>-- Bob</div>')).toEqual({ body: '<p>Hello</p><div>-- Bob</div>', hasSignature: false, quote: '' });
+    });
+
+    it('reads the text of a block of mail', () => {
+      expect(htmlText('<div><p>Le 3 nov.</p><blockquote>A &amp; B<br>C&nbsp;D</blockquote></div>')).toBe('Le 3 nov.\nA & B\nC D');
+    });
   });
 });

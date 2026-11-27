@@ -169,11 +169,11 @@ impl Worker {
                     }
                 }
             }
-            Command::DrainOperations => {
-                if let Err(error) = self.drain_operations().await {
-                    self.report(error);
-                }
-            }
+            Command::DrainOperations => match self.drain_operations().await {
+                Ok(refresh) if !refresh.is_empty() => self.sync(Some(refresh), false).await,
+                Ok(_) => {}
+                Err(error) => self.report(error),
+            },
             Command::Disconnect => self.disconnect().await,
             Command::SyncInboxes { reply } => {
                 let inboxes = self
@@ -228,7 +228,14 @@ impl Worker {
         while let Ok(command) = self.receiver.try_recv() {
             match command {
                 Command::DrainOperations => {
-                    let _ = self.drain_operations().await;
+                    if let Ok(refresh) = self.drain_operations().await
+                        && !refresh.is_empty()
+                    {
+                        self.deferred.push_back(Command::Sync {
+                            mailbox_ids: Some(refresh),
+                            force: false,
+                        });
+                    }
                 }
                 command @ (Command::FetchBody { .. } | Command::SaveAttachment { .. }) => {
                     self.handle_urgent(command).await
@@ -643,11 +650,12 @@ impl Worker {
         Ok(target.to_string_lossy().into_owned())
     }
 
-    pub async fn drain_operations(&mut self) -> Result<()> {
+    pub async fn drain_operations(&mut self) -> Result<Vec<i64>> {
         if !self.has_secret() {
-            return Ok(());
+            return Ok(Vec::new());
         }
         let mut changed_mailboxes = HashSet::new();
+        let mut drafts_saved = false;
         for pending in self.store.due_operations(&self.account.id, now_millis())? {
             let Some(payload) = self.store.begin_operation(pending.id)? else {
                 continue;
@@ -658,7 +666,10 @@ impl Worker {
                 continue;
             };
             match self.execute(&operation, &mut changed_mailboxes).await {
-                Ok(()) => self.store.complete_operation(pending.id)?,
+                Ok(()) => {
+                    drafts_saved |= matches!(operation, Operation::AppendDraft { .. });
+                    self.store.complete_operation(pending.id)?;
+                }
                 Err(error @ (Error::Network(_) | Error::Auth)) => {
                     let attempts = pending.attempts + 1;
                     self.store.postpone_operation(
@@ -701,7 +712,15 @@ impl Worker {
                 }
             }
         }
-        Ok(())
+        if !drafts_saved {
+            return Ok(Vec::new());
+        }
+        Ok(self
+            .store
+            .mailbox_by_role(&self.account.id, MailboxRole::Drafts)?
+            .map(|drafts| drafts.id)
+            .into_iter()
+            .collect())
     }
 
     async fn locate_on_server(&mut self, sources: &[Source]) -> Result<Vec<Source>> {
@@ -850,6 +869,22 @@ impl Worker {
                 })
                 .await?;
                 changed_mailboxes.insert(sent.id);
+                Ok(())
+            }
+            Operation::AppendDraft { raw } => {
+                let Some(drafts) = self
+                    .store
+                    .mailbox_by_role(&self.account.id, MailboxRole::Drafts)?
+                else {
+                    return Ok(());
+                };
+                self.with_imap(None, async |connection| {
+                    connection
+                        .append_draft(&drafts.remote_name, raw.as_bytes())
+                        .await
+                })
+                .await?;
+                changed_mailboxes.insert(drafts.id);
                 Ok(())
             }
         }

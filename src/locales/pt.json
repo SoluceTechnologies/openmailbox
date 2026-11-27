@@ -146,8 +146,6 @@
     "bodyPlaceholder": "Mensagem",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Bcc, De: {{from}}",
-    "discard": "Descartar",
-    "discardTitle": "Descartar este rascunho?",
     "forward": "Reencaminhar",
     "forwardedAttachmentsFailed": "Não foi possível transferir os anexos originais, por isso não serão reencaminhados.",
     "forwardedHeader": "---------- Mensagem reencaminhada ----------",
@@ -173,7 +171,14 @@
     "to": "Para:",
     "wrote": "Em {{date}}, {{author}} escreveu:",
     "formatting": "Formatação",
-    "hideFormatting": "Ocultar formatação"
+    "hideFormatting": "Ocultar formatação",
+    "draftTitle": "Guardar esta mensagem como rascunho?",
+    "saveDraft": "Guardar rascunho",
+    "deleteDraft": "Apagar rascunho",
+    "draftSaved": "Rascunho guardado",
+    "draftFailed": "Não foi possível guardar o rascunho",
+    "draftAttachmentsFailed": "Não foi possível transferir os anexos do rascunho.",
+    "attachmentsLoading": "Os anexos ainda estão a ser transferidos."
   },
   "dates": {
     "yesterday": "Ontem"
@@ -403,7 +408,8 @@
     "unknownSender": "Remetente desconhecido",
     "unread": "Por ler",
     "unreadCount_one": "{{count}} por ler",
-    "unreadCount_other": "{{count}} por ler"
+    "unreadCount_other": "{{count}} por ler",
+    "noRecipients": "Sem destinatários"
   },
   "undo": {
     "archived": "Arquivado",

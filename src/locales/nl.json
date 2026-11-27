@@ -146,8 +146,6 @@
     "bodyPlaceholder": "Bericht",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Bcc, Van: {{from}}",
-    "discard": "Gooi weg",
-    "discardTitle": "Dit concept weggooien?",
     "forward": "Stuur door",
     "forwardedAttachmentsFailed": "De oorspronkelijke bijlagen konden niet worden gedownload en worden dus niet doorgestuurd.",
     "forwardedHeader": "---------- Doorgestuurd bericht ----------",
@@ -173,7 +171,14 @@
     "to": "Aan:",
     "wrote": "Op {{date}} schreef {{author}}:",
     "formatting": "Opmaak",
-    "hideFormatting": "Opmaak verbergen"
+    "hideFormatting": "Opmaak verbergen",
+    "draftTitle": "Dit bericht als concept bewaren?",
+    "saveDraft": "Concept bewaren",
+    "deleteDraft": "Concept verwijderen",
+    "draftSaved": "Concept bewaard",
+    "draftFailed": "Het concept kon niet worden bewaard",
+    "draftAttachmentsFailed": "De bijlagen van het concept konden niet worden gedownload.",
+    "attachmentsLoading": "De bijlagen worden nog gedownload."
   },
   "dates": {
     "yesterday": "Gisteren"
@@ -403,7 +408,8 @@
     "unknownSender": "Onbekende afzender",
     "unread": "Ongelezen",
     "unreadCount_one": "{{count}} ongelezen",
-    "unreadCount_other": "{{count}} ongelezen"
+    "unreadCount_other": "{{count}} ongelezen",
+    "noRecipients": "Geen ontvangers"
   },
   "undo": {
     "archived": "Gearchiveerd",

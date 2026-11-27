@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::sync::LazyLock;
 
 use base64::Engine;
+use lettre::address::Envelope;
 use lettre::message::header::ContentType;
 use lettre::message::{
     Attachment as LettreAttachment, Mailbox as LettreMailbox, MessageBuilder, MultiPart, SinglePart,
@@ -246,6 +247,7 @@ pub fn render(raw: &[u8]) -> Result<RenderedBody> {
     Ok(RenderedBody {
         html,
         text,
+        bcc: addresses(message.bcc()),
         has_remote_content,
         attachments,
         unsubscribe: unsubscribe(&message),
@@ -438,6 +440,7 @@ fn tnef_message(tnef: tnef::Tnef) -> Result<SavedMessage> {
         body: RenderedBody {
             html: None,
             text: String::new(),
+            bcc: Vec::new(),
             has_remote_content: false,
             attachments,
             unsubscribe: None,
@@ -459,6 +462,7 @@ pub struct OutgoingMessage<'a> {
     pub references: &'a [String],
     pub attachments: Vec<AttachmentContent>,
     pub calendar: Option<&'a str>,
+    pub draft: bool,
 }
 
 pub struct AttachmentContent {
@@ -506,10 +510,17 @@ fn alternative_body(
 }
 
 pub fn build_message(outgoing: OutgoingMessage) -> Result<BuiltMessage> {
+    let from = mailbox(outgoing.from)?;
     let mut builder = MessageBuilder::new()
-        .from(mailbox(outgoing.from)?)
+        .from(from.clone())
         .subject(outgoing.subject)
         .message_id(Some(format!("<{}>", outgoing.message_id)));
+    if outgoing.draft {
+        builder = builder.keep_bcc().envelope(
+            Envelope::new(Some(from.email.clone()), vec![from.email])
+                .map_err(|error| Error::InvalidInput(error.to_string()))?,
+        );
+    }
     for address in outgoing.to {
         builder = builder.to(mailbox(address)?);
     }

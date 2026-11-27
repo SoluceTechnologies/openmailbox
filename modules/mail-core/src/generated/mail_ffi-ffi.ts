@@ -99,6 +99,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_fn_method_mailcore_rename_account(uniffiSelf: bigint, accountId: Uint8Array, displayName: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_save_attachment(uniffiSelf: bigint, emailId: Uint8Array, index: number, directory: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_save_attachment_from_file(uniffiSelf: bigint, path: Uint8Array, index: number, directory: Uint8Array): bigint;
+    ubrn_uniffi_mail_ffi_fn_method_mailcore_save_draft(uniffiSelf: bigint, draft: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_search(uniffiSelf: bigint, query: Uint8Array, limit: number, mailboxIds: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_send(uniffiSelf: bigint, draft: Uint8Array): bigint;
     ubrn_uniffi_mail_ffi_fn_method_mailcore_set_account_color(uniffiSelf: bigint, accountId: Uint8Array, color: number): bigint;
@@ -141,6 +142,7 @@ interface NativeModuleInterface {
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_rename_account(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_attachment(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_attachment_from_file(): number;
+    ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_draft(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_search(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_send(): number;
     ubrn_uniffi_mail_ffi_checksum_method_mailcore_set_account_color(): number;

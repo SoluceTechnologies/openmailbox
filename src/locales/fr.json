@@ -146,8 +146,6 @@
     "bodyPlaceholder": "Message",
     "cc": "Cc :",
     "copiesAndFrom": "Cc/Cci, De : {{from}}",
-    "discard": "Supprimer",
-    "discardTitle": "Supprimer ce brouillon ?",
     "forward": "Transférer",
     "forwardedAttachmentsFailed": "Les pièces jointes d’origine n’ont pas pu être téléchargées : elles ne seront pas transférées.",
     "forwardedHeader": "---------- Message transféré ----------",
@@ -173,7 +171,14 @@
     "to": "À :",
     "wrote": "Le {{date}}, {{author}} a écrit :",
     "formatting": "Mise en forme",
-    "hideFormatting": "Masquer la mise en forme"
+    "hideFormatting": "Masquer la mise en forme",
+    "draftTitle": "Garder ce message en brouillon ?",
+    "saveDraft": "Enregistrer le brouillon",
+    "deleteDraft": "Supprimer le brouillon",
+    "draftSaved": "Brouillon enregistré",
+    "draftFailed": "Le brouillon n'a pas pu être enregistré",
+    "draftAttachmentsFailed": "Les pièces jointes du brouillon n'ont pas pu être téléchargées.",
+    "attachmentsLoading": "Les pièces jointes sont encore en cours de téléchargement."
   },
   "dates": {
     "yesterday": "Hier"
@@ -403,7 +408,8 @@
     "unknownSender": "Expéditeur inconnu",
     "unread": "Non lu",
     "unreadCount_one": "{{count}} non lu",
-    "unreadCount_other": "{{count}} non lus"
+    "unreadCount_other": "{{count}} non lus",
+    "noRecipients": "Aucun destinataire"
   },
   "undo": {
     "archived": "Archivé",

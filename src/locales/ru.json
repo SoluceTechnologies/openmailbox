@@ -148,8 +148,6 @@
     "bodyPlaceholder": "Сообщение",
     "cc": "Копия:",
     "copiesAndFrom": "Копия/Скрытая копия, От: {{from}}",
-    "discard": "Удалить",
-    "discardTitle": "Удалить этот черновик?",
     "forward": "Переслать",
     "forwardedAttachmentsFailed": "Не удалось загрузить исходные вложения, поэтому они не будут пересланы.",
     "forwardedHeader": "---------- Пересланное сообщение ----------",
@@ -175,7 +173,14 @@
     "to": "Кому:",
     "wrote": "{{date}}, {{author}} пишет:",
     "formatting": "Форматирование",
-    "hideFormatting": "Скрыть форматирование"
+    "hideFormatting": "Скрыть форматирование",
+    "draftTitle": "Сохранить сообщение как черновик?",
+    "saveDraft": "Сохранить черновик",
+    "deleteDraft": "Удалить черновик",
+    "draftSaved": "Черновик сохранён",
+    "draftFailed": "Не удалось сохранить черновик",
+    "draftAttachmentsFailed": "Не удалось загрузить вложения черновика.",
+    "attachmentsLoading": "Вложения ещё загружаются."
   },
   "dates": {
     "yesterday": "Вчера"
@@ -419,7 +424,8 @@
     "unreadCount_few": "{{count}} непрочитанных",
     "unreadCount_many": "{{count}} непрочитанных",
     "unreadCount_one": "{{count}} непрочитанное",
-    "unreadCount_other": "{{count}} непрочитанных"
+    "unreadCount_other": "{{count}} непрочитанных",
+    "noRecipients": "Нет получателей"
   },
   "undo": {
     "archived": "В архиве",

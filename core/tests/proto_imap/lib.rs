@@ -359,7 +359,9 @@ async fn append_waits_past_untagged_responses_for_the_continuation() {
         .map_err(|(error, _)| error)
         .unwrap();
 
-    append_seen(&mut session, "Sent", b"hello").await.unwrap();
+    append_flagged(&mut session, "Sent", "\\Seen", b"hello")
+        .await
+        .unwrap();
 
     assert_eq!(&server.await.unwrap(), b"hello\r\n");
 }

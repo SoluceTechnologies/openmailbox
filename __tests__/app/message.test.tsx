@@ -36,7 +36,7 @@ describe('attached email screen', () => {
       to: [{ name: undefined, email: 'bob@example.com' }],
       cc: [{ name: 'Nadia', email: 'nadia@atlas.example' }],
       date: BigInt(DATE),
-      body: { text: 'Here is the quote.', hasRemoteContent: false, attachments: [PDF] },
+      body: { text: 'Here is the quote.', bcc: [], hasRemoteContent: false, attachments: [PDF] },
     });
   });
 
@@ -65,7 +65,7 @@ describe('attached email screen', () => {
   });
 
   it('names an Outlook winmail.dat without a subject by its file', async () => {
-    core.readMessageFile.mockResolvedValueOnce({ subject: '', from: [], to: [], cc: [], body: { text: '', hasRemoteContent: false, attachments: [PDF] } });
+    core.readMessageFile.mockResolvedValueOnce({ subject: '', from: [], to: [], cc: [], body: { text: '', bcc: [], hasRemoteContent: false, attachments: [PDF] } });
     mockParams = { path: '/cache/attachments/email-1-9/winmail.dat', name: 'winmail.dat', mimeType: 'application/ms-tnef' };
     renderWithProviders(<MessageScreen />);
     expect(await screen.findByText('winmail.dat')).toBeOnTheScreen();

@@ -146,8 +146,6 @@
     "bodyPlaceholder": "Message",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Bcc, From: {{from}}",
-    "discard": "Discard",
-    "discardTitle": "Discard this draft?",
     "forward": "Forward",
     "forwardedAttachmentsFailed": "The original attachments couldn't be downloaded, so they won't be forwarded.",
     "forwardedHeader": "---------- Forwarded message ----------",
@@ -173,7 +171,14 @@
     "to": "To:",
     "wrote": "On {{date}}, {{author}} wrote:",
     "formatting": "Formatting",
-    "hideFormatting": "Hide Formatting"
+    "hideFormatting": "Hide Formatting",
+    "draftTitle": "Keep this message as a draft?",
+    "saveDraft": "Save Draft",
+    "deleteDraft": "Delete Draft",
+    "draftSaved": "Draft saved",
+    "draftFailed": "The draft couldn't be saved",
+    "draftAttachmentsFailed": "The draft's attachments couldn't be downloaded.",
+    "attachmentsLoading": "Attachments are still downloading."
   },
   "dates": {
     "yesterday": "Yesterday"
@@ -403,7 +408,8 @@
     "unknownSender": "Unknown sender",
     "unread": "Unread",
     "unreadCount_one": "{{count}} unread",
-    "unreadCount_other": "{{count}} unread"
+    "unreadCount_other": "{{count}} unread",
+    "noRecipients": "No Recipients"
   },
   "undo": {
     "archived": "Archived",
