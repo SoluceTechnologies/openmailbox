@@ -357,3 +357,52 @@ fn a_server_preview_is_trimmed_like_a_computed_one() {
         Some(PREVIEW_LENGTH)
     );
 }
+
+const INVITATION: &str = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nMETHOD:REQUEST\r\nBEGIN:VEVENT\r\nUID:kickoff@atlas\r\nSUMMARY:Atlas kickoff\r\nDTSTART:20261203T090000Z\r\nDTEND:20261203T100000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+#[test]
+fn render_keeps_the_invitation_of_an_outlook_mail() {
+    let raw = format!(
+        "From: c@atlas.example\r\nTo: b@example.com\r\nSubject: Kickoff\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=\"a\"\r\n\r\n--a\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nWhen: Thursday\r\n--a\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<p>When: Thursday</p>\r\n--a\r\nContent-Type: text/calendar; charset=UTF-8; method=REQUEST\r\n\r\n{INVITATION}\r\n--a--\r\n"
+    );
+    let body = render(raw.as_bytes()).unwrap();
+    assert!(
+        body.calendar
+            .as_deref()
+            .unwrap()
+            .starts_with("BEGIN:VCALENDAR")
+    );
+    assert!(
+        body.calendar
+            .as_deref()
+            .unwrap()
+            .contains("SUMMARY:Atlas kickoff")
+    );
+    assert_eq!(
+        body.attachments
+            .iter()
+            .map(|attachment| attachment.mime_type.as_str())
+            .collect::<Vec<_>>(),
+        ["text/calendar"]
+    );
+}
+
+#[test]
+fn render_reads_an_ics_attachment() {
+    let raw = format!(
+        "From: c@atlas.example\r\nTo: b@example.com\r\nSubject: Kickoff\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"m\"\r\n\r\n--m\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nSee attached\r\n--m\r\nContent-Type: application/ics; name=\"invite.ics\"\r\nContent-Disposition: attachment; filename=\"invite.ics\"\r\n\r\n{INVITATION}\r\n--m--\r\n"
+    );
+    assert!(
+        render(raw.as_bytes())
+            .unwrap()
+            .calendar
+            .unwrap()
+            .contains("UID:kickoff@atlas")
+    );
+}
+
+#[test]
+fn render_without_invitation_has_no_calendar() {
+    let raw = b"From: a@example.com\r\nSubject: Hi\r\nContent-Type: text/plain\r\n\r\nHello\r\n";
+    assert_eq!(render(raw).unwrap().calendar, None);
+}

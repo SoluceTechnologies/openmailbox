@@ -333,6 +333,7 @@ pub struct RenderedBody {
     pub has_remote_content: bool,
     pub attachments: Vec<Attachment>,
     pub unsubscribe: Option<Unsubscribe>,
+    pub calendar: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

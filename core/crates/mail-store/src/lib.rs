@@ -32,6 +32,7 @@ const MIGRATIONS: &[&str] = &[
     include_str!("migrations/0013_original_sender.sql"),
     include_str!("migrations/0014_alias_senders.sql"),
     include_str!("migrations/0015_smtp_username.sql"),
+    include_str!("migrations/0016_body_calendar.sql"),
 ];
 
 pub struct Store {
@@ -178,6 +179,10 @@ mod migration_tests;
 #[cfg(test)]
 #[path = "../../../tests/mail_store/cached_html_tests.rs"]
 mod cached_html_tests;
+
+#[cfg(test)]
+#[path = "../../../tests/mail_store/cached_invitation_tests.rs"]
+mod cached_invitation_tests;
 
 #[cfg(test)]
 #[path = "../../../tests/mail_store/search_text_tests.rs"]

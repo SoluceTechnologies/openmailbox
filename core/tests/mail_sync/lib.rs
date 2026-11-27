@@ -400,6 +400,7 @@ fn newsletter(fixture: &Fixture, unsubscribe: Unsubscribe) -> i64 {
                 has_remote_content: false,
                 attachments: vec![],
                 unsubscribe: Some(unsubscribe),
+                calendar: None,
             },
         )
         .unwrap();

@@ -254,6 +254,26 @@ pub fn render(raw: &[u8]) -> Result<RenderedBody> {
         has_remote_content,
         attachments,
         unsubscribe: unsubscribe(&message),
+        calendar: calendar(&message),
+    })
+}
+
+fn calendar(message: &Message) -> Option<String> {
+    let inline = message
+        .parts()
+        .find(|part| part.is_content_type("text", "calendar"));
+    let attached = || {
+        message.attachments().find(|part| {
+            part.is_content_type("application", "ics")
+                || part
+                    .attachment_name()
+                    .is_some_and(|name| name.to_ascii_lowercase().ends_with(".ics"))
+        })
+    };
+    let part = inline.or_else(attached)?;
+    Some(match part.text() {
+        Some(text) => text.into_owned(),
+        None => String::from_utf8_lossy(&part.decoded()).into_owned(),
     })
 }
 

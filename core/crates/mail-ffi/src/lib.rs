@@ -240,6 +240,7 @@ pub struct RenderedBody {
     pub has_remote_content: bool,
     pub attachments: Vec<Attachment>,
     pub unsubscribe: Option<Unsubscribe>,
+    pub calendar: Option<String>,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -594,6 +595,7 @@ impl From<mail_model::RenderedBody> for RenderedBody {
                 mailto: unsubscribe.mailto,
                 one_click: unsubscribe.one_click,
             }),
+            calendar: body.calendar,
         }
     }
 }

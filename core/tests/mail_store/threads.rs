@@ -323,6 +323,7 @@ fn search_finds_words_inside_text_written_without_spaces() {
                 has_remote_content: false,
                 attachments: Vec::new(),
                 unsubscribe: None,
+                calendar: None,
             },
         )
         .unwrap();

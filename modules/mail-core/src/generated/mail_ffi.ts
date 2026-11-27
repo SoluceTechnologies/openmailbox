@@ -872,7 +872,8 @@ export type RenderedBody = {
     text: string,
     hasRemoteContent: boolean,
     attachments: Array<Attachment>,
-    unsubscribe?: Unsubscribe
+    unsubscribe?: Unsubscribe,
+    calendar?: string
 }
 
 /**
@@ -900,7 +901,8 @@ const FfiConverterTypeRenderedBody = (() => {
                 text: FfiConverterString.readFromCursor(c), 
                 hasRemoteContent: FfiConverterBool.readFromCursor(c), 
                 attachments: FfiConverterSequenceTypeAttachment.readFromCursor(c), 
-                unsubscribe: FfiConverterOptionalTypeUnsubscribe.readFromCursor(c)
+                unsubscribe: FfiConverterOptionalTypeUnsubscribe.readFromCursor(c), 
+                calendar: FfiConverterOptionalString.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
@@ -909,13 +911,15 @@ const FfiConverterTypeRenderedBody = (() => {
             FfiConverterBool.writeIntoCursor(value.hasRemoteContent, c);
             FfiConverterSequenceTypeAttachment.writeIntoCursor(value.attachments, c);
             FfiConverterOptionalTypeUnsubscribe.writeIntoCursor(value.unsubscribe, c);
+            FfiConverterOptionalString.writeIntoCursor(value.calendar, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterOptionalString.allocationSize(value.html) +
              FfiConverterString.allocationSize(value.text) +
              FfiConverterBool.allocationSize(value.hasRemoteContent) +
              FfiConverterSequenceTypeAttachment.allocationSize(value.attachments) +
-             FfiConverterOptionalTypeUnsubscribe.allocationSize(value.unsubscribe);
+             FfiConverterOptionalTypeUnsubscribe.allocationSize(value.unsubscribe) +
+             FfiConverterOptionalString.allocationSize(value.calendar);
             
         }
     };
