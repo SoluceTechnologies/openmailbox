@@ -101,7 +101,7 @@ export function parseInvite(ics: string, myAddresses: string[]): Invite | null {
       ? {
           address: addressOf(myProperty)!,
           partstat: partstatOf(myProperty),
-          rsvp: String(myProperty.getParameter('rsvp') ?? '').toUpperCase() === 'TRUE',
+          rsvp: String(myProperty.getParameter('rsvp') ?? '').toUpperCase() !== 'FALSE',
         }
       : undefined,
     repeat:

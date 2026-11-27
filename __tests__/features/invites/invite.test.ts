@@ -86,9 +86,14 @@ describe('canAnswer', () => {
 
   it('does not ask for an answer that is not wanted', () => {
     expect(canAnswer(parseInvite(fixture('allday'), BOB)!, BEFORE)).toBe(false);
-    const noReply = fixture('google').replace('RSVP=TRUE;', '');
+    const noReply = fixture('google').replace('RSVP=TRUE;', 'RSVP=FALSE;');
     expect(canAnswer(parseInvite(noReply, BOB)!, BEFORE)).toBe(false);
     expect(canAnswer(parseInvite(fixture('google'), ['someone@else.org'])!, BEFORE)).toBe(false);
+  });
+
+  it('lets me answer when the invitation does not say whether it wants an answer', () => {
+    const unsaid = fixture('google').replace('RSVP=TRUE;', '');
+    expect(canAnswer(parseInvite(unsaid, BOB)!, BEFORE)).toBe(true);
   });
 
   it('stops once the event is over', () => {
