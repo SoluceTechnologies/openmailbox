@@ -17,7 +17,7 @@ export default function AttachmentScreen() {
   const directory = uri.slice(0, uri.lastIndexOf('/') + 1);
   const share = () => Sharing.shareAsync(uri, { mimeType, dialogTitle: name }).catch(() => undefined);
 
-  const viewer = mimeType.startsWith('image/') ? (
+  const viewer = mimeType.startsWith('image/') && mimeType !== 'image/svg+xml' ? (
     <ScrollView maximumZoomScale={4} centerContent style={styles.flex} contentContainerStyle={styles.flex}>
       <Image source={{ uri }} resizeMode="contain" accessibilityLabel={name} style={styles.flex} />
     </ScrollView>
@@ -28,6 +28,7 @@ export default function AttachmentScreen() {
       allowingReadAccessToURL={directory}
       allowFileAccess
       javaScriptEnabled={false}
+      allowsInlineMediaPlayback
       contentInsetAdjustmentBehavior="automatic"
       style={styles.flex}
     />

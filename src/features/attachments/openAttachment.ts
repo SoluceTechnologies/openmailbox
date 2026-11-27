@@ -10,7 +10,10 @@ import { attachmentsDirectory, mailCore } from '@/core/mailCore';
 export const VIEWABLE_ON_IOS = [
   'application/pdf',
   'image/',
-  'text/plain',
+  'video/',
+  'audio/',
+  'text/',
+  'application/json',
   'application/vnd.openxmlformats-officedocument.',
   'application/msword',
   'application/vnd.ms-excel',
@@ -72,7 +75,7 @@ async function openSaved(saved: string, original: Attachment): Promise<void> {
   }
 
   const hasExtension = /\.[a-z0-9]+$/i.test(attachment.filename);
-  if (hasExtension && VIEWABLE_ON_IOS.some((type) => attachment.mimeType.startsWith(type))) {
+  if (hasExtension && attachment.mimeType !== 'text/calendar' && VIEWABLE_ON_IOS.some((type) => attachment.mimeType.startsWith(type))) {
     router.push({ pathname: '/attachment', params: { uri, name: attachment.filename, mimeType: attachment.mimeType } });
     return;
   }

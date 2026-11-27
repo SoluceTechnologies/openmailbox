@@ -30,6 +30,20 @@ describe('attachment viewer', () => {
     expect(screen.getByLabelText('IMG_0005.jpeg').props.source).toEqual({ uri: mockParams.uri });
   });
 
+  it('draws a vector image in the web view, which the image view cannot', () => {
+    mockParams = { uri: 'file:///cache/attachments/email-1-2/logo.svg', name: 'logo.svg', mimeType: 'image/svg+xml' };
+    renderWithProviders(<AttachmentScreen />);
+    const webView = screen.getByTestId('web-view');
+    expect(webView.props.source).toEqual({ uri: mockParams.uri });
+    expect(webView.props.javaScriptEnabled).toBe(false);
+  });
+
+  it('plays a video in place', () => {
+    mockParams = { uri: 'file:///cache/attachments/email-1-3/clip.mp4', name: 'clip.mp4', mimeType: 'video/mp4' };
+    renderWithProviders(<AttachmentScreen />);
+    expect(screen.getByTestId('web-view').props.allowsInlineMediaPlayback).toBe(true);
+  });
+
   it('shows the file without running scripts', () => {
     renderWithProviders(<AttachmentScreen />);
     const webView = screen.getByTestId('web-view');
