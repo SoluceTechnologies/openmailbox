@@ -7,9 +7,10 @@ use lettre::message::{
     Attachment as LettreAttachment, Mailbox as LettreMailbox, MessageBuilder, MultiPart, SinglePart,
 };
 use mail_model::{
-    Address, Attachment, Error, ParsedHeaders, RenderedBody, Result, SendingSignals, Unsubscribe,
+    Address, Attachment, Error, ParsedHeaders, RenderedBody, Result, SavedMessage, SendingSignals,
+    Unsubscribe,
 };
-use mail_parser::{AddressList, HeaderForm, Message};
+use mail_parser::{AddressList, HeaderForm, Message, MessagePart};
 
 mod charsets;
 mod code_pages;
@@ -231,21 +232,14 @@ pub fn render(raw: &[u8]) -> Result<RenderedBody> {
                 .content_id()
                 .is_some_and(|content_id| inline_content_ids.contains(content_id))
         })
-        .map(|(index, part)| Attachment {
-            index: index as u32,
-            filename: part
-                .attachment_name()
-                .map(str::to_owned)
-                .unwrap_or_else(|| format!("attachment-{}", index + 1)),
-            mime_type: part
-                .content_type()
-                .map(|content_type| match content_type.subtype() {
-                    Some(subtype) => format!("{}/{}", content_type.ctype(), subtype),
-                    None => content_type.ctype().to_owned(),
-                })
-                .unwrap_or_else(|| "application/octet-stream".into())
-                .to_ascii_lowercase(),
-            size: part.decoded_len() as u64,
+        .map(|(index, part)| {
+            let filename = attachment_filename(&part, index);
+            Attachment {
+                index: index as u32,
+                mime_type: attachment_mime_type(&part, &filename),
+                filename,
+                size: part.decoded_len() as u64,
+            }
         })
         .collect();
     Ok(RenderedBody {
@@ -357,14 +351,57 @@ fn references_remote_content(html: &str) -> bool {
     .any(|pattern| lowercase.contains(pattern))
 }
 
+fn attachment_filename(part: &MessagePart, index: usize) -> String {
+    if let Some(name) = part.attachment_name() {
+        return name.to_owned();
+    }
+    match part.nested() {
+        Some(nested) => {
+            let subject = nested
+                .subject()
+                .map(str::trim)
+                .filter(|subject| !subject.is_empty())
+                .unwrap_or("message");
+            format!("{}.eml", subject.replace(['/', '\\'], "-"))
+        }
+        None => format!("attachment-{}", index + 1),
+    }
+}
+
+fn attachment_mime_type(part: &MessagePart, filename: &str) -> String {
+    let declared = part
+        .content_type()
+        .map(|content_type| match content_type.subtype() {
+            Some(subtype) => format!("{}/{}", content_type.ctype(), subtype),
+            None => content_type.ctype().to_owned(),
+        })
+        .unwrap_or_else(|| "application/octet-stream".into())
+        .to_ascii_lowercase();
+    if declared == "application/octet-stream" && filename.to_ascii_lowercase().ends_with(".eml") {
+        return "message/rfc822".into();
+    }
+    declared
+}
+
 pub fn attachment(raw: &[u8], index: u32) -> Option<(String, Vec<u8>)> {
     let message = charsets::parse(raw)?;
     let part = message.attachments().nth(index as usize)?;
-    let filename = part
-        .attachment_name()
-        .map(str::to_owned)
-        .unwrap_or_else(|| format!("attachment-{}", index + 1));
-    Some((filename, part.decoded().into_owned()))
+    Some((
+        attachment_filename(&part, index as usize),
+        part.decoded().into_owned(),
+    ))
+}
+
+pub fn read_message(raw: &[u8]) -> Result<SavedMessage> {
+    let headers = parse_summary(raw, b"");
+    Ok(SavedMessage {
+        subject: headers.subject.unwrap_or_default(),
+        from: headers.from,
+        to: headers.to,
+        cc: headers.cc,
+        date: headers.date,
+        body: render(raw)?,
+    })
 }
 
 pub struct OutgoingMessage<'a> {

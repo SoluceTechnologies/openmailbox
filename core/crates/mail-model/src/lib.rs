@@ -336,6 +336,16 @@ pub struct RenderedBody {
     pub calendar: Option<String>,
 }
 
+#[derive(Debug, Clone)]
+pub struct SavedMessage {
+    pub subject: String,
+    pub from: Vec<Address>,
+    pub to: Vec<Address>,
+    pub cc: Vec<Address>,
+    pub date: Option<i64>,
+    pub body: RenderedBody,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Unsubscribe {
     pub https_url: Option<String>,

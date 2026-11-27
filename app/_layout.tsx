@@ -48,6 +48,7 @@ function Navigator() {
         options={{ ...modalHeader(t('accounts.signature')), headerTransparent: false, headerStyle: { backgroundColor: colors.background } }}
       />
       <Stack.Screen name="attachment" options={({ route }) => modalHeader((route.params as { name?: string } | undefined)?.name ?? '')} />
+      <Stack.Screen name="message" options={modalHeader('')} />
       <Stack.Screen
         name="filters"
         options={{

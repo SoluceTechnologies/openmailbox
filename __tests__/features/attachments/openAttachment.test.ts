@@ -4,7 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { router } from 'expo-router';
 import type { Attachment } from '@openmailbox/mail-core';
 
-import { openAttachment } from '@/features/attachments/openAttachment';
+import { openAttachment, openAttachmentOfFile } from '@/features/attachments/openAttachment';
 
 import { core } from '../../helpers/fixtures';
 
@@ -45,6 +45,36 @@ describe('openAttachment', () => {
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/attachment',
       params: { uri: 'file:///cache/attachments/email-1-0/file', name: 'Facture n°12.pdf', mimeType: 'application/pdf' },
+    });
+  });
+
+  describe('attached emails', () => {
+    const EML: Attachment = { index: 4, filename: 'Original quote.eml', mimeType: 'message/rfc822', size: 900 };
+
+    it.each(['ios', 'android'] as const)('opens an attached email in the message screen on %s', async (os) => {
+      onPlatform(os);
+      core.saveAttachment.mockResolvedValueOnce('/cache/attachments/email-1-4/Original quote.eml');
+      await openAttachment('email-1', EML);
+      expect(router.push).toHaveBeenCalledWith({
+        pathname: '/message',
+        params: { path: '/cache/attachments/email-1-4/Original quote.eml', name: 'Original quote.eml' },
+      });
+      expect(IntentLauncher.startActivityAsync).not.toHaveBeenCalled();
+    });
+
+    it('recognises an .eml file sent without its type', async () => {
+      onPlatform('ios');
+      await openAttachment('email-1', { ...EML, mimeType: 'application/octet-stream' });
+      expect(router.push).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/message' }));
+      expect(Sharing.shareAsync).not.toHaveBeenCalled();
+    });
+
+    it('opens an attachment of a saved email from its file', async () => {
+      onPlatform('ios');
+      core.saveAttachmentFromFile.mockResolvedValueOnce('/cache/attachments/Original quote-0/quote.pdf');
+      await openAttachmentOfFile('/cache/attachments/email-1-4/Original quote.eml', PDF);
+      expect(core.saveAttachmentFromFile).toHaveBeenCalledWith('/cache/attachments/email-1-4/Original quote.eml', 0, '/cache/attachments');
+      expect(router.push).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/attachment' }));
     });
   });
 

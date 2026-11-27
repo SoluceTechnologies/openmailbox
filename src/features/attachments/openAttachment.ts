@@ -19,6 +19,7 @@ export const VIEWABLE_ON_IOS = [
 
 const UNKNOWN_TYPE = 'application/octet-stream';
 const JPEG_XL = /\.jxl$/i;
+const EMAIL = /\.eml$/i;
 const FLAG_GRANT_READ_URI_PERMISSION = 1;
 
 function share(uri: string, attachment: Attachment): Promise<void> {
@@ -31,10 +32,29 @@ async function readableCopy(path: string, attachment: Attachment): Promise<{ pat
   return png ? { path: png, attachment: { ...attachment, mimeType: 'image/png' } } : { path, attachment };
 }
 
+export function isAttachedEmail(attachment: Attachment): boolean {
+  return attachment.mimeType === 'message/rfc822' || EMAIL.test(attachment.filename);
+}
+
+export function fileUri(path: string): string {
+  return `file://${path.split('/').map(encodeURIComponent).join('/')}`;
+}
+
 export async function openAttachment(emailId: string, original: Attachment): Promise<void> {
-  const saved = await mailCore().saveAttachment(emailId, original.index, attachmentsDirectory());
+  return openSaved(await mailCore().saveAttachment(emailId, original.index, attachmentsDirectory()), original);
+}
+
+export async function openAttachmentOfFile(file: string, original: Attachment): Promise<void> {
+  return openSaved(await mailCore().saveAttachmentFromFile(file, original.index, attachmentsDirectory()), original);
+}
+
+async function openSaved(saved: string, original: Attachment): Promise<void> {
+  if (isAttachedEmail(original)) {
+    router.push({ pathname: '/message', params: { path: saved, name: original.filename } });
+    return;
+  }
   const { path, attachment } = await readableCopy(saved, original);
-  const uri = `file://${path.split('/').map(encodeURIComponent).join('/')}`;
+  const uri = fileUri(path);
   if (attachment.mimeType === UNKNOWN_TYPE) return share(uri, attachment);
 
   if (Platform.OS === 'android') {

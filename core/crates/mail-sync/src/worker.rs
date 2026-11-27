@@ -633,16 +633,7 @@ impl Worker {
     ) -> Result<String> {
         let raw = self.fetch_raw(email_id).await?;
         let (filename, bytes) = mail_mime::attachment(&raw, index).ok_or(Error::NotFound)?;
-        let safe_name: String = filename
-            .chars()
-            .map(|character| {
-                if matches!(character, '/' | '\\' | '\0') {
-                    '_'
-                } else {
-                    character
-                }
-            })
-            .collect();
+        let safe_name = crate::safe_file_name(&filename);
         let target = directory
             .join(format!("{email_id}-{index}"))
             .join(safe_name);

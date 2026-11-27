@@ -470,3 +470,66 @@ fn keeps_the_calendar_reply_next_to_attachments() {
             .any(|attachment| attachment.filename == "agenda.pdf")
     );
 }
+
+const QUOTE: &str = "From: Claire <claire@atlas.example>\r\nTo: bob@example.com\r\nCc: Nadia <nadia@atlas.example>\r\nSubject: Original quote\r\nDate: Tue, 24 Nov 2026 10:00:00 +0100\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"i\"\r\n\r\n--i\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<p>Here is the <b>quote</b>.</p>\r\n--i\r\nContent-Type: application/pdf; name=\"quote.pdf\"\r\nContent-Disposition: attachment; filename=\"quote.pdf\"\r\n\r\n%PDF-1.7\r\n--i--\r\n";
+
+fn forwarding(part_headers: &str, inner: &str) -> String {
+    format!(
+        "From: Bob <bob@example.com>\r\nTo: alice@example.com\r\nSubject: Fwd: quote\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"o\"\r\n\r\n--o\r\nContent-Type: text/plain\r\n\r\nSee attached.\r\n--o\r\n{part_headers}\r\n\r\n{inner}\r\n--o--\r\n"
+    )
+}
+
+#[test]
+fn names_an_attached_message_after_its_subject() {
+    let raw = forwarding(
+        "Content-Type: message/rfc822\r\nContent-Disposition: attachment",
+        QUOTE,
+    );
+    let body = render(raw.as_bytes()).unwrap();
+    assert_eq!(body.attachments[0].filename, "Original quote.eml");
+    assert_eq!(body.attachments[0].mime_type, "message/rfc822");
+    assert_eq!(
+        crate::attachment(raw.as_bytes(), 0).unwrap().0,
+        "Original quote.eml"
+    );
+}
+
+#[test]
+fn names_a_message_without_subject_message_eml() {
+    let raw = forwarding(
+        "Content-Type: message/rfc822",
+        "From: a@example.com\r\nTo: b@example.com\r\n\r\nHi\r\n",
+    );
+    assert_eq!(
+        render(raw.as_bytes()).unwrap().attachments[0].filename,
+        "message.eml"
+    );
+}
+
+#[test]
+fn reports_an_eml_file_as_a_message() {
+    let raw = forwarding(
+        "Content-Type: application/octet-stream; name=\"old.EML\"\r\nContent-Disposition: attachment; filename=\"old.EML\"",
+        QUOTE,
+    );
+    let body = render(raw.as_bytes()).unwrap();
+    assert_eq!(
+        (
+            body.attachments[0].filename.as_str(),
+            body.attachments[0].mime_type.as_str()
+        ),
+        ("old.EML", "message/rfc822")
+    );
+}
+
+#[test]
+fn reads_a_saved_message() {
+    let message = crate::read_message(QUOTE.as_bytes()).unwrap();
+    assert_eq!(message.subject, "Original quote");
+    assert_eq!(message.from[0].email, "claire@atlas.example");
+    assert_eq!(message.to[0].email, "bob@example.com");
+    assert_eq!(message.cc[0].name.as_deref(), Some("Nadia"));
+    assert_eq!(message.date, Some(1_795_510_800_000));
+    assert!(message.body.html.unwrap().contains("<b>quote</b>"));
+    assert_eq!(message.body.attachments[0].filename, "quote.pdf");
+}

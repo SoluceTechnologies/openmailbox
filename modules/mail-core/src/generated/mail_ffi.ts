@@ -6,7 +6,7 @@
 import nativeModule from "./mail_ffi-ffi";
 import { type UniffiRustFutureContinuationCallback, type UniffiForeignFutureDroppedCallback, type UniffiForeignFutureDroppedCallbackStruct, type UniffiVTableCallbackInterfaceMailFfiEventListener,
 } from "./mail_ffi-ffi";
-import { type FfiConverter, type UniffiByteArray, type UniffiGcObject, type UniffiHandle, type UniffiObjectFactory, type UniffiReferenceHolder, type UniffiRustCallStatus, AbstractFfiConverterByteArray, Cursor, FfiConverterArray, FfiConverterBool, FfiConverterFloat64, FfiConverterObject, FfiConverterObjectWithCallbacks, FfiConverterOptional, FfiConverterUInt16, FfiConverterUInt32, FfiConverterUInt8, RustBuffer, UniffiAbstractObject, UniffiEnum, UniffiError, UniffiInternalError, UniffiResult, UniffiRustCaller, destructorGuardSymbol, pointerLiteralSymbol, uniffiCreateFfiConverterString, uniffiCreateRecord, uniffiRustCallAsync, uniffiTraitInterfaceCall, uniffiTypeNameSymbol, variantOrdinalSymbol,
+import { type FfiConverter, type UniffiByteArray, type UniffiGcObject, type UniffiHandle, type UniffiObjectFactory, type UniffiReferenceHolder, type UniffiRustCallStatus, AbstractFfiConverterByteArray, Cursor, FfiConverterArray, FfiConverterBool, FfiConverterFloat64, FfiConverterInt64, FfiConverterObject, FfiConverterObjectWithCallbacks, FfiConverterOptional, FfiConverterUInt16, FfiConverterUInt32, FfiConverterUInt8, RustBuffer, UniffiAbstractObject, UniffiEnum, UniffiError, UniffiInternalError, UniffiResult, UniffiRustCaller, destructorGuardSymbol, pointerLiteralSymbol, uniffiCreateFfiConverterString, uniffiCreateRecord, uniffiRustCallAsync, uniffiTraitInterfaceCall, uniffiTypeNameSymbol, variantOrdinalSymbol,
 } from "@ubjs/core";
 const uniffiCaller = new UniffiRustCaller(() => ({ code: 0 }));
 
@@ -924,6 +924,65 @@ const FfiConverterTypeRenderedBody = (() => {
              FfiConverterSequenceTypeAttachment.allocationSize(value.attachments) +
              FfiConverterOptionalTypeUnsubscribe.allocationSize(value.unsubscribe) +
              FfiConverterOptionalString.allocationSize(value.calendar);
+            
+        }
+    };
+    return new FFIConverter();
+})();
+
+export type SavedMessage = {
+    subject: string,
+    from: Array<Address>,
+    to: Array<Address>,
+    cc: Array<Address>,
+    date?: bigint,
+    body: RenderedBody
+}
+
+/**
+ * Generated factory for {@link SavedMessage} record objects.
+ */
+export const SavedMessage = (() => {
+    const defaults = () => ({
+    });
+    const create = (() => {
+        return uniffiCreateRecord<SavedMessage, ReturnType<typeof defaults>>(defaults);
+    })();
+    return Object.freeze({
+        create,
+        new: create,
+        defaults: () => Object.freeze(defaults()) as Partial<SavedMessage>,
+    });
+})();
+
+const FfiConverterTypeSavedMessage = (() => {
+    type TypeName = SavedMessage;
+    class FFIConverter extends AbstractFfiConverterByteArray<TypeName> {
+        readFromCursor(c: Cursor): TypeName {
+            return {
+                subject: FfiConverterString.readFromCursor(c), 
+                from: FfiConverterSequenceTypeAddress.readFromCursor(c), 
+                to: FfiConverterSequenceTypeAddress.readFromCursor(c), 
+                cc: FfiConverterSequenceTypeAddress.readFromCursor(c), 
+                date: FfiConverterOptionalInt64.readFromCursor(c), 
+                body: FfiConverterTypeRenderedBody.readFromCursor(c)
+            };
+        }
+        writeIntoCursor(value: TypeName, c: Cursor): void {
+            FfiConverterString.writeIntoCursor(value.subject, c);
+            FfiConverterSequenceTypeAddress.writeIntoCursor(value.from, c);
+            FfiConverterSequenceTypeAddress.writeIntoCursor(value.to, c);
+            FfiConverterSequenceTypeAddress.writeIntoCursor(value.cc, c);
+            FfiConverterOptionalInt64.writeIntoCursor(value.date, c);
+            FfiConverterTypeRenderedBody.writeIntoCursor(value.body, c);
+        }
+        allocationSize(value: TypeName): number {
+            return FfiConverterString.allocationSize(value.subject) +
+             FfiConverterSequenceTypeAddress.allocationSize(value.from) +
+             FfiConverterSequenceTypeAddress.allocationSize(value.to) +
+             FfiConverterSequenceTypeAddress.allocationSize(value.cc) +
+             FfiConverterOptionalInt64.allocationSize(value.date) +
+             FfiConverterTypeRenderedBody.allocationSize(value.body);
             
         }
     };
@@ -2921,11 +2980,13 @@ export interface MailCoreLike {
     onForeground(): void;
     openMailbox(mailboxId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     probeOauth(email: string, imap: ServerEndpoint, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<string | undefined>;
+    readMessageFile(path: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<SavedMessage>;
     readableImage(path: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<string | undefined>;
     reauthorize(accountId: string, callbackUrl: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     removeAccount(accountId: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     renameAccount(accountId: string, displayName: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     saveAttachment(emailId: string, index: number, directory: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<string>;
+    saveAttachmentFromFile(path: string, index: number, directory: string, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<string>;
     search(query: string, limit: number, mailboxIds: Array<string>, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<Array<SearchHit>>;
     send(draft: Draft, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
     setAccountColor(accountId: string, color: number, asyncOpts_?: { signal: AbortSignal }) /*throws*/: Promise<void>;
@@ -3575,6 +3636,47 @@ private constructor(pointer: UniffiHandle) {
     }
     }
     
+    async readMessageFile(path: string, asyncOpts_?: { signal: AbortSignal }): Promise<SavedMessage> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_read_message_file(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(path, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterTypeSavedMessage.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
     async readableImage(path: string, asyncOpts_?: { signal: AbortSignal }): Promise<string | undefined> /*throws*/ {
     const __stack = uniffiIsDebug ? new Error().stack : undefined;
     try {
@@ -3705,6 +3807,47 @@ private constructor(pointer: UniffiHandle) {
             /*rustFutureFunc:*/ () => {
                 return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_save_attachment(
                     uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(emailId, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(index, nativeModule().rustbuffer_alloc),FfiConverterString.lower(directory, nativeModule().rustbuffer_alloc)
+                );
+            },
+            /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
+            /*cancelFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_cancel_rust_buffer,
+            /*completeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_complete_rust_buffer,
+            /*freeFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_free_rust_buffer,
+            // Async returns always go through the JS-side converter: the
+            // FFI symbol returns the future handle (u64), and the user-level
+            // RustBuffer comes back via the shared `rust_future_complete_*`
+            // export. The bytes the runtime hands back must be deserialized
+            // here using the per-callable return-type converter.
+            // Borrowed view over foreign memory: the call site owns the free,
+            // as on the sync paths. Unconditional — a no-op where buffers are
+            // already JS-owned.
+            /*liftFunc:*/ (__rb) => {
+                try {
+                    return FfiConverterString.lift(__rb);
+                } finally {
+                    nativeModule().rustbuffer_free(__rb);
+                }
+            },
+            /*liftString:*/ FfiConverterString.lift.bind(FfiConverterString),
+            /*asyncOpts:*/ asyncOpts_,
+            /*errorHandler:*/ FfiConverterTypeCoreError.lift.bind(FfiConverterTypeCoreError)
+        );
+    } catch (__error: any) {
+        if (uniffiIsDebug && __error instanceof Error) {
+            __error.stack = __stack;
+        }
+        throw __error;
+    }
+    }
+    
+    async saveAttachmentFromFile(path: string, index: number, directory: string, asyncOpts_?: { signal: AbortSignal }): Promise<string> /*throws*/ {
+    const __stack = uniffiIsDebug ? new Error().stack : undefined;
+    try {
+        return await uniffiRustCallAsync(
+            /*rustCaller:*/ uniffiCaller,
+            /*rustFutureFunc:*/ () => {
+                return nativeModule().ubrn_uniffi_mail_ffi_fn_method_mailcore_save_attachment_from_file(
+                    uniffiTypeMailCoreObjectFactory.clonePointer(this),FfiConverterString.lower(path, nativeModule().rustbuffer_alloc),FfiConverterUInt32.lower(index, nativeModule().rustbuffer_alloc),FfiConverterString.lower(directory, nativeModule().rustbuffer_alloc)
                 );
             },
             /*pollFunc:*/ nativeModule().ubrn_ffi_mail_ffi_rust_future_poll_rust_buffer,
@@ -4200,6 +4343,9 @@ const FfiConverterSequenceTypeAttachment = new FfiConverterArray(FfiConverterTyp
 // FfiConverter for Unsubscribe | undefined
 const FfiConverterOptionalTypeUnsubscribe = new FfiConverterOptional(FfiConverterTypeUnsubscribe);
 
+// FfiConverter for bigint | undefined
+const FfiConverterOptionalInt64 = new FfiConverterOptional(FfiConverterInt64);
+
 // FfiConverter for number | undefined
 const FfiConverterOptionalFloat64 = new FfiConverterOptional(FfiConverterFloat64);
 
@@ -4306,6 +4452,9 @@ function uniffiEnsureInitialized() {
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_probe_oauth() !== 35009) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_probe_oauth");
     }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_read_message_file() !== 58419) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_read_message_file");
+    }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_readable_image() !== 47870) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_readable_image");
     }
@@ -4320,6 +4469,9 @@ function uniffiEnsureInitialized() {
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_attachment() !== 54661) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_save_attachment");
+    }
+    if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_save_attachment_from_file() !== 48092) {
+        throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_save_attachment_from_file");
     }
     if (nativeModule().ubrn_uniffi_mail_ffi_checksum_method_mailcore_search() !== 62065) {
         throw new UniffiInternalError.ApiChecksumMismatch("uniffi_mail_ffi_checksum_method_mailcore_search");
@@ -4390,6 +4542,7 @@ export default Object.freeze({
     FfiConverterTypeOutgoingAttachment,
     FfiConverterTypeRelocation,
     FfiConverterTypeRenderedBody,
+    FfiConverterTypeSavedMessage,
     FfiConverterTypeSearchHit,
     FfiConverterTypeSecurity,
     FfiConverterTypeServerConfig,

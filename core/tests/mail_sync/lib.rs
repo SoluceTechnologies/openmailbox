@@ -791,3 +791,24 @@ fn leaves_other_saved_attachments_as_they_are() {
     std::fs::write(&saved, b"%PDF-1.7").unwrap();
     assert_eq!(readable_image(&saved).unwrap(), None);
 }
+
+#[test]
+fn saves_an_attachment_of_a_saved_message() {
+    let directory = std::env::temp_dir().join(format!("mail-sync-eml-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let saved = directory.join("Original quote.eml");
+    std::fs::write(
+        &saved,
+        "From: a@example.com\r\nSubject: Quote\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"i\"\r\n\r\n--i\r\nContent-Type: text/plain\r\n\r\nHi\r\n--i\r\nContent-Type: application/pdf; name=\"quote.pdf\"\r\nContent-Disposition: attachment; filename=\"quote.pdf\"\r\n\r\n%PDF-1.7\r\n--i--\r\n",
+    )
+    .unwrap();
+
+    let path = save_attachment_from_file(&saved, 0, &directory).unwrap();
+
+    assert!(path.ends_with("/quote.pdf"));
+    assert_eq!(std::fs::read(&path).unwrap(), b"%PDF-1.7");
+    assert!(matches!(
+        save_attachment_from_file(&saved, 5, &directory),
+        Err(Error::NotFound)
+    ));
+}

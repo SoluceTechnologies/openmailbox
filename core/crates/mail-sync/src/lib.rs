@@ -1182,6 +1182,40 @@ fn read_attachments(attachments: &[OutgoingAttachment]) -> Result<Vec<Attachment
         .collect()
 }
 
+pub(crate) fn safe_file_name(filename: &str) -> String {
+    filename
+        .chars()
+        .map(|character| {
+            if matches!(character, '/' | '\\' | '\0') {
+                '_'
+            } else {
+                character
+            }
+        })
+        .collect()
+}
+
+pub fn save_attachment_from_file(path: &Path, index: u32, directory: &Path) -> Result<String> {
+    let raw = std::fs::read(path).map_err(|error| Error::Storage(error.to_string()))?;
+    let (filename, bytes) = mail_mime::attachment(&raw, index).ok_or(Error::NotFound)?;
+    let stem = path
+        .file_stem()
+        .map(|stem| stem.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let target = directory
+        .join(format!("{}-{index}", safe_file_name(&stem)))
+        .join(safe_file_name(&filename));
+    let parent = target.parent().ok_or(Error::NotFound)?;
+    std::fs::create_dir_all(parent).map_err(|error| Error::Storage(error.to_string()))?;
+    std::fs::write(&target, bytes).map_err(|error| Error::Storage(error.to_string()))?;
+    Ok(target.to_string_lossy().into_owned())
+}
+
+pub fn read_message_file(path: &Path) -> Result<mail_model::SavedMessage> {
+    let raw = std::fs::read(path).map_err(|error| Error::Storage(error.to_string()))?;
+    mail_mime::read_message(&raw)
+}
+
 pub fn readable_image(path: &Path) -> Result<Option<String>> {
     let bytes = std::fs::read(path).map_err(|error| Error::Storage(error.to_string()))?;
     let Some(png) = mail_mime::png_from_jxl(&bytes) else {

@@ -19,7 +19,7 @@ interface MessageCardProps {
   onToggle: (emailId: string) => void;
 }
 
-function AddressLine({ label, addresses }: { label: string; addresses: MailAddress[] }) {
+export function AddressLine({ label, addresses }: { label: string; addresses: MailAddress[] }) {
   const { colors } = useTheme();
   if (addresses.length === 0) return null;
   return (

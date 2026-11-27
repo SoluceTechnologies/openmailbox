@@ -272,6 +272,29 @@ pub struct Draft {
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
+pub struct SavedMessage {
+    pub subject: String,
+    pub from: Vec<Address>,
+    pub to: Vec<Address>,
+    pub cc: Vec<Address>,
+    pub date: Option<i64>,
+    pub body: RenderedBody,
+}
+
+impl From<mail_model::SavedMessage> for SavedMessage {
+    fn from(message: mail_model::SavedMessage) -> SavedMessage {
+        SavedMessage {
+            subject: message.subject,
+            from: message.from.into_iter().map(Into::into).collect(),
+            to: message.to.into_iter().map(Into::into).collect(),
+            cc: message.cc.into_iter().map(Into::into).collect(),
+            date: message.date,
+            body: message.body.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct OutgoingAttachment {
     pub path: String,
     pub filename: String,
@@ -966,6 +989,23 @@ impl MailCore {
                     UnsubscribeOutcome::OpenInBrowser { url }
                 }
             })
+        })
+        .await
+    }
+
+    pub async fn read_message_file(&self, path: String) -> CoreResult<SavedMessage> {
+        self.blocking(move |_| mail_sync::read_message_file(Path::new(&path)).map(Into::into))
+            .await
+    }
+
+    pub async fn save_attachment_from_file(
+        &self,
+        path: String,
+        index: u32,
+        directory: String,
+    ) -> CoreResult<String> {
+        self.blocking(move |_| {
+            mail_sync::save_attachment_from_file(Path::new(&path), index, Path::new(&directory))
         })
         .await
     }
