@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TextInput } from 'react-native';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 
 import { queryClient } from '@/core/queryClient';
 import { RecipientField } from '@/features/composer/components/RecipientField';
@@ -66,6 +66,28 @@ describe('RecipientField', () => {
     expect(screen.getByRole('button', { name: 'a@x.org' })).toBeSelected();
     fireEvent.press(screen.getByRole('button', { name: 'a@x.org' }));
     expect(screen.getByRole('button', { name: 'a@x.org' })).not.toBeSelected();
+  });
+
+  it('draws recipients as capsules, tinted while editing and solid blue once selected', () => {
+    renderWithProviders(<Harness initial={[A]} />, { dark: true });
+    expect(screen.getByRole('button', { name: 'a@x.org' })).toHaveStyle({ borderRadius: 999, backgroundColor: '#2c2c2e' });
+    expect(screen.getByText('a@x.org')).toHaveStyle({ color: '#0a84ff' });
+    fireEvent.press(screen.getByRole('button', { name: 'a@x.org' }));
+    const selected = screen.getByRole('button', { name: 'a@x.org' });
+    expect(selected).toHaveStyle({ backgroundColor: '#0a84ff' });
+    expect(within(selected).getByText('a@x.org')).toHaveStyle({ color: '#ffffff' });
+  });
+
+  it('lists the recipients in blue once the field is left', () => {
+    renderWithProviders(<Harness initial={[{ name: 'Alice', email: 'alice@x.org' }, A]} autoFocus={false} />);
+    expect(screen.getByText('Alice,')).toHaveStyle({ color: '#007aff' });
+    expect(screen.getByText('a@x.org')).toHaveStyle({ color: '#007aff' });
+  });
+
+  it('draws the caret in the same blue', () => {
+    renderWithProviders(<Harness />);
+    expect(screen.getByLabelText('To').props.cursorColor).toBe('#007aff');
+    expect(screen.getByLabelText('To').props.selectionColor).toBe('#007aff');
   });
 
   it('selects the last recipient with backspace, then removes it', () => {

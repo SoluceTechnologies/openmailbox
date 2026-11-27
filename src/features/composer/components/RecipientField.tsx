@@ -14,6 +14,7 @@ import { useRecipientSuggestions } from '../useRecipientSuggestions';
 const SEPARATOR = /[,;\n]$/;
 const VISIBLE_SUGGESTIONS = 5;
 const SUMMARY_GAP = 4;
+export const TOKEN_BLUE = { light: '#007aff', dark: '#0a84ff' };
 
 const sameEmail = (first: MailAddress, second: MailAddress) => first.email.toLowerCase() === second.email.toLowerCase();
 const shownName = (address: MailAddress) => address.name || address.email;
@@ -31,7 +32,7 @@ interface RecipientFieldProps {
   onFocus?: () => void;
 }
 
-function RecipientSummary({ addresses, label, onPress }: { addresses: MailAddress[]; label: string; onPress: () => void }) {
+function RecipientSummary({ addresses, label, color, onPress }: { addresses: MailAddress[]; label: string; color: string; onPress: () => void }) {
   const { t } = useTranslation();
   const names = addresses.map(shownName);
   const [width, setWidth] = useState(0);
@@ -56,12 +57,12 @@ function RecipientSummary({ addresses, label, onPress }: { addresses: MailAddres
     >
       <View style={styles.summaryRow}>
         {names.slice(0, shown).map((name, index) => (
-          <Typography key={index} numberOfLines={1} style={index === shown - 1 ? styles.shrink : styles.fixed}>
+          <Typography key={index} numberOfLines={1} weight="400" color={color} style={index === shown - 1 ? styles.shrink : styles.fixed}>
             {segment(name, index, shown - 1)}
           </Typography>
         ))}
         {shown < names.length ? (
-          <Typography color="secondary" style={styles.fixed}>
+          <Typography color="secondary" weight="400" style={styles.fixed}>
             {t('compose.andMore', { count: names.length - shown })}
           </Typography>
         ) : null}
@@ -71,6 +72,7 @@ function RecipientSummary({ addresses, label, onPress }: { addresses: MailAddres
           <Typography
             key={index}
             testID={`recipient-summary-name-${index}`}
+            weight="400"
             style={styles.fixed}
             onLayout={({ nativeEvent: { layout } }) =>
               setEnds((current) => {
@@ -83,7 +85,7 @@ function RecipientSummary({ addresses, label, onPress }: { addresses: MailAddres
             {segment(name, index, names.length - 1)}
           </Typography>
         ))}
-        <Typography testID="recipient-summary-more" style={styles.fixed} onLayout={(event) => setMoreWidth(event.nativeEvent.layout.width)}>
+        <Typography testID="recipient-summary-more" weight="400" style={styles.fixed} onLayout={(event) => setMoreWidth(event.nativeEvent.layout.width)}>
           {t('compose.andMore', { count: names.length })}
         </Typography>
       </View>
@@ -147,7 +149,8 @@ function SelectedRecipient({ address, onSwap }: { address: MailAddress; onSwap: 
 
 export function RecipientField({ label, value, onChange, text, onTextChange, autoFocus, inputAccessoryViewID, onFocus }: RecipientFieldProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
+  const blue = TOKEN_BLUE[dark ? 'dark' : 'light'];
   const input = useRef<TextInput>(null);
   const [focused, setFocused] = useState(autoFocus === true);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
@@ -212,7 +215,7 @@ export function RecipientField({ label, value, onChange, text, onTextChange, aut
         </Typography>
         <View style={styles.tokens}>
           {folded ? (
-            <RecipientSummary key={value.map(shownName).join('\n')} addresses={value} label={name} onPress={() => input.current?.focus()} />
+            <RecipientSummary key={value.map(shownName).join('\n')} addresses={value} label={name} color={blue} onPress={() => input.current?.focus()} />
           ) : (
             value.map((address) => {
               const isSelected = address.email === selectedEmail;
@@ -227,9 +230,9 @@ export function RecipientField({ label, value, onChange, text, onTextChange, aut
                     nativeEvent.actionName === 'delete' ? remove(address) : toggle(address)
                   }
                   onPress={() => toggle(address)}
-                  style={[styles.token, isSelected && { backgroundColor: colors.primary }]}
+                  style={[styles.token, { backgroundColor: isSelected ? blue : colors.chip }]}
                 >
-                  <Typography weight="500" color={isSelected ? 'light' : colors.primary} numberOfLines={1} style={styles.shrink}>
+                  <Typography weight="400" color={isSelected ? 'light' : blue} numberOfLines={1} style={styles.shrink}>
                     {shownName(address)}
                   </Typography>
                 </Pressable>
@@ -259,6 +262,8 @@ export function RecipientField({ label, value, onChange, text, onTextChange, aut
             textContentType="emailAddress"
             blurOnSubmit={false}
             inputAccessoryViewID={inputAccessoryViewID}
+            cursorColor={blue}
+            selectionColor={blue}
             style={[styles.input, { color: colors.text }, folded && styles.foldedInput]}
           />
         </View>
@@ -302,8 +307,8 @@ export function RecipientField({ label, value, onChange, text, onTextChange, aut
 const styles = StyleSheet.create({
   field: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, borderBottomWidth: StyleSheet.hairlineWidth },
   label: { alignSelf: 'flex-start', paddingTop: 14 },
-  tokens: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 2, paddingVertical: 6 },
-  token: { flexDirection: 'row', alignItems: 'center', maxWidth: '100%', paddingHorizontal: 5, paddingVertical: 4, borderRadius: 6 },
+  tokens: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingVertical: 6 },
+  token: { flexDirection: 'row', alignItems: 'center', maxWidth: '100%', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999 },
   shrink: { flexShrink: 1 },
   fixed: { flexShrink: 0 },
   input: { flexGrow: 1, minWidth: 90, fontSize: 16, paddingVertical: 6 },

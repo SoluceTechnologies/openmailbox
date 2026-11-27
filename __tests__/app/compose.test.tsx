@@ -166,6 +166,12 @@ describe('composer', () => {
   describe('copies', () => {
     const openCopies = () => fireEvent.press(screen.getByText('Cc/Bcc, From: alice@example.com'));
 
+    it('draws the subject caret in the recipients blue', () => {
+      renderWithProviders(<ComposeScreen />);
+      expect(screen.getByLabelText('Subject').props.selectionColor).toBe('#007aff');
+      expect(screen.getByLabelText('Subject').props.cursorColor).toBe('#007aff');
+    });
+
     it('opens the copies on Cc', () => {
       renderWithProviders(<ComposeScreen />);
       openCopies();
