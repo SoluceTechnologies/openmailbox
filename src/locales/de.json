@@ -187,6 +187,49 @@
     "operationFailed": "Eine Änderung konnte auf dem Server nicht übernommen werden",
     "server": "Der Server hat einen Fehler gemeldet: {{message}}"
   },
+  "invites": {
+    "accept": "Annehmen",
+    "addToCalendar": "Zum Kalender hinzufügen",
+    "allDay": "Ganztägig",
+    "answer": {
+      "ACCEPTED": "Zugesagt",
+      "DECLINED": "Abgesagt",
+      "TENTATIVE": "Vielleicht zugesagt"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} hat die Einladung angenommen.",
+      "DECLINED": "{{name}} hat die Einladung abgelehnt.",
+      "TENTATIVE": "{{name}} nimmt vielleicht teil."
+    },
+    "cancelled": "Dieser Termin wurde abgesagt.",
+    "decline": "Ablehnen",
+    "from": "von {{name}}",
+    "maybe": "Vielleicht",
+    "notAdded": "Der Termin konnte nicht zum Kalender hinzugefügt werden.",
+    "removeFromCalendar": "Aus dem Kalender entfernen",
+    "repeats": {
+      "daily_one": "Jeden Tag",
+      "daily_other": "Alle {{count}} Tage",
+      "monthly_one": "Jeden Monat",
+      "monthly_other": "Alle {{count}} Monate",
+      "weekly_one": "Jede Woche",
+      "weekly_other": "Alle {{count}} Wochen",
+      "yearly_one": "Jedes Jahr",
+      "yearly_other": "Alle {{count}} Jahre"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} hat zugesagt.",
+      "DECLINED": "{{name}} hat abgesagt.",
+      "TENTATIVE": "{{name}} nimmt vielleicht teil."
+    },
+    "sendFailed": "Die Antwort konnte nicht gesendet werden.",
+    "subject": {
+      "ACCEPTED": "Angenommen: {{summary}}",
+      "DECLINED": "Abgelehnt: {{summary}}",
+      "TENTATIVE": "Vielleicht: {{summary}}"
+    },
+    "updated": "Diese Einladung wurde geändert."
+  },
   "mailboxes": {
     "allInboxes": "Alle Eingänge",
     "loadingFolders": "Ordner werden geladen …",

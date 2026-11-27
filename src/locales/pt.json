@@ -187,6 +187,49 @@
     "operationFailed": "Não foi possível aplicar uma alteração no servidor",
     "server": "O servidor devolveu um erro: {{message}}"
   },
+  "invites": {
+    "accept": "Aceitar",
+    "addToCalendar": "Adicionar ao calendário",
+    "allDay": "Todo o dia",
+    "answer": {
+      "ACCEPTED": "Aceitou",
+      "DECLINED": "Recusou",
+      "TENTATIVE": "Respondeu talvez"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} aceitou o convite.",
+      "DECLINED": "{{name}} recusou o convite.",
+      "TENTATIVE": "{{name}} talvez participe."
+    },
+    "cancelled": "Este evento foi cancelado.",
+    "decline": "Recusar",
+    "from": "de {{name}}",
+    "maybe": "Talvez",
+    "notAdded": "Não foi possível adicionar o evento ao calendário.",
+    "removeFromCalendar": "Remover do calendário",
+    "repeats": {
+      "daily_one": "Todos os dias",
+      "daily_other": "A cada {{count}} dias",
+      "monthly_one": "Todos os meses",
+      "monthly_other": "A cada {{count}} meses",
+      "weekly_one": "Todas as semanas",
+      "weekly_other": "A cada {{count}} semanas",
+      "yearly_one": "Todos os anos",
+      "yearly_other": "A cada {{count}} anos"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} aceitou.",
+      "DECLINED": "{{name}} recusou.",
+      "TENTATIVE": "{{name}} talvez participe."
+    },
+    "sendFailed": "Não foi possível enviar a resposta.",
+    "subject": {
+      "ACCEPTED": "Aceite: {{summary}}",
+      "DECLINED": "Recusado: {{summary}}",
+      "TENTATIVE": "Talvez: {{summary}}"
+    },
+    "updated": "Este convite foi atualizado."
+  },
   "mailboxes": {
     "allInboxes": "Todas as caixas",
     "loadingFolders": "A carregar pastas…",

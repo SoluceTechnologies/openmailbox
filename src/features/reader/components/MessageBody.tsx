@@ -15,6 +15,8 @@ import { formatSize } from '@/utils/sizes';
 import { Button, Spinner, Typography } from '@/ui/components';
 
 import { confirmOpenLink } from '../openLink';
+import { InviteCard, isCalendarFile, useInvite } from '@/features/invites/InviteCard';
+
 import { HtmlBody } from './HtmlBody';
 import { UnsubscribeBanner } from './UnsubscribeBanner';
 
@@ -68,13 +70,14 @@ function AttachmentChip({ emailId, attachment }: { emailId: string; attachment: 
   );
 }
 
-function MessageBodyImpl({ emailId }: { emailId: string }) {
+function MessageBodyImpl({ emailId, accountId }: { emailId: string; accountId?: string }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const loadRemoteImagesByDefault = useSettingsStore((state) => state.loadRemoteImages);
   const [remoteAllowed, setRemoteAllowed] = useState(loadRemoteImagesByDefault);
   const body = useBody(emailId);
   const segments = useMemo(() => splitLinks(body.data?.text ?? ''), [body.data?.text]);
+  const { invite, senders } = useInvite(body.data?.calendar, accountId);
 
   if (body.isLoading) return <Spinner style={styles.loading} />;
   if (body.isError || !body.data) {
@@ -91,9 +94,13 @@ function MessageBodyImpl({ emailId }: { emailId: string }) {
     );
   }
 
-  const { html, text, hasRemoteContent, attachments, unsubscribe } = body.data;
+  const { html, text, hasRemoteContent, unsubscribe, calendar } = body.data;
+  const attachments = invite ? body.data.attachments.filter((attachment) => !isCalendarFile(attachment)) : body.data.attachments;
   return (
     <View style={styles.body}>
+      {invite && calendar && accountId ? (
+        <InviteCard emailId={emailId} accountId={accountId} source={calendar} invite={invite} senders={senders} />
+      ) : null}
       {unsubscribe ? <UnsubscribeBanner emailId={emailId} list={unsubscribe} /> : null}
       {html && hasRemoteContent && !remoteAllowed ? (
         <Pressable onPress={() => setRemoteAllowed(true)} style={[styles.remoteBanner, { backgroundColor: colors.surface }]}>

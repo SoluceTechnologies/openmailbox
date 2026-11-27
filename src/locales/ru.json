@@ -189,6 +189,57 @@
     "operationFailed": "Не удалось применить изменение на сервере",
     "server": "Сервер вернул ошибку: {{message}}"
   },
+  "invites": {
+    "accept": "Принять",
+    "addToCalendar": "Добавить в календарь",
+    "allDay": "Весь день",
+    "answer": {
+      "ACCEPTED": "Вы приняли",
+      "DECLINED": "Вы отклонили",
+      "TENTATIVE": "Вы ответили «возможно»"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} принимает приглашение.",
+      "DECLINED": "{{name}} отклоняет приглашение.",
+      "TENTATIVE": "{{name}}, возможно, придёт."
+    },
+    "cancelled": "Это событие отменено.",
+    "decline": "Отклонить",
+    "from": "от {{name}}",
+    "maybe": "Возможно",
+    "notAdded": "Не удалось добавить событие в календарь.",
+    "removeFromCalendar": "Удалить из календаря",
+    "repeats": {
+      "daily_few": "Каждые {{count}} дня",
+      "daily_many": "Каждые {{count}} дней",
+      "daily_one": "Каждый день",
+      "daily_other": "Каждые {{count}} дня",
+      "monthly_few": "Каждые {{count}} месяца",
+      "monthly_many": "Каждые {{count}} месяцев",
+      "monthly_one": "Каждый месяц",
+      "monthly_other": "Каждые {{count}} месяца",
+      "weekly_few": "Каждые {{count}} недели",
+      "weekly_many": "Каждые {{count}} недель",
+      "weekly_one": "Каждую неделю",
+      "weekly_other": "Каждые {{count}} недели",
+      "yearly_few": "Каждые {{count}} года",
+      "yearly_many": "Каждые {{count}} лет",
+      "yearly_one": "Каждый год",
+      "yearly_other": "Каждые {{count}} года"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} принимает.",
+      "DECLINED": "{{name}} отклоняет.",
+      "TENTATIVE": "{{name}}, возможно, придёт."
+    },
+    "sendFailed": "Не удалось отправить ответ.",
+    "subject": {
+      "ACCEPTED": "Принято: {{summary}}",
+      "DECLINED": "Отклонено: {{summary}}",
+      "TENTATIVE": "Возможно: {{summary}}"
+    },
+    "updated": "Это приглашение изменено."
+  },
   "mailboxes": {
     "allInboxes": "Все входящие",
     "loadingFolders": "Загрузка папок…",

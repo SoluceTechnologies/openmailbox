@@ -187,6 +187,49 @@
     "operationFailed": "No se ha podido aplicar un cambio en el servidor",
     "server": "El servidor ha devuelto un error: {{message}}"
   },
+  "invites": {
+    "accept": "Aceptar",
+    "addToCalendar": "Añadir al calendario",
+    "allDay": "Todo el día",
+    "answer": {
+      "ACCEPTED": "Has aceptado",
+      "DECLINED": "Has rechazado",
+      "TENTATIVE": "Has respondido quizás"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} ha aceptado la invitación.",
+      "DECLINED": "{{name}} ha rechazado la invitación.",
+      "TENTATIVE": "{{name}} quizás asista."
+    },
+    "cancelled": "Este evento se ha cancelado.",
+    "decline": "Rechazar",
+    "from": "de {{name}}",
+    "maybe": "Quizás",
+    "notAdded": "No se ha podido añadir el evento al calendario.",
+    "removeFromCalendar": "Quitar del calendario",
+    "repeats": {
+      "daily_one": "Cada día",
+      "daily_other": "Cada {{count}} días",
+      "monthly_one": "Cada mes",
+      "monthly_other": "Cada {{count}} meses",
+      "weekly_one": "Cada semana",
+      "weekly_other": "Cada {{count}} semanas",
+      "yearly_one": "Cada año",
+      "yearly_other": "Cada {{count}} años"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} ha aceptado.",
+      "DECLINED": "{{name}} ha rechazado.",
+      "TENTATIVE": "{{name}} quizás asista."
+    },
+    "sendFailed": "No se ha podido enviar la respuesta.",
+    "subject": {
+      "ACCEPTED": "Aceptado: {{summary}}",
+      "DECLINED": "Rechazado: {{summary}}",
+      "TENTATIVE": "Quizás: {{summary}}"
+    },
+    "updated": "Esta invitación se ha actualizado."
+  },
   "mailboxes": {
     "allInboxes": "Todas las bandejas",
     "loadingFolders": "Cargando carpetas…",

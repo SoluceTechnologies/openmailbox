@@ -187,6 +187,49 @@
     "operationFailed": "A change couldn't be applied on the server",
     "server": "The server returned an error: {{message}}"
   },
+  "invites": {
+    "accept": "Accept",
+    "addToCalendar": "Add to Calendar",
+    "allDay": "All day",
+    "answer": {
+      "ACCEPTED": "You accepted",
+      "DECLINED": "You declined",
+      "TENTATIVE": "You said maybe"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} accepted the invitation.",
+      "DECLINED": "{{name}} declined the invitation.",
+      "TENTATIVE": "{{name}} might attend."
+    },
+    "cancelled": "This event was cancelled.",
+    "decline": "Decline",
+    "from": "from {{name}}",
+    "maybe": "Maybe",
+    "notAdded": "The event couldn't be added to your calendar.",
+    "removeFromCalendar": "Remove from Calendar",
+    "repeats": {
+      "daily_one": "Every day",
+      "daily_other": "Every {{count}} days",
+      "monthly_one": "Every month",
+      "monthly_other": "Every {{count}} months",
+      "weekly_one": "Every week",
+      "weekly_other": "Every {{count}} weeks",
+      "yearly_one": "Every year",
+      "yearly_other": "Every {{count}} years"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} accepted.",
+      "DECLINED": "{{name}} declined.",
+      "TENTATIVE": "{{name}} might attend."
+    },
+    "sendFailed": "The answer couldn't be sent.",
+    "subject": {
+      "ACCEPTED": "Accepted: {{summary}}",
+      "DECLINED": "Declined: {{summary}}",
+      "TENTATIVE": "Maybe: {{summary}}"
+    },
+    "updated": "This invitation was updated."
+  },
   "mailboxes": {
     "allInboxes": "All Inboxes",
     "loadingFolders": "Loading folders…",

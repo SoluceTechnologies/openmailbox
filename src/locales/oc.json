@@ -187,6 +187,49 @@
     "operationFailed": "Una modificacion a pas pogut èsser aplicada sul servidor",
     "server": "Lo servidor a mandat una error : {{message}}"
   },
+  "invites": {
+    "accept": "Acceptar",
+    "addToCalendar": "Apondre al calendièr",
+    "allDay": "Tota la jornada",
+    "answer": {
+      "ACCEPTED": "Avètz acceptat",
+      "DECLINED": "Avètz refusat",
+      "TENTATIVE": "Avètz respondut benlèu"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} a acceptat l’invitacion.",
+      "DECLINED": "{{name}} a refusat l’invitacion.",
+      "TENTATIVE": "{{name}} participarà benlèu."
+    },
+    "cancelled": "Aqueste eveniment es estat anullat.",
+    "decline": "Refusar",
+    "from": "de {{name}}",
+    "maybe": "Benlèu",
+    "notAdded": "L’eveniment se poguèt pas apondre al calendièr.",
+    "removeFromCalendar": "Levar del calendièr",
+    "repeats": {
+      "daily_one": "Cada jorn",
+      "daily_other": "Cada {{count}} jorns",
+      "monthly_one": "Cada mes",
+      "monthly_other": "Cada {{count}} meses",
+      "weekly_one": "Cada setmana",
+      "weekly_other": "Cada {{count}} setmanas",
+      "yearly_one": "Cada an",
+      "yearly_other": "Cada {{count}} ans"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} a acceptat.",
+      "DECLINED": "{{name}} a refusat.",
+      "TENTATIVE": "{{name}} participarà benlèu."
+    },
+    "sendFailed": "La responsa se poguèt pas mandar.",
+    "subject": {
+      "ACCEPTED": "Acceptat : {{summary}}",
+      "DECLINED": "Refusat : {{summary}}",
+      "TENTATIVE": "Benlèu : {{summary}}"
+    },
+    "updated": "Aquesta invitacion es estada modificada."
+  },
   "mailboxes": {
     "allInboxes": "Totas las bóstias",
     "loadingFolders": "Cargament dels dossièrs…",

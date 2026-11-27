@@ -187,6 +187,49 @@
     "operationFailed": "Une modification n'a pas pu être appliquée sur le serveur",
     "server": "Le serveur a renvoyé une erreur : {{message}}"
   },
+  "invites": {
+    "accept": "Accepter",
+    "addToCalendar": "Ajouter au calendrier",
+    "allDay": "Toute la journée",
+    "answer": {
+      "ACCEPTED": "Vous avez accepté",
+      "DECLINED": "Vous avez refusé",
+      "TENTATIVE": "Vous avez répondu peut-être"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} a accepté l’invitation.",
+      "DECLINED": "{{name}} a refusé l’invitation.",
+      "TENTATIVE": "{{name}} participera peut-être."
+    },
+    "cancelled": "Cet événement a été annulé.",
+    "decline": "Refuser",
+    "from": "de {{name}}",
+    "maybe": "Peut-être",
+    "notAdded": "L’événement n’a pas pu être ajouté à votre calendrier.",
+    "removeFromCalendar": "Retirer du calendrier",
+    "repeats": {
+      "daily_one": "Tous les jours",
+      "daily_other": "Tous les {{count}} jours",
+      "monthly_one": "Tous les mois",
+      "monthly_other": "Tous les {{count}} mois",
+      "weekly_one": "Toutes les semaines",
+      "weekly_other": "Toutes les {{count}} semaines",
+      "yearly_one": "Tous les ans",
+      "yearly_other": "Tous les {{count}} ans"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} a accepté.",
+      "DECLINED": "{{name}} a refusé.",
+      "TENTATIVE": "{{name}} participera peut-être."
+    },
+    "sendFailed": "La réponse n’a pas pu être envoyée.",
+    "subject": {
+      "ACCEPTED": "Accepté : {{summary}}",
+      "DECLINED": "Refusé : {{summary}}",
+      "TENTATIVE": "Peut-être : {{summary}}"
+    },
+    "updated": "Cette invitation a été modifiée."
+  },
   "mailboxes": {
     "allInboxes": "Toutes les boîtes",
     "loadingFolders": "Chargement des dossiers…",

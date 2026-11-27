@@ -187,6 +187,49 @@
     "operationFailed": "Een wijziging kon niet op de server worden toegepast",
     "server": "De server gaf een fout terug: {{message}}"
   },
+  "invites": {
+    "accept": "Accepteren",
+    "addToCalendar": "Aan agenda toevoegen",
+    "allDay": "Hele dag",
+    "answer": {
+      "ACCEPTED": "Je hebt geaccepteerd",
+      "DECLINED": "Je hebt geweigerd",
+      "TENTATIVE": "Je hebt misschien geantwoord"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} heeft de uitnodiging geaccepteerd.",
+      "DECLINED": "{{name}} heeft de uitnodiging geweigerd.",
+      "TENTATIVE": "{{name}} komt misschien."
+    },
+    "cancelled": "Deze afspraak is geannuleerd.",
+    "decline": "Weigeren",
+    "from": "van {{name}}",
+    "maybe": "Misschien",
+    "notAdded": "De afspraak kon niet aan je agenda worden toegevoegd.",
+    "removeFromCalendar": "Uit agenda verwijderen",
+    "repeats": {
+      "daily_one": "Elke dag",
+      "daily_other": "Elke {{count}} dagen",
+      "monthly_one": "Elke maand",
+      "monthly_other": "Elke {{count}} maanden",
+      "weekly_one": "Elke week",
+      "weekly_other": "Elke {{count}} weken",
+      "yearly_one": "Elk jaar",
+      "yearly_other": "Elke {{count}} jaar"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} heeft geaccepteerd.",
+      "DECLINED": "{{name}} heeft geweigerd.",
+      "TENTATIVE": "{{name}} komt misschien."
+    },
+    "sendFailed": "Het antwoord kon niet worden verzonden.",
+    "subject": {
+      "ACCEPTED": "Geaccepteerd: {{summary}}",
+      "DECLINED": "Geweigerd: {{summary}}",
+      "TENTATIVE": "Misschien: {{summary}}"
+    },
+    "updated": "Deze uitnodiging is gewijzigd."
+  },
   "mailboxes": {
     "allInboxes": "Alle inkomende",
     "loadingFolders": "Mappen laden…",

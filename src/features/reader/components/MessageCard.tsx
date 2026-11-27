@@ -89,7 +89,7 @@ function MessageCardImpl({ email, expanded, onToggle }: MessageCardProps) {
       {expanded ? (
         <View style={[styles.separator, { backgroundColor: colors.border }]} />
       ) : null}
-      {expanded ? <MessageBody emailId={email.id} /> : null}
+      {expanded ? <MessageBody emailId={email.id} accountId={email.accountId} /> : null}
     </View>
   );
 }

@@ -44,3 +44,7 @@ export function formatFullDate(timestamp: number): string {
 export function formatTime(timestamp: number): string {
   return dayjs(timestamp).format(localized('LT'));
 }
+
+export function formatDay(timestamp: number): string {
+  return capitalize(dayjs(timestamp).format('ddd ll'));
+}
