@@ -533,3 +533,24 @@ fn reads_a_saved_message() {
     assert!(message.body.html.unwrap().contains("<b>quote</b>"));
     assert_eq!(message.body.attachments[0].filename, "quote.pdf");
 }
+
+#[test]
+fn previews_a_message_whose_attachment_is_cut_by_the_partial_fetch() {
+    let header = b"Content-Type: multipart/mixed; boundary=\"==b==\"\r\nMIME-Version: 1.0\r\n\
+From: Claire Dubois <claire@atlas.example>\r\nSubject: Scan from the copier\r\n\r\n";
+    let mut text = b"--==b==\r\nContent-Type: text/plain; charset=\"us-ascii\"\r\n\
+MIME-Version: 1.0\r\nContent-Transfer-Encoding: 7bit\r\n\r\nScanned page attached.\r\n\
+--==b==\r\nContent-Type: image/tiff\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: base64\r\n\
+Content-Disposition: attachment; filename=\"Scan copier.tif\"\r\n\r\n"
+        .to_vec();
+    while text.len() < 2048 {
+        text.extend_from_slice(
+            b"SUkqAAgAAAAJAAABAwABAAAAoAAAAAEBAwABAAAAZAAAAAIBAwABAAAACAAAAAMBAwAB\r\n",
+        );
+    }
+    text.truncate(2048);
+    assert_eq!(
+        parse_summary(header, &text).preview.as_deref(),
+        Some("Scanned page attached.")
+    );
+}
