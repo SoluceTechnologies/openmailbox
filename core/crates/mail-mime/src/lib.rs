@@ -379,6 +379,7 @@ pub struct OutgoingMessage<'a> {
     pub in_reply_to: Option<&'a str>,
     pub references: &'a [String],
     pub attachments: Vec<AttachmentContent>,
+    pub calendar: Option<&'a str>,
 }
 
 pub struct AttachmentContent {
@@ -391,6 +392,38 @@ pub struct BuiltMessage {
     pub raw: Vec<u8>,
     pub envelope_from: String,
     pub recipients: Vec<String>,
+}
+
+fn alternative_body(
+    text: &str,
+    html: Option<&str>,
+    calendar: Option<&str>,
+) -> Result<Option<MultiPart>> {
+    let Some(calendar) = calendar else {
+        return Ok(
+            html.map(|html| MultiPart::alternative_plain_html(text.to_owned(), html.to_owned()))
+        );
+    };
+    let method = calendar
+        .lines()
+        .find_map(|line| line.strip_prefix("METHOD:"))
+        .map(str::trim)
+        .filter(|method| !method.is_empty())
+        .unwrap_or("REQUEST");
+    let content_type =
+        ContentType::parse(&format!("text/calendar; charset=UTF-8; method={method}"))
+            .map_err(|error| Error::InvalidInput(error.to_string()))?;
+    let mut alternative = MultiPart::alternative().singlepart(SinglePart::plain(text.to_owned()));
+    if let Some(html) = html {
+        alternative = alternative.singlepart(SinglePart::html(html.to_owned()));
+    }
+    Ok(Some(
+        alternative.singlepart(
+            SinglePart::builder()
+                .header(content_type)
+                .body(calendar.to_owned()),
+        ),
+    ))
 }
 
 pub fn build_message(outgoing: OutgoingMessage) -> Result<BuiltMessage> {
@@ -420,17 +453,15 @@ pub fn build_message(outgoing: OutgoingMessage) -> Result<BuiltMessage> {
         builder = builder.references(references);
     }
     let text = outgoing.body_text.to_owned();
+    let alternative = alternative_body(&text, outgoing.body_html, outgoing.calendar)?;
     let message = if outgoing.attachments.is_empty() {
-        match outgoing.body_html {
-            Some(html) => {
-                builder.multipart(MultiPart::alternative_plain_html(text, html.to_owned()))
-            }
+        match alternative {
+            Some(alternative) => builder.multipart(alternative),
             None => builder.header(ContentType::TEXT_PLAIN).body(text),
         }
     } else {
-        let body = match outgoing.body_html {
-            Some(html) => MultiPart::mixed()
-                .multipart(MultiPart::alternative_plain_html(text, html.to_owned())),
+        let body = match alternative {
+            Some(alternative) => MultiPart::mixed().multipart(alternative),
             None => MultiPart::mixed().singlepart(SinglePart::plain(text)),
         };
         let parts = outgoing

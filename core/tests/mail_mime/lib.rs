@@ -111,6 +111,7 @@ fn built_reply_keeps_bcc_out_of_the_headers() {
         in_reply_to: Some("reply@example.com"),
         references: &["root@example.com".into(), "reply@example.com".into()],
         attachments: vec![],
+        calendar: None,
     })
     .unwrap();
     let raw = String::from_utf8(built.raw).unwrap();
@@ -148,6 +149,7 @@ fn bcc_recipients_become_a_header_only_when_asked() {
         in_reply_to: None,
         references: &[],
         attachments: vec![],
+        calendar: None,
     })
     .unwrap();
     let raw = String::from_utf8(with_bcc_header(&built.raw, &built.recipients)).unwrap();
@@ -180,6 +182,7 @@ fn with_attachments(attachments: Vec<AttachmentContent>) -> Vec<u8> {
         in_reply_to: None,
         references: &[],
         attachments,
+        calendar: None,
     })
     .unwrap()
     .raw
@@ -203,6 +206,7 @@ fn a_reply_with_html_keeps_the_quoted_formatting() {
         in_reply_to: None,
         references: &[],
         attachments: vec![],
+        calendar: None,
     })
     .unwrap();
     let rendered = render(&built.raw).unwrap();
@@ -405,4 +409,64 @@ fn render_reads_an_ics_attachment() {
 fn render_without_invitation_has_no_calendar() {
     let raw = b"From: a@example.com\r\nSubject: Hi\r\nContent-Type: text/plain\r\n\r\nHello\r\n";
     assert_eq!(render(raw).unwrap().calendar, None);
+}
+
+const REPLY: &str = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nMETHOD:REPLY\r\nBEGIN:VEVENT\r\nUID:kickoff@atlas\r\nATTENDEE;PARTSTAT=ACCEPTED:mailto:bob@example.com\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+fn calendar_reply(attachments: Vec<AttachmentContent>) -> String {
+    let bob = Address {
+        name: Some("Bob".into()),
+        email: "bob@example.com".into(),
+    };
+    let claire = Address {
+        name: None,
+        email: "claire@atlas.example".into(),
+    };
+    let built = build_message(OutgoingMessage {
+        message_id: "answer@example.com",
+        from: &bob,
+        to: &[claire],
+        cc: &[],
+        bcc: &[],
+        subject: "Accepted: Atlas kickoff",
+        body_text: "Bob accepted the invitation.",
+        body_html: None,
+        in_reply_to: Some("invite@atlas.example"),
+        references: &[],
+        attachments,
+        calendar: Some(REPLY),
+    })
+    .unwrap();
+    String::from_utf8(built.raw).unwrap()
+}
+
+#[test]
+fn builds_a_calendar_reply_as_an_alternative() {
+    let raw = calendar_reply(vec![]);
+    assert!(raw.contains("Content-Type: multipart/alternative"), "{raw}");
+    assert!(!raw.contains("multipart/mixed"));
+    assert!(
+        raw.contains("Content-Type: text/calendar; charset=utf-8; method=REPLY"),
+        "{raw}"
+    );
+    let body = render(raw.as_bytes()).unwrap();
+    assert_eq!(body.text.trim(), "Bob accepted the invitation.");
+    assert_eq!(body.calendar.as_deref(), Some(REPLY));
+}
+
+#[test]
+fn keeps_the_calendar_reply_next_to_attachments() {
+    let raw = calendar_reply(vec![AttachmentContent {
+        filename: "agenda.pdf".into(),
+        mime_type: "application/pdf".into(),
+        bytes: b"%PDF-1.7".to_vec(),
+    }]);
+    assert!(raw.contains("Content-Type: multipart/mixed"));
+    let body = render(raw.as_bytes()).unwrap();
+    assert!(body.calendar.unwrap().contains("PARTSTAT=ACCEPTED"));
+    assert!(
+        body.attachments
+            .iter()
+            .any(|attachment| attachment.filename == "agenda.pdf")
+    );
 }

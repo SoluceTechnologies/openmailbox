@@ -268,6 +268,7 @@ pub struct Draft {
     pub in_reply_to_email_id: Option<String>,
     pub attachments: Vec<OutgoingAttachment>,
     pub from: Option<Address>,
+    pub calendar: Option<String>,
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -1105,6 +1106,7 @@ impl MailCore {
                 })
                 .collect(),
             from: draft.from.map(Into::into),
+            calendar: draft.calendar,
         };
         self.blocking(move |engine| engine.send(draft)).await
     }

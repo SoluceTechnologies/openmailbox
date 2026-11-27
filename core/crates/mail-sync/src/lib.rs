@@ -865,6 +865,7 @@ impl Engine {
                 .and_then(|context| context.message_id.as_deref()),
             references: &references,
             attachments,
+            calendar: draft.calendar.as_deref(),
         })?;
         let raw = String::from_utf8(built.raw)
             .map_err(|_| Error::InvalidInput("message is not 7-bit safe".into()))?;
@@ -938,6 +939,7 @@ impl Engine {
             in_reply_to_email_id: None,
             attachments: vec![],
             from: None,
+            calendar: None,
         })
     }
 

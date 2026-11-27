@@ -370,6 +370,7 @@ pub struct Draft {
     pub in_reply_to_email_id: Option<i64>,
     pub attachments: Vec<OutgoingAttachment>,
     pub from: Option<Address>,
+    pub calendar: Option<String>,
 }
 
 #[derive(Debug, Clone)]

@@ -461,7 +461,8 @@ export type Draft = {
     bodyHtml?: string,
     inReplyToEmailId?: string,
     attachments: Array<OutgoingAttachment>,
-    from?: Address
+    from?: Address,
+    calendar?: string
 }
 
 /**
@@ -494,7 +495,8 @@ const FfiConverterTypeDraft = (() => {
                 bodyHtml: FfiConverterOptionalString.readFromCursor(c), 
                 inReplyToEmailId: FfiConverterOptionalString.readFromCursor(c), 
                 attachments: FfiConverterSequenceTypeOutgoingAttachment.readFromCursor(c), 
-                from: FfiConverterOptionalTypeAddress.readFromCursor(c)
+                from: FfiConverterOptionalTypeAddress.readFromCursor(c), 
+                calendar: FfiConverterOptionalString.readFromCursor(c)
             };
         }
         writeIntoCursor(value: TypeName, c: Cursor): void {
@@ -508,6 +510,7 @@ const FfiConverterTypeDraft = (() => {
             FfiConverterOptionalString.writeIntoCursor(value.inReplyToEmailId, c);
             FfiConverterSequenceTypeOutgoingAttachment.writeIntoCursor(value.attachments, c);
             FfiConverterOptionalTypeAddress.writeIntoCursor(value.from, c);
+            FfiConverterOptionalString.writeIntoCursor(value.calendar, c);
         }
         allocationSize(value: TypeName): number {
             return FfiConverterString.allocationSize(value.accountId) +
@@ -519,7 +522,8 @@ const FfiConverterTypeDraft = (() => {
              FfiConverterOptionalString.allocationSize(value.bodyHtml) +
              FfiConverterOptionalString.allocationSize(value.inReplyToEmailId) +
              FfiConverterSequenceTypeOutgoingAttachment.allocationSize(value.attachments) +
-             FfiConverterOptionalTypeAddress.allocationSize(value.from);
+             FfiConverterOptionalTypeAddress.allocationSize(value.from) +
+             FfiConverterOptionalString.allocationSize(value.calendar);
             
         }
     };

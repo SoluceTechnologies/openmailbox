@@ -39,6 +39,7 @@ fn draft(
         in_reply_to_email_id,
         attachments: vec![],
         from: None,
+        calendar: None,
     }
 }
 

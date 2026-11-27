@@ -292,6 +292,7 @@ fn draft_with(attachments: Vec<OutgoingAttachment>) -> Draft {
         in_reply_to_email_id: None,
         attachments,
         from: None,
+        calendar: None,
     }
 }
 
