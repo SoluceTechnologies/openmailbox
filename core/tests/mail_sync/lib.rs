@@ -758,3 +758,34 @@ fn an_oauth_sign_in_only_accepts_the_answer_to_its_own_request() {
     ));
     assert!(engine.list_accounts().unwrap().is_empty());
 }
+
+const TINY_JXL: [u8; 42] = [
+    0xff, 0x0a, 0x30, 0x54, 0x10, 0x09, 0x08, 0x06, 0x01, 0x00, 0x78, 0x00, 0x4b, 0x38, 0x41, 0x3c,
+    0xb6, 0x3a, 0x51, 0xfe, 0x00, 0x47, 0x1e, 0xa0, 0x85, 0xb8, 0x27, 0x1a, 0x48, 0x45, 0x84, 0x1b,
+    0x71, 0x4f, 0xa8, 0x3e, 0x8e, 0x30, 0x03, 0x92, 0x84, 0x01,
+];
+
+#[test]
+fn writes_a_png_next_to_a_saved_jpeg_xl_attachment() {
+    let directory = std::env::temp_dir().join(format!("mail-sync-jxl-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let saved = directory.join("photo.jxl");
+    std::fs::write(&saved, TINY_JXL).unwrap();
+
+    let readable = readable_image(&saved).unwrap().unwrap();
+
+    assert_eq!(readable, directory.join("photo.png").to_string_lossy());
+    assert!(
+        std::fs::read(&readable)
+            .unwrap()
+            .starts_with(b"\x89PNG\r\n\x1a\n")
+    );
+    assert_eq!(std::fs::read(&saved).unwrap(), TINY_JXL);
+}
+
+#[test]
+fn leaves_other_saved_attachments_as_they_are() {
+    let saved = std::env::temp_dir().join(format!("mail-sync-pdf-{}.pdf", uuid::Uuid::new_v4()));
+    std::fs::write(&saved, b"%PDF-1.7").unwrap();
+    assert_eq!(readable_image(&saved).unwrap(), None);
+}

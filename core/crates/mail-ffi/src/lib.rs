@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock, Mutex};
 use std::time::Duration;
 
@@ -965,6 +965,11 @@ impl MailCore {
             })
         })
         .await
+    }
+
+    pub async fn readable_image(&self, path: String) -> CoreResult<Option<String>> {
+        self.blocking(move |_| mail_sync::readable_image(Path::new(&path)))
+            .await
     }
 
     pub async fn save_attachment(

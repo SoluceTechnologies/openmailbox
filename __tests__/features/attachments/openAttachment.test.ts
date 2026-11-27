@@ -24,6 +24,7 @@ jest.mock('expo-file-system', () => ({
 const PDF: Attachment = { index: 0, filename: 'Facture n°12.pdf', mimeType: 'application/pdf', size: 1200 };
 const ZIP: Attachment = { index: 1, filename: 'archives.zip', mimeType: 'application/zip', size: 1200 };
 const UNKNOWN: Attachment = { index: 2, filename: 'data', mimeType: 'application/octet-stream', size: 1200 };
+const PHOTO: Attachment = { index: 3, filename: 'Photo.jxl', mimeType: 'image/jxl', size: 1200 };
 
 function onPlatform(os: 'ios' | 'android') {
   jest.replaceProperty(Platform, 'OS', os);
@@ -44,6 +45,53 @@ describe('openAttachment', () => {
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/attachment',
       params: { uri: 'file:///cache/attachments/email-1-0/file', name: 'Facture n°12.pdf', mimeType: 'application/pdf' },
+    });
+  });
+
+  describe('JPEG XL', () => {
+    beforeEach(() => {
+      core.saveAttachment.mockResolvedValue('/cache/attachments/email-1-3/Photo.jxl');
+      core.readableImage.mockResolvedValue('/cache/attachments/email-1-3/Photo.png');
+    });
+
+    it('shows a PNG copy of a JPEG XL image in the viewer on iOS', async () => {
+      onPlatform('ios');
+      await openAttachment('email-1', PHOTO);
+      expect(core.readableImage).toHaveBeenCalledWith('/cache/attachments/email-1-3/Photo.jxl');
+      expect(router.push).toHaveBeenCalledWith({
+        pathname: '/attachment',
+        params: { uri: 'file:///cache/attachments/email-1-3/Photo.png', name: 'Photo.jxl', mimeType: 'image/png' },
+      });
+    });
+
+    it('opens a PNG copy of a JPEG XL image on Android', async () => {
+      onPlatform('android');
+      await openAttachment('email-1', PHOTO);
+      expect(IntentLauncher.startActivityAsync).toHaveBeenCalledWith('android.intent.action.VIEW', {
+        data: 'content://com.soluce.openmailbox.provider/cache/attachments/email-1-3/Photo.png',
+        type: 'image/png',
+        flags: 1,
+      });
+    });
+
+    it('recognises a JPEG XL image sent without its type', async () => {
+      onPlatform('android');
+      await openAttachment('email-1', { ...PHOTO, mimeType: 'application/octet-stream' });
+      expect(IntentLauncher.startActivityAsync).toHaveBeenCalledWith('android.intent.action.VIEW', expect.objectContaining({ type: 'image/png' }));
+      expect(Sharing.shareAsync).not.toHaveBeenCalled();
+    });
+
+    it('hands over the original file when it cannot be decoded', async () => {
+      onPlatform('android');
+      core.readableImage.mockResolvedValueOnce(undefined);
+      await openAttachment('email-1', PHOTO);
+      expect(IntentLauncher.startActivityAsync).toHaveBeenCalledWith('android.intent.action.VIEW', expect.objectContaining({ type: 'image/jxl' }));
+    });
+
+    it('leaves other attachments as they are', async () => {
+      onPlatform('ios');
+      await openAttachment('email-1', PDF);
+      expect(core.readableImage).not.toHaveBeenCalled();
     });
   });
 

@@ -256,6 +256,10 @@ extern "C" {
         RustBuffer email, 
         RustBuffer imap
     );
+    /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_readable_image(
+        /*handle*/ uint64_t ptr, 
+        RustBuffer path
+    );
     /*handle*/ uint64_t uniffi_mail_ffi_fn_method_mailcore_reauthorize(
         /*handle*/ uint64_t ptr, 
         RustBuffer account_id, 
@@ -586,6 +590,8 @@ extern "C" {
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_open_mailbox(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_probe_oauth(
+    );
+    uint16_t uniffi_mail_ffi_checksum_method_mailcore_readable_image(
     );
     uint16_t uniffi_mail_ffi_checksum_method_mailcore_reauthorize(
     );
@@ -2733,6 +2739,14 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_fn_method_mailcore_probe_oauth(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_fn_method_mailcore_readable_image"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_readable_image"),
+        2,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_fn_method_mailcore_readable_image(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_fn_method_mailcore_reauthorize"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_fn_method_mailcore_reauthorize"),
@@ -3413,6 +3427,14 @@ NativeMailFfi::NativeMailFfi(
             return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_probe_oauth(rt, thisVal, args, count);
         }
     );
+    props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_readable_image"] = jsi::Function::createFromHostFunction(
+        rt,
+        jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_readable_image"),
+        0,
+        [this](jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args, size_t count) -> jsi::Value {
+            return this->cpp_uniffi_mail_ffi_checksum_method_mailcore_readable_image(rt, thisVal, args, count);
+        }
+    );
     props["ubrn_uniffi_mail_ffi_checksum_method_mailcore_reauthorize"] = jsi::Function::createFromHostFunction(
         rt,
         jsi::PropNameID::forAscii(rt, "ubrn_uniffi_mail_ffi_checksum_method_mailcore_reauthorize"),
@@ -3975,6 +3997,13 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_open_mailbox(js
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_probe_oauth(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_fn_method_mailcore_probe_oauth(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[2])
+        );
+
+        
+        return uniffi_jsi::Bridging</*handle*/ uint64_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_fn_method_mailcore_readable_image(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_fn_method_mailcore_readable_image(uniffi_jsi::Bridging</*handle*/ uint64_t>::fromJs(rt, callInvoker, args[0]), uniffi::mail_ffi::Bridging<RustBuffer>::fromJs(rt, callInvoker, args[1])
         );
 
         
@@ -4618,6 +4647,13 @@ jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_open_mail
 }
 jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_probe_oauth(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
         auto value = uniffi_mail_ffi_checksum_method_mailcore_probe_oauth(
+        );
+
+        
+        return uniffi_jsi::Bridging<uint16_t>::toJs(rt, callInvoker, value);
+}
+jsi::Value NativeMailFfi::cpp_uniffi_mail_ffi_checksum_method_mailcore_readable_image(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+        auto value = uniffi_mail_ffi_checksum_method_mailcore_readable_image(
         );
 
         

@@ -1180,6 +1180,16 @@ fn read_attachments(attachments: &[OutgoingAttachment]) -> Result<Vec<Attachment
         .collect()
 }
 
+pub fn readable_image(path: &Path) -> Result<Option<String>> {
+    let bytes = std::fs::read(path).map_err(|error| Error::Storage(error.to_string()))?;
+    let Some(png) = mail_mime::png_from_jxl(&bytes) else {
+        return Ok(None);
+    };
+    let target = path.with_extension("png");
+    std::fs::write(&target, png).map_err(|error| Error::Storage(error.to_string()))?;
+    Ok(Some(target.to_string_lossy().into_owned()))
+}
+
 #[cfg(test)]
 #[path = "../../../tests/mail_sync/test_support.rs"]
 pub(crate) mod test_support;

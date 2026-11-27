@@ -13,6 +13,9 @@ use mail_parser::{AddressList, HeaderForm, Message};
 
 mod charsets;
 mod code_pages;
+mod images;
+
+pub use images::png_from_jxl;
 
 const PREVIEW_LENGTH: usize = 180;
 const INLINE_IMAGE_LIMIT: usize = 2 * 1024 * 1024;
@@ -304,8 +307,15 @@ fn embed_inline_images(
         if !content_type.ctype().eq_ignore_ascii_case("image") {
             continue;
         }
-        let mime_type = format!("image/{}", content_type.subtype().unwrap_or("png"));
-        let encoded = base64::engine::general_purpose::STANDARD.encode(part.decoded());
+        let decoded = part.decoded();
+        let (mime_type, bytes) = match png_from_jxl(&decoded) {
+            Some(png) => ("image/png".to_owned(), png),
+            None => (
+                format!("image/{}", content_type.subtype().unwrap_or("png")),
+                decoded.into_owned(),
+            ),
+        };
+        let encoded = base64::engine::general_purpose::STANDARD.encode(bytes);
         html = html.replace(&reference, &format!("data:{mime_type};base64,{encoded}"));
         inline_content_ids.insert(content_id.to_owned());
     }

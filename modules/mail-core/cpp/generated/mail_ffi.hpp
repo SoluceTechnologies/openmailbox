@@ -47,6 +47,7 @@ class NativeMailFfi : public jsi::HostObject {
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_on_foreground(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_open_mailbox(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_probe_oauth(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
+    jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_readable_image(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_reauthorize(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_remove_account(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_fn_method_mailcore_rename_account(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
@@ -132,6 +133,7 @@ class NativeMailFfi : public jsi::HostObject {
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_on_foreground(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_open_mailbox(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_probe_oauth(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
+    jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_readable_image(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_reauthorize(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_remove_account(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);
     jsi::Value cpp_uniffi_mail_ffi_checksum_method_mailcore_rename_account(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count);

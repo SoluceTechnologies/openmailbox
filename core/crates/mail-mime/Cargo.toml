@@ -10,3 +10,9 @@ ammonia.workspace = true
 base64.workspace = true
 lettre.workspace = true
 mail-parser.workspace = true
+jxl-oxide.workspace = true
+png.workspace = true
+
+[dev-dependencies]
+zune-jpegxl.workspace = true
+zune-core.workspace = true

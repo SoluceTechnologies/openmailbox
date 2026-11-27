@@ -18,14 +18,22 @@ export const VIEWABLE_ON_IOS = [
 ];
 
 const UNKNOWN_TYPE = 'application/octet-stream';
+const JPEG_XL = /\.jxl$/i;
 const FLAG_GRANT_READ_URI_PERMISSION = 1;
 
 function share(uri: string, attachment: Attachment): Promise<void> {
   return Sharing.shareAsync(uri, { mimeType: attachment.mimeType, dialogTitle: attachment.filename });
 }
 
-export async function openAttachment(emailId: string, attachment: Attachment): Promise<void> {
-  const path = await mailCore().saveAttachment(emailId, attachment.index, attachmentsDirectory());
+async function readableCopy(path: string, attachment: Attachment): Promise<{ path: string; attachment: Attachment }> {
+  if (attachment.mimeType !== 'image/jxl' && !JPEG_XL.test(attachment.filename)) return { path, attachment };
+  const png = await mailCore().readableImage(path).catch(() => undefined);
+  return png ? { path: png, attachment: { ...attachment, mimeType: 'image/png' } } : { path, attachment };
+}
+
+export async function openAttachment(emailId: string, original: Attachment): Promise<void> {
+  const saved = await mailCore().saveAttachment(emailId, original.index, attachmentsDirectory());
+  const { path, attachment } = await readableCopy(saved, original);
   const uri = `file://${path.split('/').map(encodeURIComponent).join('/')}`;
   if (attachment.mimeType === UNKNOWN_TYPE) return share(uri, attachment);
 
