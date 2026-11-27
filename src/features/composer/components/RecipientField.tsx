@@ -14,7 +14,6 @@ import { useRecipientSuggestions } from '../useRecipientSuggestions';
 const SEPARATOR = /[,;\n]$/;
 const VISIBLE_SUGGESTIONS = 5;
 const SUMMARY_GAP = 4;
-export const TOKEN_BLUE = { light: '#007aff', dark: '#0a84ff' };
 
 const sameEmail = (first: MailAddress, second: MailAddress) => first.email.toLowerCase() === second.email.toLowerCase();
 const shownName = (address: MailAddress) => address.name || address.email;
@@ -149,8 +148,8 @@ function SelectedRecipient({ address, onSwap }: { address: MailAddress; onSwap: 
 
 export function RecipientField({ label, value, onChange, text, onTextChange, autoFocus, inputAccessoryViewID, onFocus }: RecipientFieldProps) {
   const { t } = useTranslation();
-  const { colors, dark } = useTheme();
-  const blue = TOKEN_BLUE[dark ? 'dark' : 'light'];
+  const { colors } = useTheme();
+  const accent = colors.primary;
   const input = useRef<TextInput>(null);
   const [focused, setFocused] = useState(autoFocus === true);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
@@ -215,7 +214,7 @@ export function RecipientField({ label, value, onChange, text, onTextChange, aut
         </Typography>
         <View style={styles.tokens}>
           {folded ? (
-            <RecipientSummary key={value.map(shownName).join('\n')} addresses={value} label={name} color={blue} onPress={() => input.current?.focus()} />
+            <RecipientSummary key={value.map(shownName).join('\n')} addresses={value} label={name} color={accent} onPress={() => input.current?.focus()} />
           ) : (
             value.map((address) => {
               const isSelected = address.email === selectedEmail;
@@ -230,9 +229,9 @@ export function RecipientField({ label, value, onChange, text, onTextChange, aut
                     nativeEvent.actionName === 'delete' ? remove(address) : toggle(address)
                   }
                   onPress={() => toggle(address)}
-                  style={[styles.token, { backgroundColor: isSelected ? blue : colors.chip }]}
+                  style={[styles.token, { backgroundColor: isSelected ? accent : colors.chip }]}
                 >
-                  <Typography weight="400" color={isSelected ? 'light' : blue} numberOfLines={1} style={styles.shrink}>
+                  <Typography weight="400" color={isSelected ? 'light' : accent} numberOfLines={1} style={styles.shrink}>
                     {shownName(address)}
                   </Typography>
                 </Pressable>
@@ -262,8 +261,8 @@ export function RecipientField({ label, value, onChange, text, onTextChange, aut
             textContentType="emailAddress"
             blurOnSubmit={false}
             inputAccessoryViewID={inputAccessoryViewID}
-            cursorColor={blue}
-            selectionColor={blue}
+            cursorColor={accent}
+            selectionColor={accent}
             style={[styles.input, { color: colors.text }, folded && styles.foldedInput]}
           />
         </View>

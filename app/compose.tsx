@@ -12,7 +12,7 @@ import { sendDraft } from '@/core/actions';
 import { useAccounts, useBody, useThreadEmails } from '@/core/hooks';
 import { canAdd, forwardedAttachments, pickAttachments, type ComposerAttachment } from '@/features/composer/attachments';
 import { AttachmentList } from '@/features/composer/components/AttachmentList';
-import { RecipientField, TOKEN_BLUE } from '@/features/composer/components/RecipientField';
+import { RecipientField } from '@/features/composer/components/RecipientField';
 import { FORMAT_BAR_HEIGHT, KeyboardFormatBar } from '@/features/composer/components/KeyboardFormatBar';
 import { RichBody } from '@/features/composer/components/RichBody';
 import { editorHtml } from '@/features/composer/editorHtml';
@@ -60,7 +60,7 @@ export default function ComposeScreen() {
   const params = useLocalSearchParams<ComposeParams>();
   const mode: ComposeMode = params.mode ?? 'new';
   const { t } = useTranslation();
-  const { colors, dark } = useTheme();
+  const { colors } = useTheme();
   const accounts = useAccounts();
   const defaultAccountId = useSettingsStore((state) => state.defaultAccountId);
   const showToast = useUndoStore((state) => state.show);
@@ -460,8 +460,8 @@ export default function ComposeScreen() {
                 value={subject}
                 onChangeText={setSubject}
                 onFocus={foldCopies}
-                cursorColor={TOKEN_BLUE[dark ? 'dark' : 'light']}
-                selectionColor={TOKEN_BLUE[dark ? 'dark' : 'light']}
+                cursorColor={colors.primary}
+                selectionColor={colors.primary}
                 accessibilityLabel={fieldName(t('compose.subject'))}
                 inputAccessoryViewID={sharedAccessory}
                 style={[styles.input, { color: colors.text }]}

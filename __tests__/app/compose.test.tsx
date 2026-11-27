@@ -3,6 +3,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-
 
 import ComposeScreen from '../../app/compose';
 import { queryClient, queryKeys } from '@/core/queryClient';
+import { lightTheme } from '@/theme';
 import { forwardedAttachments, pickAttachments } from '@/features/composer/attachments';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUndoStore } from '@/stores/undoStore';
@@ -168,8 +169,8 @@ describe('composer', () => {
 
     it('draws the subject caret in the recipients blue', () => {
       renderWithProviders(<ComposeScreen />);
-      expect(screen.getByLabelText('Subject').props.selectionColor).toBe('#007aff');
-      expect(screen.getByLabelText('Subject').props.cursorColor).toBe('#007aff');
+      expect(screen.getByLabelText('Subject').props.selectionColor).toBe(lightTheme.colors.primary);
+      expect(screen.getByLabelText('Subject').props.cursorColor).toBe(lightTheme.colors.primary);
     });
 
     it('opens the copies on Cc', () => {
