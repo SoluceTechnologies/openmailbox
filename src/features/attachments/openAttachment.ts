@@ -7,6 +7,8 @@ import type { Attachment } from '@openmailbox/mail-core';
 
 import { attachmentsDirectory, mailCore } from '@/core/mailCore';
 
+import { presentVCard } from './vcard';
+
 export const VIEWABLE_ON_IOS = [
   'application/pdf',
   'image/',
@@ -24,6 +26,8 @@ const UNKNOWN_TYPE = 'application/octet-stream';
 const CONVERTED_TYPES = ['image/jxl', 'image/tiff'];
 const CONVERTED_EXTENSIONS = /\.(jxl|tiff?)$/i;
 const EMAIL = /\.eml$/i;
+const VCARD_TYPES = ['text/vcard', 'text/x-vcard', 'text/directory'];
+const VCARD = /\.vcf$/i;
 const FLAG_GRANT_READ_URI_PERMISSION = 1;
 
 function share(uri: string, attachment: Attachment): Promise<void> {
@@ -55,6 +59,11 @@ export async function openAttachmentOfFile(file: string, original: Attachment): 
 async function openSaved(saved: string, original: Attachment): Promise<void> {
   if (isAttachedEmail(original)) {
     router.push({ pathname: '/message', params: { path: saved, name: original.filename } });
+    return;
+  }
+  if (Platform.OS === 'ios' && (VCARD_TYPES.includes(original.mimeType) || VCARD.test(original.filename))) {
+    const uri = fileUri(saved);
+    if (!(await presentVCard(await new File(uri).text()))) await share(uri, original);
     return;
   }
   const { path, attachment } = await readableCopy(saved, original);

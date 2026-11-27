@@ -5,16 +5,20 @@ import { router } from 'expo-router';
 import type { Attachment } from '@openmailbox/mail-core';
 
 import { openAttachment, openAttachmentOfFile } from '@/features/attachments/openAttachment';
+import { presentVCard } from '@/features/attachments/vcard';
 
 import { core } from '../../helpers/fixtures';
 
 jest.mock('expo-router', () => ({ ...jest.requireActual('expo-router'), router: { push: jest.fn() } }));
+let mockFileText = '';
+jest.mock('@/features/attachments/vcard', () => ({ presentVCard: jest.fn(async (text: string) => text.includes('FN:')) }));
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => undefined) }));
 jest.mock('expo-intent-launcher', () => ({ startActivityAsync: jest.fn(async () => ({ resultCode: 0 })) }));
 jest.mock('expo-file-system', () => ({
   ...jest.requireActual('expo-file-system'),
   File: class {
     contentUri: string;
+    text = async () => mockFileText;
     constructor(uri: string) {
       this.contentUri = uri.replace('file:///cache', 'content://com.soluce.openmailbox.provider/cache');
     }
@@ -167,6 +171,39 @@ describe('openAttachment', () => {
     await openAttachment('email-1', { index: 7, filename: 'event.ics', mimeType: 'text/calendar', size: 300 });
     expect(router.push).not.toHaveBeenCalled();
     expect(Sharing.shareAsync).toHaveBeenCalled();
+  });
+
+  describe('vCards', () => {
+    const CARD: Attachment = { index: 8, filename: 'Claire Dubois.vcf', mimeType: 'text/vcard', size: 300 };
+
+    beforeEach(() => {
+      mockFileText = 'BEGIN:VCARD\nFN:Claire Dubois\nEND:VCARD';
+    });
+
+    it.each([CARD, { ...CARD, mimeType: 'text/x-vcard' }, { ...CARD, mimeType: 'application/octet-stream' }])(
+      'opens the new contact form for $mimeType on iOS',
+      async (attachment) => {
+        onPlatform('ios');
+        await openAttachment('email-1', attachment);
+        expect(presentVCard).toHaveBeenCalledWith(mockFileText);
+        expect(router.push).not.toHaveBeenCalled();
+        expect(Sharing.shareAsync).not.toHaveBeenCalled();
+      },
+    );
+
+    it('shares a card it cannot read', async () => {
+      onPlatform('ios');
+      mockFileText = 'nothing';
+      await openAttachment('email-1', CARD);
+      expect(Sharing.shareAsync).toHaveBeenCalled();
+    });
+
+    it('lets the Android contacts app import it', async () => {
+      onPlatform('android');
+      await openAttachment('email-1', CARD);
+      expect(presentVCard).not.toHaveBeenCalled();
+      expect(IntentLauncher.startActivityAsync).toHaveBeenCalledWith('android.intent.action.VIEW', expect.objectContaining({ type: 'text/vcard' }));
+    });
   });
 
   it('shares a file named without an extension on iOS, which the viewer could not show', async () => {
