@@ -6963,6 +6963,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ical.js@npm:2.2.1":
+  version: 2.2.1
+  resolution: "ical.js@npm:2.2.1"
+  checksum: 10c0/f08e896d613fe7dc737ca2cc5254b5413586c6f2d4c90568cdf077eff757051f8443d3b8705548e3dd7c3771e26aa3fdf7a2534b763242a9cf90a4150efefd85
+  languageName: node
+  linkType: hard
+
 "iconv-lite@npm:0.6.3, iconv-lite@npm:^0.6.3":
   version: 0.6.3
   resolution: "iconv-lite@npm:0.6.3"
@@ -9214,6 +9221,7 @@ __metadata:
     expo-task-manager: "npm:~57.0.0"
     expo-web-browser: "npm:~57.0.3"
     i18next: "npm:^26.3.1"
+    ical.js: "npm:2.2.1"
     jest: "npm:^29.7.0"
     jest-expo: "npm:~57.0.2"
     lucide-react-native: "npm:^1.25.0"
