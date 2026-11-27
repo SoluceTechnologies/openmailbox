@@ -13,6 +13,7 @@ export function documentFor(html: string, allowRemoteContent: boolean, page: (ty
 <style>
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body { margin: 0; padding: 0; background: ${page.background}; color: ${page.text}; }
+:root, :root > body { height: auto !important; min-height: 0 !important; max-height: none !important; }
 a { color: ${page.link}; }
 body { padding: 4px 2px; font: 15px/1.45 ${READER_FONT}; overflow-wrap: break-word; }
 img { max-width: 100%; height: auto; }
