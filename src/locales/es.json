@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Añadir desde Contactos",
+    "andMore_one": "y {{count}} más",
+    "andMore_other": "y {{count}} más",
     "attach": "Adjuntar",
     "attachFiles": "Archivos",
     "attachPhotos": "Fotos y vídeos",
@@ -144,8 +146,6 @@
     "bodyPlaceholder": "Mensaje",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Cco, De: {{from}}",
-    "discard": "Descartar",
-    "discardTitle": "¿Descartar este borrador?",
     "forward": "Reenviar",
     "forwardedAttachmentsFailed": "No se han podido descargar los adjuntos originales, así que no se reenviarán.",
     "forwardedHeader": "---------- Mensaje reenviado ----------",
@@ -171,7 +171,14 @@
     "to": "Para:",
     "wrote": "El {{date}}, {{author}} escribió:",
     "formatting": "Formato",
-    "hideFormatting": "Ocultar formato"
+    "hideFormatting": "Ocultar formato",
+    "draftTitle": "¿Guardar este mensaje como borrador?",
+    "saveDraft": "Guardar borrador",
+    "deleteDraft": "Eliminar borrador",
+    "draftSaved": "Borrador guardado",
+    "draftFailed": "No se pudo guardar el borrador",
+    "draftAttachmentsFailed": "No se pudieron descargar los adjuntos del borrador.",
+    "attachmentsLoading": "Los adjuntos aún se están descargando."
   },
   "dates": {
     "yesterday": "Ayer"
@@ -184,6 +191,49 @@
     "network": "No se puede acceder al servidor ({{message}}).",
     "operationFailed": "No se ha podido aplicar un cambio en el servidor",
     "server": "El servidor ha devuelto un error: {{message}}"
+  },
+  "invites": {
+    "accept": "Aceptar",
+    "addToCalendar": "Añadir al calendario",
+    "allDay": "Todo el día",
+    "answer": {
+      "ACCEPTED": "Has aceptado",
+      "DECLINED": "Has rechazado",
+      "TENTATIVE": "Has respondido quizás"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} ha aceptado la invitación.",
+      "DECLINED": "{{name}} ha rechazado la invitación.",
+      "TENTATIVE": "{{name}} quizás asista."
+    },
+    "cancelled": "Este evento se ha cancelado.",
+    "decline": "Rechazar",
+    "from": "de {{name}}",
+    "maybe": "Quizás",
+    "notAdded": "No se ha podido añadir el evento al calendario.",
+    "removeFromCalendar": "Quitar del calendario",
+    "repeats": {
+      "daily_one": "Cada día",
+      "daily_other": "Cada {{count}} días",
+      "monthly_one": "Cada mes",
+      "monthly_other": "Cada {{count}} meses",
+      "weekly_one": "Cada semana",
+      "weekly_other": "Cada {{count}} semanas",
+      "yearly_one": "Cada año",
+      "yearly_other": "Cada {{count}} años"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} ha aceptado.",
+      "DECLINED": "{{name}} ha rechazado.",
+      "TENTATIVE": "{{name}} quizás asista."
+    },
+    "sendFailed": "No se ha podido enviar la respuesta.",
+    "subject": {
+      "ACCEPTED": "Aceptado: {{summary}}",
+      "DECLINED": "Rechazado: {{summary}}",
+      "TENTATIVE": "Quizás: {{summary}}"
+    },
+    "updated": "Esta invitación se ha actualizado."
   },
   "mailboxes": {
     "allInboxes": "Todas las bandejas",
@@ -205,7 +255,8 @@
     "newMessages_other": "{{count}} mensajes nuevos"
   },
   "offline": {
-    "banner": "Estás sin conexión. Los cambios se enviarán cuando vuelva la conexión."
+    "banner": "Estás sin conexión. Los cambios se enviarán cuando vuelva la conexión.",
+    "detail": "Los cambios se enviarán al volver la conexión."
   },
   "reader": {
     "attachmentFailed": "No se ha podido abrir el archivo adjunto.",
@@ -241,11 +292,16 @@
   },
   "settings": {
     "about": "Acerca de",
+    "accessibility": "Accesibilidad",
     "accounts": "Cuentas",
     "appearance": "Apariencia e idioma",
     "contactPictures": "Fotos de contactos",
     "contactPicturesHint": "Las fotos vienen de Gravatar, o del logotipo o el sitio web de la empresa del remitente, que pueden saber que estáis en contacto.",
     "general": "General",
+    "haptics": "Respuesta háptica",
+    "hapticsHint": "Vibrar al tocar e interactuar.",
+    "inboxCategories": "Categorías de la bandeja de entrada",
+    "inboxCategoriesHint": "Ordena la bandeja de entrada en Principal, Transacciones, Actualizaciones y Promociones.",
     "language": "Idioma",
     "languageHint": "Las fechas y los textos siguen este idioma.",
     "loadRemoteImages": "Cargar imágenes remotas",
@@ -352,7 +408,8 @@
     "unknownSender": "Remitente desconocido",
     "unread": "No leído",
     "unreadCount_one": "{{count}} sin leer",
-    "unreadCount_other": "{{count}} sin leer"
+    "unreadCount_other": "{{count}} sin leer",
+    "noRecipients": "Sin destinatarios"
   },
   "undo": {
     "archived": "Archivado",

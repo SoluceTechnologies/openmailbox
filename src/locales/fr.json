@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Ajouter depuis les contacts",
+    "andMore_one": "et {{count}} autre",
+    "andMore_other": "et {{count}} autres",
     "attach": "Joindre",
     "attachFiles": "Fichiers",
     "attachPhotos": "Photos et vidéos",
@@ -144,8 +146,6 @@
     "bodyPlaceholder": "Message",
     "cc": "Cc :",
     "copiesAndFrom": "Cc/Cci, De : {{from}}",
-    "discard": "Supprimer",
-    "discardTitle": "Supprimer ce brouillon ?",
     "forward": "Transférer",
     "forwardedAttachmentsFailed": "Les pièces jointes d’origine n’ont pas pu être téléchargées : elles ne seront pas transférées.",
     "forwardedHeader": "---------- Message transféré ----------",
@@ -171,7 +171,14 @@
     "to": "À :",
     "wrote": "Le {{date}}, {{author}} a écrit :",
     "formatting": "Mise en forme",
-    "hideFormatting": "Masquer la mise en forme"
+    "hideFormatting": "Masquer la mise en forme",
+    "draftTitle": "Garder ce message en brouillon ?",
+    "saveDraft": "Enregistrer le brouillon",
+    "deleteDraft": "Supprimer le brouillon",
+    "draftSaved": "Brouillon enregistré",
+    "draftFailed": "Le brouillon n'a pas pu être enregistré",
+    "draftAttachmentsFailed": "Les pièces jointes du brouillon n'ont pas pu être téléchargées.",
+    "attachmentsLoading": "Les pièces jointes sont encore en cours de téléchargement."
   },
   "dates": {
     "yesterday": "Hier"
@@ -184,6 +191,49 @@
     "network": "Le serveur est injoignable ({{message}}).",
     "operationFailed": "Une modification n'a pas pu être appliquée sur le serveur",
     "server": "Le serveur a renvoyé une erreur : {{message}}"
+  },
+  "invites": {
+    "accept": "Accepter",
+    "addToCalendar": "Ajouter au calendrier",
+    "allDay": "Toute la journée",
+    "answer": {
+      "ACCEPTED": "Vous avez accepté",
+      "DECLINED": "Vous avez refusé",
+      "TENTATIVE": "Vous avez répondu peut-être"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} a accepté l’invitation.",
+      "DECLINED": "{{name}} a refusé l’invitation.",
+      "TENTATIVE": "{{name}} participera peut-être."
+    },
+    "cancelled": "Cet événement a été annulé.",
+    "decline": "Refuser",
+    "from": "de {{name}}",
+    "maybe": "Peut-être",
+    "notAdded": "L’événement n’a pas pu être ajouté à votre calendrier.",
+    "removeFromCalendar": "Retirer du calendrier",
+    "repeats": {
+      "daily_one": "Tous les jours",
+      "daily_other": "Tous les {{count}} jours",
+      "monthly_one": "Tous les mois",
+      "monthly_other": "Tous les {{count}} mois",
+      "weekly_one": "Toutes les semaines",
+      "weekly_other": "Toutes les {{count}} semaines",
+      "yearly_one": "Tous les ans",
+      "yearly_other": "Tous les {{count}} ans"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} a accepté.",
+      "DECLINED": "{{name}} a refusé.",
+      "TENTATIVE": "{{name}} participera peut-être."
+    },
+    "sendFailed": "La réponse n’a pas pu être envoyée.",
+    "subject": {
+      "ACCEPTED": "Accepté : {{summary}}",
+      "DECLINED": "Refusé : {{summary}}",
+      "TENTATIVE": "Peut-être : {{summary}}"
+    },
+    "updated": "Cette invitation a été modifiée."
   },
   "mailboxes": {
     "allInboxes": "Toutes les boîtes",
@@ -205,7 +255,8 @@
     "newMessages_other": "{{count}} nouveaux messages"
   },
   "offline": {
-    "banner": "Vous êtes hors ligne. Les modifications seront envoyées au retour de la connexion."
+    "banner": "Vous êtes hors ligne. Les modifications seront envoyées au retour de la connexion.",
+    "detail": "Les modifications partiront à la reconnexion."
   },
   "reader": {
     "attachmentFailed": "La pièce jointe n'a pas pu être ouverte.",
@@ -241,11 +292,16 @@
   },
   "settings": {
     "about": "À propos",
+    "accessibility": "Accessibilité",
     "accounts": "Comptes",
     "appearance": "Apparence et langue",
     "contactPictures": "Photos des contacts",
     "contactPicturesHint": "Les photos viennent de Gravatar, ou du logo ou du site de l’entreprise de l’expéditeur, qui peuvent savoir que vous êtes en contact.",
     "general": "Général",
+    "haptics": "Retour haptique",
+    "hapticsHint": "Vibrer lors des appuis et interactions.",
+    "inboxCategories": "Catégories de la boîte de réception",
+    "inboxCategoriesHint": "Classe la boîte de réception en Principal, Transactions, Mises à jour et Promotions.",
     "language": "Langue",
     "languageHint": "Les dates et les textes suivent cette langue.",
     "loadRemoteImages": "Charger les images distantes",
@@ -352,7 +408,8 @@
     "unknownSender": "Expéditeur inconnu",
     "unread": "Non lu",
     "unreadCount_one": "{{count}} non lu",
-    "unreadCount_other": "{{count}} non lus"
+    "unreadCount_other": "{{count}} non lus",
+    "noRecipients": "Aucun destinataire"
   },
   "undo": {
     "archived": "Archivé",

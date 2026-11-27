@@ -5714,6 +5714,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-calendar@npm:~57.0.7":
+  version: 57.0.7
+  resolution: "expo-calendar@npm:57.0.7"
+  peerDependencies:
+    expo: "*"
+    react-native: "*"
+  checksum: 10c0/13f94526a7037796d9ab6e1b7fab7b4160c54e1b10840966d32494b3b2f7db6f5e48497a0988712bd524c5d25ac6df8d4ddc3aa976993f77f04530378c1b92a2
+  languageName: node
+  linkType: hard
+
 "expo-constants@npm:~57.0.23":
   version: 57.0.23
   resolution: "expo-constants@npm:57.0.23"
@@ -6203,6 +6213,17 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 10c0/763ade714dfce8f989fc7dbf73ac447d26d3b0d9d5f5c04d1273f60d9a3741641f13e457a33f1dd7873f95eb97e5e01deee60b630fc8c07a07caa1e6a7d1a914
+  languageName: node
+  linkType: hard
+
+"expo-video@npm:~57.0.5":
+  version: 57.0.5
+  resolution: "expo-video@npm:57.0.5"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/89562cf6fd0e5a1a724eb027d3ad56587db1f42e83eb0cfd7626aaa02555d11334954812b1d9960e3c7d95cc584341849439200b054a71ab7946ee3135dec129
   languageName: node
   linkType: hard
 
@@ -6960,6 +6981,13 @@ __metadata:
     typescript:
       optional: true
   checksum: 10c0/5920ac8fb6b647a2bdd439d121de04e5297246e52c4d95d13f5faae0824fd45b2faeb66038bcd61fc62362daa815f9c32fb992d6faa3787607d1dfe768e9a8b1
+  languageName: node
+  linkType: hard
+
+"ical.js@npm:2.2.1":
+  version: 2.2.1
+  resolution: "ical.js@npm:2.2.1"
+  checksum: 10c0/f08e896d613fe7dc737ca2cc5254b5413586c6f2d4c90568cdf077eff757051f8443d3b8705548e3dd7c3771e26aa3fdf7a2534b763242a9cf90a4150efefd85
   languageName: node
   linkType: hard
 
@@ -9190,6 +9218,7 @@ __metadata:
     dayjs: "npm:^1.11.20"
     expo: "npm:^57.0.0"
     expo-background-task: "npm:~57.0.0"
+    expo-calendar: "npm:~57.0.7"
     expo-constants: "npm:~57.0.6"
     expo-contacts: "npm:~57.0.0"
     expo-dev-client: "npm:~57.0.9"
@@ -9212,8 +9241,10 @@ __metadata:
     expo-status-bar: "npm:~57.0.1"
     expo-system-ui: "npm:~57.0.4"
     expo-task-manager: "npm:~57.0.0"
+    expo-video: "npm:~57.0.5"
     expo-web-browser: "npm:~57.0.3"
     i18next: "npm:^26.3.1"
+    ical.js: "npm:2.2.1"
     jest: "npm:^29.7.0"
     jest-expo: "npm:~57.0.2"
     lucide-react-native: "npm:^1.25.0"

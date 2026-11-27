@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, Stack, useRouter, useTheme } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Inbox, Settings, TriangleAlert } from 'lucide-react-native';
 import { MailboxRole, type Account, type Mailbox } from '@openmailbox/mail-core';
 
 import { BottomBar } from '@/components/BottomBar';
-import { useAccounts, useMailboxes } from '@/core/hooks';
+import { accountsQuery, useAccounts, useMailboxes } from '@/core/hooks';
 import { UNIFIED_SCOPE } from '@/core/queryClient';
 import { accountName } from '@/features/accounts/accountName';
 import { mailboxBadge, mailboxIcon, mailboxName, visibleFolders } from '@/features/mailboxes/mailboxPresentation';
@@ -16,7 +17,7 @@ import { useSyncLabel } from '@/features/sync/useSyncLabel';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { accountColor } from '@/theme';
-import { FormSection, IconButton, ListRow, Typography, ViewContainer } from '@/ui/components';
+import { Button, EmptyState, FormSection, IconButton, ListRow, Typography, ViewContainer } from '@/ui/components';
 import { LIQUID_GLASS, NATIVE_CHROME, translucentHeader } from '@/ui/nativeChrome';
 
 let unifiedInboxOpened = false;
@@ -119,6 +120,7 @@ export default function MailboxesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
+  const accountsStatus = useQuery(accountsQuery);
   const accounts = useAccounts();
   const mailboxes = useMailboxes();
   const accountNames = useSettingsStore((state) => state.accountNames);
@@ -141,6 +143,17 @@ export default function MailboxesScreen() {
     }
   }, [accounts.length, router]);
 
+  if (accountsStatus.isPending) return <ViewContainer grouped />;
+  if (accountsStatus.isError) {
+    return (
+      <ViewContainer grouped centered>
+        <EmptyState
+          title={t('errors.generic')}
+          action={<Button title={t('common.retry')} onPress={() => accountsStatus.refetch()} />}
+        />
+      </ViewContainer>
+    );
+  }
   if (accounts.length === 0) return <Redirect href="/onboarding" />;
 
   const list =

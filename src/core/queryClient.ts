@@ -23,5 +23,8 @@ export const queryKeys = {
   newestUnread: (scope: string) => ['newestUnread', scope] as const,
   thread: (threadId: string, mailboxId: string | undefined) => ['thread', threadId, mailboxId ?? null] as const,
   body: (emailId: string) => ['body', emailId] as const,
+  savedMessage: (path: string) => ['savedMessage', path] as const,
   search: (query: string, mailboxIds: string[]) => ['search', query, mailboxIds.join(',')] as const,
 };
+
+queryClient.setQueryDefaults(queryKeys.accounts, { gcTime: Infinity });

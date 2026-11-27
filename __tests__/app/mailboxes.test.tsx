@@ -7,7 +7,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { useSyncStore } from '@/stores/syncStore';
 import i18n from '@/utils/i18n';
 
-import { makeAccount, makeMailbox } from '../helpers/fixtures';
+import { core, makeAccount, makeMailbox } from '../helpers/fixtures';
 import { renderWithProviders } from '../helpers/render';
 
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
@@ -99,5 +99,29 @@ describe('mailboxes', () => {
     queryClient.setQueryData(queryKeys.accounts, []);
     renderWithProviders(<MailboxesScreen />);
     expect(screen.getByText('redirect /onboarding')).toBeOnTheScreen();
+  });
+
+  describe('before the accounts are read', () => {
+    beforeEach(() => queryClient.clear());
+
+    it('waits for the accounts before choosing the welcome screen', () => {
+      core.listAccounts.mockReturnValue(new Promise(() => undefined));
+      renderWithProviders(<MailboxesScreen />);
+      expect(screen.queryByText('redirect /onboarding')).toBeNull();
+    });
+
+    it('opens the welcome screen once no account is found', async () => {
+      core.listAccounts.mockResolvedValue([]);
+      renderWithProviders(<MailboxesScreen />);
+      expect(await screen.findByText('redirect /onboarding')).toBeOnTheScreen();
+    });
+
+    it('offers a retry when the accounts cannot be read', async () => {
+      core.listAccounts.mockRejectedValueOnce(new Error('locked')).mockResolvedValue([ALICE]);
+      renderWithProviders(<MailboxesScreen />);
+      fireEvent.press(await screen.findByRole('button', { name: 'Try Again' }));
+      expect(await screen.findByRole('button', { name: 'All Inboxes' })).toBeOnTheScreen();
+      expect(screen.queryByText('redirect /onboarding')).toBeNull();
+    });
   });
 });

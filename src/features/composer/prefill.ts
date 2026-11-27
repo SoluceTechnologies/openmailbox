@@ -3,10 +3,10 @@ import type { EmailSummary } from '@openmailbox/mail-core';
 import { displayName, parseAddressList, withoutAddresses, type MailAddress } from '@/utils/addresses';
 import { splitLinks } from '@/utils/links';
 
-export type ComposeMode = 'new' | 'reply' | 'replyAll' | 'forward';
+export type ComposeMode = 'new' | 'reply' | 'replyAll' | 'forward' | 'draft';
 
 export function composeTitleKey(mode: ComposeMode = 'new'): string {
-  return mode === 'new' ? 'compose.newMessage' : mode === 'forward' ? 'compose.forward' : 'compose.reply';
+  return mode === 'new' || mode === 'draft' ? 'compose.newMessage' : mode === 'forward' ? 'compose.forward' : 'compose.reply';
 }
 
 export interface ComposePrefill {
@@ -90,6 +90,43 @@ export function linkedParagraphs(text: string): string {
     .split('\n')
     .map((line) => (line ? `<p>${linkedHtml(line)}</p>` : '<br>'))
     .join('');
+}
+
+const MAIL_WRAPPER = /^\s*<div style="font-family:[^"]*">([\s\S]*)<\/div>\s*$/i;
+const SIGNATURE_MARK = '<div class="openmailbox-signature">';
+const QUOTE_MARK = '<div class="openmailbox-quote">';
+const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", nbsp: ' ' };
+
+export function signatureBlock(markup: string): string {
+  return markup ? `${SIGNATURE_MARK}<br><br>${markup}</div>` : '';
+}
+
+export function quoteBlock(markup: string): string {
+  return markup ? `${QUOTE_MARK}${markup}</div>` : '';
+}
+
+export function draftParts(html: string): { body: string; hasSignature: boolean; quote: string } {
+  const content = html.match(MAIL_WRAPPER)?.[1] ?? html;
+  const quoteAt = content.indexOf(QUOTE_MARK);
+  const end = quoteAt === -1 ? content.length : quoteAt;
+  const signatureAt = content.slice(0, end).indexOf(SIGNATURE_MARK);
+  return {
+    body: content.slice(0, signatureAt === -1 ? end : signatureAt),
+    hasSignature: signatureAt !== -1,
+    quote: quoteAt === -1 ? '' : content.slice(quoteAt),
+  };
+}
+
+export function htmlText(html: string): string {
+  return html
+    .replace(/<(style|script|title)\b[\s\S]*?<\/\1>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|tr|h[1-6]|blockquote)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_entity, name: string) => ENTITIES[name])
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 export function quoteHtml(mode: ComposeMode, quoteText: string, originalHtml: string): string {

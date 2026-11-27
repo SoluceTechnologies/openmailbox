@@ -77,7 +77,8 @@ export default function MailboxScreen() {
   const [searchActive, setSearchActive] = useState(false);
   const searching = searchActive || query.trim().length > 1;
   const mailbox = mailboxes.find((candidate) => candidate.id === scope);
-  const categorized = unified || mailbox?.role === MailboxRole.Inbox;
+  const categoriesEnabled = useSettingsStore((state) => state.categoriesEnabled);
+  const categorized = categoriesEnabled && (unified || mailbox?.role === MailboxRole.Inbox);
   const inboxFilter = useSettingsStore((state) => state.inboxFilter);
   const setInboxFilter = useSettingsStore((state) => state.setInboxFilter);
   const accountNames = useSettingsStore((state) => state.accountNames);
@@ -170,12 +171,21 @@ export default function MailboxScreen() {
     [markKept, toggle],
   );
 
+  const drafts = mailbox?.role === MailboxRole.Drafts;
+  const showRecipients = drafts || mailbox?.role === MailboxRole.Sent;
   const openThread = useCallback(
     (thread: ThreadSummary) => {
       markKept([thread.threadId]);
+      if (drafts) {
+        router.push({
+          pathname: '/compose',
+          params: { mode: 'draft', emailId: thread.latest.id, threadId: thread.threadId, mailboxId: thread.mailboxId, accountId: thread.accountId },
+        });
+        return;
+      }
       router.push({ pathname: '/thread/[threadId]', params: { threadId: thread.threadId, mailboxId: thread.mailboxId } });
     },
-    [markKept, router],
+    [markKept, router, drafts],
   );
 
   const renderItem = useCallback(
@@ -184,15 +194,16 @@ export default function MailboxScreen() {
         thread={item}
         accountAccent={showAccountAccent ? accentByAccount.get(item.accountId) : undefined}
         canArchive={actionsFor(item).includes('archive')}
-        menuActions={selection.active ? undefined : actionsFor(item)}
+        menuActions={selection.active || drafts ? undefined : actionsFor(item)}
         onOpen={selection.active ? toggleSelected : openThread}
         onLongPress={setPreviewed}
         onAction={runThreadAction}
         onMore={setSheetThread}
         selected={selection.active ? selection.selected.has(item.key) : undefined}
+        showRecipients={showRecipients}
       />
     ),
-    [showAccountAccent, accentByAccount, actionsFor, openThread, runThreadAction, selection.active, selection.selected, toggleSelected],
+    [showAccountAccent, accentByAccount, actionsFor, openThread, runThreadAction, selection.active, selection.selected, toggleSelected, drafts, showRecipients],
   );
 
   const title = unified ? t('mailboxes.allInboxes') : mailbox ? mailboxName(mailbox, t) : '';
@@ -328,7 +339,7 @@ export default function MailboxScreen() {
         setFilterEnabled(true);
       }}
     />,
-    <Stack.Toolbar.View key={`on:${filterPillWidth}`} hidden={!filterEnabled || barSettling || filterPillWidth === 0}>
+    <Stack.Toolbar.View key="on" hidden={!filterEnabled || barSettling || filterPillWidth === 0}>
       {filterPill(true, true)}
     </Stack.Toolbar.View>,
   ];

@@ -290,8 +290,10 @@ fn draft_with(attachments: Vec<OutgoingAttachment>) -> Draft {
         body_text: "Voici.".into(),
         body_html: None,
         in_reply_to_email_id: None,
+        draft_email_id: None,
         attachments,
         from: None,
+        calendar: None,
     }
 }
 
@@ -387,6 +389,114 @@ fn send_from_an_identity_uses_it_as_sender_and_envelope() {
     );
 }
 
+const WITH_DRAFTS: &[(&str, MailboxRole)] = &[
+    ("INBOX", MailboxRole::Inbox),
+    ("Drafts", MailboxRole::Drafts),
+    ("Trash", MailboxRole::Trash),
+];
+
+fn queued_raw(fixture: &Fixture, kind: &str) -> String {
+    let queued = fixture
+        .engine
+        .store
+        .waiting_operations("alice", kind)
+        .unwrap();
+    match serde_json::from_str(&queued.last().unwrap().payload).unwrap() {
+        Operation::AppendDraft { raw } | Operation::Send { raw, .. } => raw,
+        _ => panic!("no message in {kind}"),
+    }
+}
+
+#[test]
+fn a_draft_without_recipients_is_queued_for_the_drafts_mailbox_with_its_bcc() {
+    let fixture = Fixture::new(WITH_DRAFTS);
+    let mut draft = draft_with(vec![]);
+    draft.to.clear();
+    draft.bcc = vec![Address {
+        name: None,
+        email: "carol@example.org".into(),
+    }];
+    fixture.engine.save_draft(draft).unwrap();
+    let rendered = mail_mime::render(queued_raw(&fixture, "append_draft").as_bytes()).unwrap();
+    assert_eq!(rendered.bcc[0].email, "carol@example.org");
+    assert!(rendered.text.contains("Voici."));
+}
+
+#[test]
+fn saving_a_draft_needs_a_drafts_mailbox() {
+    let fixture = Fixture::new(STANDARD);
+    assert!(matches!(
+        fixture.engine.save_draft(draft_with(vec![])),
+        Err(Error::InvalidInput(_))
+    ));
+}
+
+#[test]
+fn saving_or_sending_a_resumed_draft_removes_the_previous_copy() {
+    for send in [false, true] {
+        let fixture = Fixture::new(WITH_DRAFTS);
+        let drafts = fixture.id(MailboxRole::Drafts);
+        let (_, email_ids) = fixture.deliver(drafts, 4);
+        let mut draft = draft_with(vec![]);
+        draft.draft_email_id = Some(email_ids[0]);
+        if send {
+            fixture.engine.send(draft).unwrap();
+        } else {
+            fixture.engine.save_draft(draft).unwrap();
+        }
+        assert!(fixture.threads(drafts).is_empty());
+        let deletions = fixture
+            .engine
+            .store
+            .waiting_operations("alice", "delete")
+            .unwrap();
+        let Operation::Delete { sources } = serde_json::from_str(&deletions[0].payload).unwrap()
+        else {
+            panic!("not a deletion");
+        };
+        assert_eq!(sources[0].uid, Some(4));
+    }
+}
+
+#[test]
+fn a_resumed_reply_is_sent_in_its_conversation() {
+    let fixture = Fixture::new(WITH_DRAFTS);
+    let drafts = fixture.id(MailboxRole::Drafts);
+    fixture
+        .engine
+        .store
+        .insert_messages(
+            "alice",
+            drafts,
+            &[FetchedMessage {
+                uid: 4,
+                flags: Flags::default(),
+                internal_date: Some(1),
+                size: 1,
+                headers: ParsedHeaders {
+                    message_id: Some("draft@example.org".into()),
+                    in_reply_to: Some("question@example.org".into()),
+                    references: vec!["root@example.org".into(), "question@example.org".into()],
+                    ..ParsedHeaders::default()
+                },
+            }],
+        )
+        .unwrap();
+    let thread_id = fixture.threads(drafts)[0];
+    let mut draft = draft_with(vec![]);
+    draft.draft_email_id = Some(
+        fixture
+            .engine
+            .store
+            .thread_email_ids(drafts, thread_id)
+            .unwrap()[0],
+    );
+    fixture.engine.send(draft).unwrap();
+    let raw = queued_raw(&fixture, "send");
+    assert!(raw.contains("In-Reply-To: <question@example.org>"));
+    assert!(raw.contains("References: <root@example.org> <question@example.org>"));
+}
+
 fn newsletter(fixture: &Fixture, unsubscribe: Unsubscribe) -> i64 {
     let (_, email_ids) = fixture.deliver(fixture.id(MailboxRole::Inbox), 9);
     fixture
@@ -397,9 +507,11 @@ fn newsletter(fixture: &Fixture, unsubscribe: Unsubscribe) -> i64 {
             &RenderedBody {
                 html: None,
                 text: "News".into(),
+                bcc: Vec::new(),
                 has_remote_content: false,
                 attachments: vec![],
                 unsubscribe: Some(unsubscribe),
+                calendar: None,
             },
         )
         .unwrap();
@@ -757,4 +869,78 @@ fn an_oauth_sign_in_only_accepts_the_answer_to_its_own_request() {
         Err(Error::InvalidInput(_))
     ));
     assert!(engine.list_accounts().unwrap().is_empty());
+}
+
+const TINY_JXL: [u8; 42] = [
+    0xff, 0x0a, 0x30, 0x54, 0x10, 0x09, 0x08, 0x06, 0x01, 0x00, 0x78, 0x00, 0x4b, 0x38, 0x41, 0x3c,
+    0xb6, 0x3a, 0x51, 0xfe, 0x00, 0x47, 0x1e, 0xa0, 0x85, 0xb8, 0x27, 0x1a, 0x48, 0x45, 0x84, 0x1b,
+    0x71, 0x4f, 0xa8, 0x3e, 0x8e, 0x30, 0x03, 0x92, 0x84, 0x01,
+];
+
+#[test]
+fn writes_a_png_next_to_a_saved_jpeg_xl_attachment() {
+    let directory = std::env::temp_dir().join(format!("mail-sync-jxl-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let saved = directory.join("photo.jxl");
+    std::fs::write(&saved, TINY_JXL).unwrap();
+
+    let readable = readable_image(&saved).unwrap().unwrap();
+
+    assert_eq!(readable, directory.join("photo.png").to_string_lossy());
+    assert!(
+        std::fs::read(&readable)
+            .unwrap()
+            .starts_with(b"\x89PNG\r\n\x1a\n")
+    );
+    assert_eq!(std::fs::read(&saved).unwrap(), TINY_JXL);
+}
+
+#[test]
+fn writes_a_png_next_to_a_saved_tiff_scan() {
+    let directory = std::env::temp_dir().join(format!("mail-sync-tiff-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let saved = directory.join("scan.tif");
+    let mut tiff = std::io::Cursor::new(Vec::new());
+    tiff::encoder::TiffEncoder::new(&mut tiff)
+        .unwrap()
+        .write_image::<tiff::encoder::colortype::Gray8>(2, 2, &[0, 80, 160, 255])
+        .unwrap();
+    std::fs::write(&saved, tiff.into_inner()).unwrap();
+
+    let readable = readable_image(&saved).unwrap().unwrap();
+
+    assert_eq!(readable, directory.join("scan.png").to_string_lossy());
+    assert!(
+        std::fs::read(&readable)
+            .unwrap()
+            .starts_with(b"\x89PNG\r\n\x1a\n")
+    );
+}
+
+#[test]
+fn leaves_other_saved_attachments_as_they_are() {
+    let saved = std::env::temp_dir().join(format!("mail-sync-pdf-{}.pdf", uuid::Uuid::new_v4()));
+    std::fs::write(&saved, b"%PDF-1.7").unwrap();
+    assert_eq!(readable_image(&saved).unwrap(), None);
+}
+
+#[test]
+fn saves_an_attachment_of_a_saved_message() {
+    let directory = std::env::temp_dir().join(format!("mail-sync-eml-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let saved = directory.join("Original quote.eml");
+    std::fs::write(
+        &saved,
+        "From: a@example.com\r\nSubject: Quote\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"i\"\r\n\r\n--i\r\nContent-Type: text/plain\r\n\r\nHi\r\n--i\r\nContent-Type: application/pdf; name=\"quote.pdf\"\r\nContent-Disposition: attachment; filename=\"quote.pdf\"\r\n\r\n%PDF-1.7\r\n--i--\r\n",
+    )
+    .unwrap();
+
+    let path = save_attachment_from_file(&saved, 0, &directory).unwrap();
+
+    assert!(path.ends_with("/quote.pdf"));
+    assert_eq!(std::fs::read(&path).unwrap(), b"%PDF-1.7");
+    assert!(matches!(
+        save_attachment_from_file(&saved, 5, &directory),
+        Err(Error::NotFound)
+    ));
 }

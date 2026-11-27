@@ -136,6 +136,10 @@
   },
   "compose": {
     "addFromContacts": "Добавить из контактов",
+    "andMore_few": "и ещё {{count}}",
+    "andMore_many": "и ещё {{count}}",
+    "andMore_one": "и ещё {{count}}",
+    "andMore_other": "и ещё {{count}}",
     "attach": "Прикрепить",
     "attachFiles": "Файлы",
     "attachPhotos": "Фото и видео",
@@ -144,8 +148,6 @@
     "bodyPlaceholder": "Сообщение",
     "cc": "Копия:",
     "copiesAndFrom": "Копия/Скрытая копия, От: {{from}}",
-    "discard": "Удалить",
-    "discardTitle": "Удалить этот черновик?",
     "forward": "Переслать",
     "forwardedAttachmentsFailed": "Не удалось загрузить исходные вложения, поэтому они не будут пересланы.",
     "forwardedHeader": "---------- Пересланное сообщение ----------",
@@ -171,7 +173,14 @@
     "to": "Кому:",
     "wrote": "{{date}}, {{author}} пишет:",
     "formatting": "Форматирование",
-    "hideFormatting": "Скрыть форматирование"
+    "hideFormatting": "Скрыть форматирование",
+    "draftTitle": "Сохранить сообщение как черновик?",
+    "saveDraft": "Сохранить черновик",
+    "deleteDraft": "Удалить черновик",
+    "draftSaved": "Черновик сохранён",
+    "draftFailed": "Не удалось сохранить черновик",
+    "draftAttachmentsFailed": "Не удалось загрузить вложения черновика.",
+    "attachmentsLoading": "Вложения ещё загружаются."
   },
   "dates": {
     "yesterday": "Вчера"
@@ -184,6 +193,57 @@
     "network": "Сервер недоступен ({{message}}).",
     "operationFailed": "Не удалось применить изменение на сервере",
     "server": "Сервер вернул ошибку: {{message}}"
+  },
+  "invites": {
+    "accept": "Принять",
+    "addToCalendar": "Добавить в календарь",
+    "allDay": "Весь день",
+    "answer": {
+      "ACCEPTED": "Вы приняли",
+      "DECLINED": "Вы отклонили",
+      "TENTATIVE": "Вы ответили «возможно»"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} принимает приглашение.",
+      "DECLINED": "{{name}} отклоняет приглашение.",
+      "TENTATIVE": "{{name}}, возможно, придёт."
+    },
+    "cancelled": "Это событие отменено.",
+    "decline": "Отклонить",
+    "from": "от {{name}}",
+    "maybe": "Возможно",
+    "notAdded": "Не удалось добавить событие в календарь.",
+    "removeFromCalendar": "Удалить из календаря",
+    "repeats": {
+      "daily_few": "Каждые {{count}} дня",
+      "daily_many": "Каждые {{count}} дней",
+      "daily_one": "Каждый день",
+      "daily_other": "Каждые {{count}} дня",
+      "monthly_few": "Каждые {{count}} месяца",
+      "monthly_many": "Каждые {{count}} месяцев",
+      "monthly_one": "Каждый месяц",
+      "monthly_other": "Каждые {{count}} месяца",
+      "weekly_few": "Каждые {{count}} недели",
+      "weekly_many": "Каждые {{count}} недель",
+      "weekly_one": "Каждую неделю",
+      "weekly_other": "Каждые {{count}} недели",
+      "yearly_few": "Каждые {{count}} года",
+      "yearly_many": "Каждые {{count}} лет",
+      "yearly_one": "Каждый год",
+      "yearly_other": "Каждые {{count}} года"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} принимает.",
+      "DECLINED": "{{name}} отклоняет.",
+      "TENTATIVE": "{{name}}, возможно, придёт."
+    },
+    "sendFailed": "Не удалось отправить ответ.",
+    "subject": {
+      "ACCEPTED": "Принято: {{summary}}",
+      "DECLINED": "Отклонено: {{summary}}",
+      "TENTATIVE": "Возможно: {{summary}}"
+    },
+    "updated": "Это приглашение изменено."
   },
   "mailboxes": {
     "allInboxes": "Все входящие",
@@ -207,7 +267,8 @@
     "newMessages_other": "{{count}} новых писем"
   },
   "offline": {
-    "banner": "Нет подключения к сети. Изменения будут отправлены, когда соединение восстановится."
+    "banner": "Нет подключения к сети. Изменения будут отправлены, когда соединение восстановится.",
+    "detail": "Изменения отправятся после подключения."
   },
   "reader": {
     "attachmentFailed": "Не удалось открыть вложение.",
@@ -243,11 +304,16 @@
   },
   "settings": {
     "about": "О приложении",
+    "accessibility": "Специальные возможности",
     "accounts": "Учётные записи",
     "appearance": "Оформление и язык",
     "contactPictures": "Фото контактов",
     "contactPicturesHint": "Фото загружаются с Gravatar или берутся из логотипа или сайта компании отправителя, и они могут узнать, что вы общаетесь.",
     "general": "Общие",
+    "haptics": "Тактильная отдача",
+    "hapticsHint": "Вибрация при касаниях и действиях.",
+    "inboxCategories": "Категории входящих",
+    "inboxCategoriesHint": "Сортирует входящие на Основные, Транзакции, Обновления и Акции.",
     "language": "Язык",
     "languageHint": "Даты и тексты отображаются на этом языке.",
     "loadRemoteImages": "Загружать внешние изображения",
@@ -358,7 +424,8 @@
     "unreadCount_few": "{{count}} непрочитанных",
     "unreadCount_many": "{{count}} непрочитанных",
     "unreadCount_one": "{{count}} непрочитанное",
-    "unreadCount_other": "{{count}} непрочитанных"
+    "unreadCount_other": "{{count}} непрочитанных",
+    "noRecipients": "Нет получателей"
   },
   "undo": {
     "archived": "В архиве",

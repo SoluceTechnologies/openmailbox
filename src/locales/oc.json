@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Apondre dempuèi los contactes",
+    "andMore_one": "e {{count}} autre",
+    "andMore_other": "e {{count}} autres",
     "attach": "Jónher",
     "attachFiles": "Fichièrs",
     "attachPhotos": "Fotos e vidèos",
@@ -144,8 +146,6 @@
     "bodyPlaceholder": "Messatge",
     "cc": "Cc :",
     "copiesAndFrom": "Cc/Cci, De : {{from}}",
-    "discard": "Suprimir",
-    "discardTitle": "Suprimir aqueste borrolhon ?",
     "forward": "Transferir",
     "forwardedAttachmentsFailed": "Las pèças juntas d’origina an pas pogut èsser telecargadas : seràn pas transferidas.",
     "forwardedHeader": "---------- Messatge transferit ----------",
@@ -171,7 +171,14 @@
     "to": "A :",
     "wrote": "Lo {{date}}, {{author}} a escrich :",
     "formatting": "Mesa en forma",
-    "hideFormatting": "Amagar la mesa en forma"
+    "hideFormatting": "Amagar la mesa en forma",
+    "draftTitle": "Gardar aqueste messatge coma borrolhon ?",
+    "saveDraft": "Enregistrar lo borrolhon",
+    "deleteDraft": "Suprimir lo borrolhon",
+    "draftSaved": "Borrolhon enregistrat",
+    "draftFailed": "Lo borrolhon a pas pogut èsser enregistrat",
+    "draftAttachmentsFailed": "Las pèças juntas del borrolhon an pas pogut èsser telecargadas.",
+    "attachmentsLoading": "Las pèças juntas son encara en telecargament."
   },
   "dates": {
     "yesterday": "Ièr"
@@ -184,6 +191,49 @@
     "network": "Lo servidor es injonhable ({{message}}).",
     "operationFailed": "Una modificacion a pas pogut èsser aplicada sul servidor",
     "server": "Lo servidor a mandat una error : {{message}}"
+  },
+  "invites": {
+    "accept": "Acceptar",
+    "addToCalendar": "Apondre al calendièr",
+    "allDay": "Tota la jornada",
+    "answer": {
+      "ACCEPTED": "Avètz acceptat",
+      "DECLINED": "Avètz refusat",
+      "TENTATIVE": "Avètz respondut benlèu"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} a acceptat l’invitacion.",
+      "DECLINED": "{{name}} a refusat l’invitacion.",
+      "TENTATIVE": "{{name}} participarà benlèu."
+    },
+    "cancelled": "Aqueste eveniment es estat anullat.",
+    "decline": "Refusar",
+    "from": "de {{name}}",
+    "maybe": "Benlèu",
+    "notAdded": "L’eveniment se poguèt pas apondre al calendièr.",
+    "removeFromCalendar": "Levar del calendièr",
+    "repeats": {
+      "daily_one": "Cada jorn",
+      "daily_other": "Cada {{count}} jorns",
+      "monthly_one": "Cada mes",
+      "monthly_other": "Cada {{count}} meses",
+      "weekly_one": "Cada setmana",
+      "weekly_other": "Cada {{count}} setmanas",
+      "yearly_one": "Cada an",
+      "yearly_other": "Cada {{count}} ans"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} a acceptat.",
+      "DECLINED": "{{name}} a refusat.",
+      "TENTATIVE": "{{name}} participarà benlèu."
+    },
+    "sendFailed": "La responsa se poguèt pas mandar.",
+    "subject": {
+      "ACCEPTED": "Acceptat : {{summary}}",
+      "DECLINED": "Refusat : {{summary}}",
+      "TENTATIVE": "Benlèu : {{summary}}"
+    },
+    "updated": "Aquesta invitacion es estada modificada."
   },
   "mailboxes": {
     "allInboxes": "Totas las bóstias",
@@ -205,7 +255,8 @@
     "newMessages_other": "{{count}} messatges novèls"
   },
   "offline": {
-    "banner": "Sètz fòra linha. Las modificacions seràn mandadas quand la connexion tornarà."
+    "banner": "Sètz fòra linha. Las modificacions seràn mandadas quand la connexion tornarà.",
+    "detail": "Las modificacions partiràn a la reconnexion."
   },
   "reader": {
     "attachmentFailed": "La pèça junta a pas pogut èsser dobèrta.",
@@ -241,11 +292,16 @@
   },
   "settings": {
     "about": "A prepaus",
+    "accessibility": "Accessibilitat",
     "accounts": "Comptes",
     "appearance": "Aparéncia e lenga",
     "contactPictures": "Fòtos dels contactes",
     "contactPicturesHint": "Las fòtos venon de Gravatar, o del lògo o del site de l’entrepresa del mandaire, que pòdon saber que sètz en contacte.",
     "general": "General",
+    "haptics": "Retorn aptic",
+    "hapticsHint": "Vibra suls tusts e interaccions.",
+    "inboxCategories": "Categorias de la bóstia de recepcion",
+    "inboxCategoriesHint": "Classa la bóstia de recepcion en Principal, Transaccions, Actualitats e Promocions.",
     "language": "Lenga",
     "languageHint": "Las datas e los tèxtes seguisson aquesta lenga.",
     "loadRemoteImages": "Cargar los imatges distants",
@@ -352,7 +408,8 @@
     "unknownSender": "Expeditor desconegut",
     "unread": "Pas legit",
     "unreadCount_one": "{{count}} pas legit",
-    "unreadCount_other": "{{count}} pas legits"
+    "unreadCount_other": "{{count}} pas legits",
+    "noRecipients": "Pas cap de destinatari"
   },
   "undo": {
     "archived": "Archivat",

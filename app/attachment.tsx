@@ -1,14 +1,45 @@
+import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Sharing from 'expo-sharing';
+import { File } from 'expo-file-system';
 import { Share, X } from 'lucide-react-native';
 import WebView from 'react-native-webview';
+import { useVideoPlayer, VideoView } from 'expo-video';
 
 import { IconButton, Typography, ViewContainer } from '@/ui/components';
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
 import { goBack } from '@/utils/navigation';
+
+const SVG = 'image/svg+xml';
+const MEDIA = /^(audio|video)\//;
+
+function MediaPlayer({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri);
+  return <VideoView player={player} nativeControls contentFit="contain" allowsPictureInPicture={false} style={styles.flex} />;
+}
+
+function needsPage(mimeType: string): boolean {
+  return mimeType === SVG || mimeType === 'application/json' || (mimeType.startsWith('text/') && mimeType !== 'text/html');
+}
+
+function viewerPage(uri: string, mimeType: string): string {
+  const content = mimeType === SVG ? `<img src="${uri}">` : `<iframe src="${uri}"></iframe>`;
+  const page = new File(`${uri}.view.html`);
+  try {
+    page.write(
+      `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>` +
+        'html,body{margin:0;height:100%}body{display:flex;align-items:center;justify-content:center}' +
+        'img{width:100%;max-height:100%;object-fit:contain}iframe{border:0;width:100%;height:100%}' +
+        `</style></head><body>${content}</body></html>`,
+    );
+    return page.uri;
+  } catch {
+    return uri;
+  }
+}
 
 export default function AttachmentScreen() {
   const { uri, name, mimeType } = useLocalSearchParams<{ uri: string; name: string; mimeType: string }>();
@@ -16,14 +47,17 @@ export default function AttachmentScreen() {
   const { colors } = useTheme();
   const directory = uri.slice(0, uri.lastIndexOf('/') + 1);
   const share = () => Sharing.shareAsync(uri, { mimeType, dialogTitle: name }).catch(() => undefined);
+  const [source] = useState(() => ({ uri: needsPage(mimeType) ? viewerPage(uri, mimeType) : uri }));
 
-  const viewer = mimeType.startsWith('image/') ? (
+  const viewer = MEDIA.test(mimeType) ? (
+    <MediaPlayer uri={uri} />
+  ) : mimeType.startsWith('image/') && mimeType !== SVG ? (
     <ScrollView maximumZoomScale={4} centerContent style={styles.flex} contentContainerStyle={styles.flex}>
       <Image source={{ uri }} resizeMode="contain" accessibilityLabel={name} style={styles.flex} />
     </ScrollView>
   ) : (
     <WebView
-      source={{ uri }}
+      source={source}
       originWhitelist={['file://*']}
       allowingReadAccessToURL={directory}
       allowFileAccess

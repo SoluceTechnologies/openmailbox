@@ -6,11 +6,17 @@ import { router } from 'expo-router';
 import type { Attachment } from '@openmailbox/mail-core';
 
 import { attachmentsDirectory, mailCore } from '@/core/mailCore';
+import { queryClient, queryKeys } from '@/core/queryClient';
+
+import { presentVCard } from './vcard';
 
 export const VIEWABLE_ON_IOS = [
   'application/pdf',
   'image/',
-  'text/plain',
+  'video/',
+  'audio/',
+  'text/',
+  'application/json',
   'application/vnd.openxmlformats-officedocument.',
   'application/msword',
   'application/vnd.ms-excel',
@@ -18,15 +24,61 @@ export const VIEWABLE_ON_IOS = [
 ];
 
 const UNKNOWN_TYPE = 'application/octet-stream';
+const CONVERTED_TYPES = ['image/jxl', 'image/tiff'];
+const CONVERTED_EXTENSIONS = /\.(jxl|tiff?)$/i;
+const EMAIL = /\.eml$/i;
+const TNEF_TYPES = ['application/ms-tnef', 'application/vnd.ms-tnef'];
+const TNEF = /^winmail\.dat$/i;
+const VCARD_TYPES = ['text/vcard', 'text/x-vcard', 'text/directory'];
+const VCARD = /\.vcf$/i;
 const FLAG_GRANT_READ_URI_PERMISSION = 1;
 
 function share(uri: string, attachment: Attachment): Promise<void> {
   return Sharing.shareAsync(uri, { mimeType: attachment.mimeType, dialogTitle: attachment.filename });
 }
 
-export async function openAttachment(emailId: string, attachment: Attachment): Promise<void> {
-  const path = await mailCore().saveAttachment(emailId, attachment.index, attachmentsDirectory());
-  const uri = `file://${path.split('/').map(encodeURIComponent).join('/')}`;
+async function readableCopy(path: string, attachment: Attachment): Promise<{ path: string; attachment: Attachment }> {
+  if (!CONVERTED_TYPES.includes(attachment.mimeType) && !CONVERTED_EXTENSIONS.test(attachment.filename)) return { path, attachment };
+  const png = await mailCore().readableImage(path).catch(() => undefined);
+  return png ? { path: png, attachment: { ...attachment, mimeType: 'image/png' } } : { path, attachment };
+}
+
+function opensAsMessage(attachment: Attachment): boolean {
+  return (
+    attachment.mimeType === 'message/rfc822' ||
+    EMAIL.test(attachment.filename) ||
+    TNEF_TYPES.includes(attachment.mimeType) ||
+    TNEF.test(attachment.filename)
+  );
+}
+
+export function fileUri(path: string): string {
+  return `file://${path.split('/').map(encodeURIComponent).join('/')}`;
+}
+
+export async function openAttachment(emailId: string, original: Attachment): Promise<void> {
+  return openSaved(await mailCore().saveAttachment(emailId, original.index, attachmentsDirectory()), original);
+}
+
+export async function openAttachmentOfFile(file: string, original: Attachment): Promise<void> {
+  return openSaved(await mailCore().saveAttachmentFromFile(file, original.index, attachmentsDirectory()), original);
+}
+
+async function openSaved(saved: string, original: Attachment): Promise<void> {
+  if (opensAsMessage(original)) {
+    const message = await mailCore().readMessageFile(saved).catch(() => undefined);
+    if (!message) return share(fileUri(saved), original);
+    queryClient.setQueryData(queryKeys.savedMessage(saved), message);
+    router.push({ pathname: '/message', params: { path: saved, name: original.filename, mimeType: original.mimeType } });
+    return;
+  }
+  if (Platform.OS === 'ios' && (VCARD_TYPES.includes(original.mimeType) || VCARD.test(original.filename))) {
+    const uri = fileUri(saved);
+    if (!(await presentVCard(await new File(uri).text()))) await share(uri, original);
+    return;
+  }
+  const { path, attachment } = await readableCopy(saved, original);
+  const uri = fileUri(path);
   if (attachment.mimeType === UNKNOWN_TYPE) return share(uri, attachment);
 
   if (Platform.OS === 'android') {
@@ -43,7 +95,7 @@ export async function openAttachment(emailId: string, attachment: Attachment): P
   }
 
   const hasExtension = /\.[a-z0-9]+$/i.test(attachment.filename);
-  if (hasExtension && VIEWABLE_ON_IOS.some((type) => attachment.mimeType.startsWith(type))) {
+  if (hasExtension && attachment.mimeType !== 'text/calendar' && VIEWABLE_ON_IOS.some((type) => attachment.mimeType.startsWith(type))) {
     router.push({ pathname: '/attachment', params: { uri, name: attachment.filename, mimeType: attachment.mimeType } });
     return;
   }

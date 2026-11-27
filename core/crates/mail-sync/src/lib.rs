@@ -50,6 +50,12 @@ pub struct Relocation {
     pub target_mailbox_id: Option<i64>,
 }
 
+struct Built {
+    raw: String,
+    envelope_from: String,
+    recipients: Vec<String>,
+}
+
 struct AccountHandle {
     account: Account,
     secret: Secret,
@@ -826,59 +832,21 @@ impl Engine {
         if draft.to.is_empty() && draft.cc.is_empty() && draft.bcc.is_empty() {
             return Err(Error::InvalidInput("no recipient".into()));
         }
-        let attachments = read_attachments(&draft.attachments)?;
-        let account = self.store.account(&draft.account_id)?;
-        let reply = draft
-            .in_reply_to_email_id
-            .map(|email_id| self.store.reply_context(email_id))
-            .transpose()?;
-        let from = draft.from.clone().unwrap_or_else(|| Address {
-            name: Some(account.display_name.clone()),
-            email: account.email.clone(),
-        });
-        let domain = from
-            .email
-            .rsplit_once('@')
-            .map(|(_, domain)| domain)
-            .unwrap_or("localhost");
-        let message_id = format!("{}@{domain}", uuid::Uuid::new_v4());
-        let mut references = reply
-            .as_ref()
-            .map(|context| context.references.clone())
-            .unwrap_or_default();
-        references.extend(
-            reply
-                .as_ref()
-                .and_then(|context| context.message_id.clone()),
-        );
-        let built = mail_mime::build_message(OutgoingMessage {
-            message_id: &message_id,
-            from: &from,
-            to: &draft.to,
-            cc: &draft.cc,
-            bcc: &draft.bcc,
-            subject: &draft.subject,
-            body_text: &draft.body_text,
-            body_html: draft.body_html.as_deref(),
-            in_reply_to: reply
-                .as_ref()
-                .and_then(|context| context.message_id.as_deref()),
-            references: &references,
-            attachments,
-        })?;
-        let raw = String::from_utf8(built.raw)
-            .map_err(|_| Error::InvalidInput("message is not 7-bit safe".into()))?;
+        let built = self.build(&draft, false)?;
         operations::enqueue(
             &self.store,
-            &account.id,
+            &draft.account_id,
             &Operation::Send {
-                raw,
+                raw: built.raw,
                 envelope_from: built.envelope_from,
                 recipients: built.recipients,
             },
         )?;
         if let Some(email_id) = draft.in_reply_to_email_id {
             self.set_keywords(&[email_id], &[Keyword::Answered], &[])?;
+        }
+        if let Some(email_id) = draft.draft_email_id {
+            self.drop_draft(&draft.account_id, email_id)?;
         }
         let recipients: Vec<Address> = draft
             .to
@@ -890,8 +858,95 @@ impl Engine {
         if remember_recipients {
             self.store.record_sent(&recipients, now_millis())?;
         }
-        self.dispatch(&account.id, Command::DrainOperations);
+        self.dispatch(&draft.account_id, Command::DrainOperations);
         Ok(())
+    }
+
+    pub fn save_draft(&self, draft: Draft) -> Result<()> {
+        if self
+            .store
+            .mailbox_by_role(&draft.account_id, MailboxRole::Drafts)?
+            .is_none()
+        {
+            return Err(Error::InvalidInput("no drafts mailbox".into()));
+        }
+        let built = self.build(&draft, true)?;
+        operations::enqueue(
+            &self.store,
+            &draft.account_id,
+            &Operation::AppendDraft { raw: built.raw },
+        )?;
+        if let Some(email_id) = draft.draft_email_id {
+            self.drop_draft(&draft.account_id, email_id)?;
+        }
+        self.dispatch(&draft.account_id, Command::DrainOperations);
+        Ok(())
+    }
+
+    fn drop_draft(&self, account_id: &str, email_id: i64) -> Result<()> {
+        let Some(drafts) = self
+            .store
+            .mailbox_by_role(account_id, MailboxRole::Drafts)?
+        else {
+            return Ok(());
+        };
+        let sources = self.store.move_emails(&[email_id], drafts.id, None)?;
+        operations::enqueue_relocation(&self.store, account_id, sources, None, 0)?;
+        self.events.mailboxes_changed(std::iter::once(drafts.id));
+        Ok(())
+    }
+
+    fn build(&self, draft: &Draft, as_draft: bool) -> Result<Built> {
+        let attachments = read_attachments(&draft.attachments)?;
+        let account = self.store.account(&draft.account_id)?;
+        let (in_reply_to, references) = match (draft.in_reply_to_email_id, draft.draft_email_id) {
+            (Some(email_id), _) => {
+                let context = self.store.reply_context(email_id)?;
+                let mut references = context.references;
+                references.extend(context.message_id.clone());
+                (context.message_id, references)
+            }
+            (None, Some(email_id)) => {
+                let references = self
+                    .store
+                    .reply_context(email_id)
+                    .map(|context| context.references)
+                    .unwrap_or_default();
+                (references.last().cloned(), references)
+            }
+            (None, None) => (None, Vec::new()),
+        };
+        let from = draft.from.clone().unwrap_or_else(|| Address {
+            name: Some(account.display_name.clone()),
+            email: account.email.clone(),
+        });
+        let domain = from
+            .email
+            .rsplit_once('@')
+            .map(|(_, domain)| domain)
+            .unwrap_or("localhost");
+        let message_id = format!("{}@{domain}", uuid::Uuid::new_v4());
+        let built = mail_mime::build_message(OutgoingMessage {
+            message_id: &message_id,
+            from: &from,
+            to: &draft.to,
+            cc: &draft.cc,
+            bcc: &draft.bcc,
+            subject: &draft.subject,
+            body_text: &draft.body_text,
+            body_html: draft.body_html.as_deref(),
+            in_reply_to: in_reply_to.as_deref(),
+            references: &references,
+            attachments,
+            calendar: draft.calendar.as_deref(),
+            draft: as_draft,
+        })?;
+        Ok(Built {
+            raw: String::from_utf8(built.raw)
+                .map_err(|_| Error::InvalidInput("message is not 7-bit safe".into()))?,
+            envelope_from: built.envelope_from,
+            recipients: built.recipients,
+        })
     }
 
     pub fn unsubscribe(&self, email_id: i64) -> Result<UnsubscribeOutcome> {
@@ -936,8 +991,10 @@ impl Engine {
             body_text: parameter("body").unwrap_or_else(|| "unsubscribe".into()),
             body_html: None,
             in_reply_to_email_id: None,
+            draft_email_id: None,
             attachments: vec![],
             from: None,
+            calendar: None,
         })
     }
 
@@ -1178,6 +1235,50 @@ fn read_attachments(attachments: &[OutgoingAttachment]) -> Result<Vec<Attachment
             })
         })
         .collect()
+}
+
+pub(crate) fn safe_file_name(filename: &str) -> String {
+    filename
+        .chars()
+        .map(|character| {
+            if matches!(character, '/' | '\\' | '\0') {
+                '_'
+            } else {
+                character
+            }
+        })
+        .collect()
+}
+
+pub fn save_attachment_from_file(path: &Path, index: u32, directory: &Path) -> Result<String> {
+    let raw = std::fs::read(path).map_err(|error| Error::Storage(error.to_string()))?;
+    let (filename, bytes) = mail_mime::attachment(&raw, index).ok_or(Error::NotFound)?;
+    let stem = path
+        .file_stem()
+        .map(|stem| stem.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let target = directory
+        .join(format!("{}-{index}", safe_file_name(&stem)))
+        .join(safe_file_name(&filename));
+    let parent = target.parent().ok_or(Error::NotFound)?;
+    std::fs::create_dir_all(parent).map_err(|error| Error::Storage(error.to_string()))?;
+    std::fs::write(&target, bytes).map_err(|error| Error::Storage(error.to_string()))?;
+    Ok(target.to_string_lossy().into_owned())
+}
+
+pub fn read_message_file(path: &Path) -> Result<mail_model::SavedMessage> {
+    let raw = std::fs::read(path).map_err(|error| Error::Storage(error.to_string()))?;
+    mail_mime::read_message(&raw)
+}
+
+pub fn readable_image(path: &Path) -> Result<Option<String>> {
+    let bytes = std::fs::read(path).map_err(|error| Error::Storage(error.to_string()))?;
+    let Some(png) = mail_mime::readable_png(&bytes) else {
+        return Ok(None);
+    };
+    let target = path.with_extension("png");
+    std::fs::write(&target, png).map_err(|error| Error::Storage(error.to_string()))?;
+    Ok(Some(target.to_string_lossy().into_owned()))
 }
 
 #[cfg(test)]

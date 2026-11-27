@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Aggiungi dai contatti",
+    "andMore_one": "e {{count}} altro",
+    "andMore_other": "e altri {{count}}",
     "attach": "Allega",
     "attachFiles": "File",
     "attachPhotos": "Foto e video",
@@ -144,8 +146,6 @@
     "bodyPlaceholder": "Messaggio",
     "cc": "Cc:",
     "copiesAndFrom": "Cc/Ccn, Da: {{from}}",
-    "discard": "Elimina",
-    "discardTitle": "Eliminare questa bozza?",
     "forward": "Inoltra",
     "forwardedAttachmentsFailed": "Non è stato possibile scaricare gli allegati originali, quindi non verranno inoltrati.",
     "forwardedHeader": "---------- Messaggio inoltrato ----------",
@@ -171,7 +171,14 @@
     "to": "A:",
     "wrote": "Il {{date}}, {{author}} ha scritto:",
     "formatting": "Formattazione",
-    "hideFormatting": "Nascondi formattazione"
+    "hideFormatting": "Nascondi formattazione",
+    "draftTitle": "Conservare questo messaggio come bozza?",
+    "saveDraft": "Salva bozza",
+    "deleteDraft": "Elimina bozza",
+    "draftSaved": "Bozza salvata",
+    "draftFailed": "Impossibile salvare la bozza",
+    "draftAttachmentsFailed": "Impossibile scaricare gli allegati della bozza.",
+    "attachmentsLoading": "Gli allegati sono ancora in download."
   },
   "dates": {
     "yesterday": "Ieri"
@@ -184,6 +191,49 @@
     "network": "Il server non è raggiungibile ({{message}}).",
     "operationFailed": "Impossibile applicare una modifica sul server",
     "server": "Il server ha restituito un errore: {{message}}"
+  },
+  "invites": {
+    "accept": "Accetta",
+    "addToCalendar": "Aggiungi al calendario",
+    "allDay": "Tutto il giorno",
+    "answer": {
+      "ACCEPTED": "Hai accettato",
+      "DECLINED": "Hai rifiutato",
+      "TENTATIVE": "Hai risposto forse"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} ha accettato l’invito.",
+      "DECLINED": "{{name}} ha rifiutato l’invito.",
+      "TENTATIVE": "{{name}} forse parteciperà."
+    },
+    "cancelled": "Questo evento è stato annullato.",
+    "decline": "Rifiuta",
+    "from": "da {{name}}",
+    "maybe": "Forse",
+    "notAdded": "Non è stato possibile aggiungere l’evento al calendario.",
+    "removeFromCalendar": "Rimuovi dal calendario",
+    "repeats": {
+      "daily_one": "Ogni giorno",
+      "daily_other": "Ogni {{count}} giorni",
+      "monthly_one": "Ogni mese",
+      "monthly_other": "Ogni {{count}} mesi",
+      "weekly_one": "Ogni settimana",
+      "weekly_other": "Ogni {{count}} settimane",
+      "yearly_one": "Ogni anno",
+      "yearly_other": "Ogni {{count}} anni"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} ha accettato.",
+      "DECLINED": "{{name}} ha rifiutato.",
+      "TENTATIVE": "{{name}} forse parteciperà."
+    },
+    "sendFailed": "Non è stato possibile inviare la risposta.",
+    "subject": {
+      "ACCEPTED": "Accettato: {{summary}}",
+      "DECLINED": "Rifiutato: {{summary}}",
+      "TENTATIVE": "Forse: {{summary}}"
+    },
+    "updated": "Questo invito è stato aggiornato."
   },
   "mailboxes": {
     "allInboxes": "Tutte le caselle",
@@ -205,7 +255,8 @@
     "newMessages_other": "{{count}} nuovi messaggi"
   },
   "offline": {
-    "banner": "Sei offline. Le modifiche verranno inviate al ritorno della connessione."
+    "banner": "Sei offline. Le modifiche verranno inviate al ritorno della connessione.",
+    "detail": "Le modifiche partiranno alla riconnessione."
   },
   "reader": {
     "attachmentFailed": "Impossibile aprire l'allegato.",
@@ -241,11 +292,16 @@
   },
   "settings": {
     "about": "Informazioni",
+    "accessibility": "Accessibilità",
     "accounts": "Account",
     "appearance": "Aspetto e lingua",
     "contactPictures": "Foto dei contatti",
     "contactPicturesHint": "Le foto provengono da Gravatar, o dal logo o dal sito dell’azienda del mittente, che possono sapere che siete in contatto.",
     "general": "Generali",
+    "haptics": "Feedback aptico",
+    "hapticsHint": "Vibra ai tocchi e alle interazioni.",
+    "inboxCategories": "Categorie della posta in arrivo",
+    "inboxCategoriesHint": "Ordina la posta in arrivo in Principale, Transazioni, Aggiornamenti e Promozioni.",
     "language": "Lingua",
     "languageHint": "Date e testi seguono questa lingua.",
     "loadRemoteImages": "Carica immagini remote",
@@ -352,7 +408,8 @@
     "unknownSender": "Mittente sconosciuto",
     "unread": "Da leggere",
     "unreadCount_one": "{{count}} da leggere",
-    "unreadCount_other": "{{count}} da leggere"
+    "unreadCount_other": "{{count}} da leggere",
+    "noRecipients": "Nessun destinatario"
   },
   "undo": {
     "archived": "Archiviato",

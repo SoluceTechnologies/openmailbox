@@ -2,7 +2,7 @@ import { memo, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { File, FileArchive, FileImage, FileSpreadsheet, FileText, ImageOff, type LucideIcon } from 'lucide-react-native';
+import { Contact, File, FileArchive, FileImage, FileJson, FileMusic, FileSpreadsheet, FileText, FileVideoCamera, ImageOff, Mail, type LucideIcon } from 'lucide-react-native';
 import type { Attachment } from '@openmailbox/mail-core';
 
 import { useBody } from '@/core/hooks';
@@ -15,18 +15,25 @@ import { formatSize } from '@/utils/sizes';
 import { Button, Spinner, Typography } from '@/ui/components';
 
 import { confirmOpenLink } from '../openLink';
+import { InviteCard, isCalendarFile, useInvite } from '@/features/invites/InviteCard';
+
 import { HtmlBody } from './HtmlBody';
 import { UnsubscribeBanner } from './UnsubscribeBanner';
 
 function attachmentIcon(mimeType: string): LucideIcon {
+  if (mimeType === 'message/rfc822') return Mail;
+  if (mimeType.includes('vcard')) return Contact;
   if (mimeType.startsWith('image/')) return FileImage;
+  if (mimeType.startsWith('audio/')) return FileMusic;
+  if (mimeType.startsWith('video/')) return FileVideoCamera;
+  if (mimeType === 'application/json') return FileJson;
   if (mimeType === 'application/pdf' || mimeType.startsWith('text/') || mimeType.includes('word')) return FileText;
   if (mimeType.includes('sheet') || mimeType.includes('excel') || mimeType === 'text/csv') return FileSpreadsheet;
-  if (mimeType.includes('zip') || mimeType.includes('compressed')) return FileArchive;
+  if (mimeType.includes('zip') || mimeType.includes('compressed') || mimeType.includes('tnef')) return FileArchive;
   return File;
 }
 
-function AttachmentChip({ emailId, attachment }: { emailId: string; attachment: Attachment }) {
+export function AttachmentChip({ attachment, onOpen }: { attachment: Attachment; onOpen: () => Promise<void> }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [opening, setOpening] = useState(false);
@@ -35,7 +42,7 @@ function AttachmentChip({ emailId, attachment }: { emailId: string; attachment: 
   const open = async () => {
     setOpening(true);
     try {
-      await openAttachment(emailId, attachment);
+      await onOpen();
     } catch {
       Alert.alert(t('reader.attachmentFailed'));
     } finally {
@@ -68,33 +75,27 @@ function AttachmentChip({ emailId, attachment }: { emailId: string; attachment: 
   );
 }
 
-function MessageBodyImpl({ emailId }: { emailId: string }) {
+export function BodyContent({
+  html,
+  text,
+  hasRemoteContent,
+  attachments,
+  onOpen,
+}: {
+  html?: string;
+  text: string;
+  hasRemoteContent: boolean;
+  attachments: Attachment[];
+  onOpen: (attachment: Attachment) => Promise<void>;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const loadRemoteImagesByDefault = useSettingsStore((state) => state.loadRemoteImages);
   const [remoteAllowed, setRemoteAllowed] = useState(loadRemoteImagesByDefault);
-  const body = useBody(emailId);
-  const segments = useMemo(() => splitLinks(body.data?.text ?? ''), [body.data?.text]);
+  const segments = useMemo(() => splitLinks(text), [text]);
 
-  if (body.isLoading) return <Spinner style={styles.loading} />;
-  if (body.isError || !body.data) {
-    return (
-      <View style={styles.error}>
-        <Typography color="secondary">{t('reader.loadFailed')}</Typography>
-        {body.error ? (
-          <Typography variant="caption" color="secondary" align="center">
-            {describeCoreError(body.error, t)}
-          </Typography>
-        ) : null}
-        <Button variant="link" title={t('common.retry')} onPress={() => body.refetch()} />
-      </View>
-    );
-  }
-
-  const { html, text, hasRemoteContent, attachments, unsubscribe } = body.data;
   return (
-    <View style={styles.body}>
-      {unsubscribe ? <UnsubscribeBanner emailId={emailId} list={unsubscribe} /> : null}
+    <>
       {html && hasRemoteContent && !remoteAllowed ? (
         <Pressable onPress={() => setRemoteAllowed(true)} style={[styles.remoteBanner, { backgroundColor: colors.surface }]}>
           <ImageOff size={16} color={colors.textSecondary} />
@@ -124,10 +125,49 @@ function MessageBodyImpl({ emailId }: { emailId: string }) {
       {attachments.length > 0 ? (
         <AttachmentStack count={attachments.length} background={colors.card}>
           {attachments.map((attachment) => (
-            <AttachmentChip key={attachment.index} emailId={emailId} attachment={attachment} />
+            <AttachmentChip key={attachment.index} attachment={attachment} onOpen={() => onOpen(attachment)} />
           ))}
         </AttachmentStack>
       ) : null}
+    </>
+  );
+}
+
+function MessageBodyImpl({ emailId, accountId }: { emailId: string; accountId?: string }) {
+  const { t } = useTranslation();
+  const body = useBody(emailId);
+  const { invite, senders } = useInvite(body.data?.calendar, accountId);
+
+  if (body.isLoading) return <Spinner style={styles.loading} />;
+  if (body.isError || !body.data) {
+    return (
+      <View style={styles.error}>
+        <Typography color="secondary">{t('reader.loadFailed')}</Typography>
+        {body.error ? (
+          <Typography variant="caption" color="secondary" align="center">
+            {describeCoreError(body.error, t)}
+          </Typography>
+        ) : null}
+        <Button variant="link" title={t('common.retry')} onPress={() => body.refetch()} />
+      </View>
+    );
+  }
+
+  const { html, text, hasRemoteContent, unsubscribe, calendar } = body.data;
+  const attachments = invite ? body.data.attachments.filter((attachment) => !isCalendarFile(attachment)) : body.data.attachments;
+  return (
+    <View style={styles.body}>
+      {invite && calendar && accountId ? (
+        <InviteCard emailId={emailId} accountId={accountId} source={calendar} invite={invite} senders={senders} />
+      ) : null}
+      {unsubscribe ? <UnsubscribeBanner emailId={emailId} list={unsubscribe} /> : null}
+      <BodyContent
+        html={html}
+        text={text}
+        hasRemoteContent={hasRemoteContent}
+        attachments={attachments}
+        onOpen={(attachment) => openAttachment(emailId, attachment)}
+      />
     </View>
   );
 }

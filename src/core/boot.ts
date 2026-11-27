@@ -19,7 +19,8 @@ async function start(): Promise<void> {
   queryClient.setQueryData(queryKeys.accounts, accounts);
 
   if (accounts.length > 0) {
-    const category = categoryOf(useSettingsStore.getState().inboxFilter);
+    const { inboxFilter, categoriesEnabled } = useSettingsStore.getState();
+    const category = categoriesEnabled ? categoryOf(inboxFilter) : undefined;
     await Promise.all([
       queryClient.prefetchQuery(mailboxesQuery),
       queryClient.prefetchInfiniteQuery(threadsQuery(UNIFIED_SCOPE, EMPTY_THREAD_FILTER, category)),

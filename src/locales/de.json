@@ -136,6 +136,8 @@
   },
   "compose": {
     "addFromContacts": "Aus Kontakten hinzufügen",
+    "andMore_one": "und {{count}} weitere",
+    "andMore_other": "und {{count}} weitere",
     "attach": "Anhängen",
     "attachFiles": "Dateien",
     "attachPhotos": "Fotos und Videos",
@@ -144,8 +146,6 @@
     "bodyPlaceholder": "Nachricht",
     "cc": "Kopie:",
     "copiesAndFrom": "Kopie/Blindkopie, Von: {{from}}",
-    "discard": "Verwerfen",
-    "discardTitle": "Entwurf verwerfen?",
     "forward": "Weiterleiten",
     "forwardedAttachmentsFailed": "Die ursprünglichen Anhänge konnten nicht geladen werden und werden nicht weitergeleitet.",
     "forwardedHeader": "---------- Weitergeleitete Nachricht ----------",
@@ -171,7 +171,14 @@
     "to": "An:",
     "wrote": "Am {{date}} schrieb {{author}}:",
     "formatting": "Formatierung",
-    "hideFormatting": "Formatierung ausblenden"
+    "hideFormatting": "Formatierung ausblenden",
+    "draftTitle": "Diese Nachricht als Entwurf behalten?",
+    "saveDraft": "Entwurf sichern",
+    "deleteDraft": "Entwurf löschen",
+    "draftSaved": "Entwurf gesichert",
+    "draftFailed": "Der Entwurf konnte nicht gesichert werden",
+    "draftAttachmentsFailed": "Die Anhänge des Entwurfs konnten nicht geladen werden.",
+    "attachmentsLoading": "Die Anhänge werden noch geladen."
   },
   "dates": {
     "yesterday": "Gestern"
@@ -184,6 +191,49 @@
     "network": "Der Server ist nicht erreichbar ({{message}}).",
     "operationFailed": "Eine Änderung konnte auf dem Server nicht übernommen werden",
     "server": "Der Server hat einen Fehler gemeldet: {{message}}"
+  },
+  "invites": {
+    "accept": "Annehmen",
+    "addToCalendar": "Zum Kalender hinzufügen",
+    "allDay": "Ganztägig",
+    "answer": {
+      "ACCEPTED": "Zugesagt",
+      "DECLINED": "Abgesagt",
+      "TENTATIVE": "Vielleicht zugesagt"
+    },
+    "body": {
+      "ACCEPTED": "{{name}} hat die Einladung angenommen.",
+      "DECLINED": "{{name}} hat die Einladung abgelehnt.",
+      "TENTATIVE": "{{name}} nimmt vielleicht teil."
+    },
+    "cancelled": "Dieser Termin wurde abgesagt.",
+    "decline": "Ablehnen",
+    "from": "von {{name}}",
+    "maybe": "Vielleicht",
+    "notAdded": "Der Termin konnte nicht zum Kalender hinzugefügt werden.",
+    "removeFromCalendar": "Aus dem Kalender entfernen",
+    "repeats": {
+      "daily_one": "Jeden Tag",
+      "daily_other": "Alle {{count}} Tage",
+      "monthly_one": "Jeden Monat",
+      "monthly_other": "Alle {{count}} Monate",
+      "weekly_one": "Jede Woche",
+      "weekly_other": "Alle {{count}} Wochen",
+      "yearly_one": "Jedes Jahr",
+      "yearly_other": "Alle {{count}} Jahre"
+    },
+    "replied": {
+      "ACCEPTED": "{{name}} hat zugesagt.",
+      "DECLINED": "{{name}} hat abgesagt.",
+      "TENTATIVE": "{{name}} nimmt vielleicht teil."
+    },
+    "sendFailed": "Die Antwort konnte nicht gesendet werden.",
+    "subject": {
+      "ACCEPTED": "Angenommen: {{summary}}",
+      "DECLINED": "Abgelehnt: {{summary}}",
+      "TENTATIVE": "Vielleicht: {{summary}}"
+    },
+    "updated": "Diese Einladung wurde geändert."
   },
   "mailboxes": {
     "allInboxes": "Alle Eingänge",
@@ -205,7 +255,8 @@
     "newMessages_other": "{{count}} neue Nachrichten"
   },
   "offline": {
-    "banner": "Du bist offline. Änderungen werden gesendet, sobald die Verbindung wieder besteht."
+    "banner": "Du bist offline. Änderungen werden gesendet, sobald die Verbindung wieder besteht.",
+    "detail": "Änderungen werden gesendet, sobald du online bist."
   },
   "reader": {
     "attachmentFailed": "Der Anhang konnte nicht geöffnet werden.",
@@ -241,11 +292,16 @@
   },
   "settings": {
     "about": "Über",
+    "accessibility": "Barrierefreiheit",
     "accounts": "Accounts",
     "appearance": "Darstellung und Sprache",
     "contactPictures": "Kontaktbilder",
     "contactPicturesHint": "Die Bilder stammen von Gravatar oder vom Logo oder der Website der Firma des Absenders, die so erfahren können, dass Sie in Kontakt stehen.",
     "general": "Allgemein",
+    "haptics": "Haptisches Feedback",
+    "hapticsHint": "Bei Tippen und Interaktionen vibrieren.",
+    "inboxCategories": "Posteingangskategorien",
+    "inboxCategoriesHint": "Sortiert den Posteingang in Primär, Transaktionen, Updates und Werbung.",
     "language": "Sprache",
     "languageHint": "Datumsangaben und Texte folgen dieser Sprache.",
     "loadRemoteImages": "Externe Bilder laden",
@@ -352,7 +408,8 @@
     "unknownSender": "Unbekannter Absender",
     "unread": "Ungelesen",
     "unreadCount_one": "{{count}} ungelesen",
-    "unreadCount_other": "{{count}} ungelesen"
+    "unreadCount_other": "{{count}} ungelesen",
+    "noRecipients": "Keine Empfänger"
   },
   "undo": {
     "archived": "Archiviert",
