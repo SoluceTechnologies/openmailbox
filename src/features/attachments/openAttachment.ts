@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import type { Attachment } from '@openmailbox/mail-core';
 
 import { attachmentsDirectory, mailCore } from '@/core/mailCore';
+import { queryClient, queryKeys } from '@/core/queryClient';
 
 import { presentVCard } from './vcard';
 
@@ -26,6 +27,8 @@ const UNKNOWN_TYPE = 'application/octet-stream';
 const CONVERTED_TYPES = ['image/jxl', 'image/tiff'];
 const CONVERTED_EXTENSIONS = /\.(jxl|tiff?)$/i;
 const EMAIL = /\.eml$/i;
+const TNEF_TYPES = ['application/ms-tnef', 'application/vnd.ms-tnef'];
+const TNEF = /^winmail\.dat$/i;
 const VCARD_TYPES = ['text/vcard', 'text/x-vcard', 'text/directory'];
 const VCARD = /\.vcf$/i;
 const FLAG_GRANT_READ_URI_PERMISSION = 1;
@@ -40,8 +43,13 @@ async function readableCopy(path: string, attachment: Attachment): Promise<{ pat
   return png ? { path: png, attachment: { ...attachment, mimeType: 'image/png' } } : { path, attachment };
 }
 
-export function isAttachedEmail(attachment: Attachment): boolean {
-  return attachment.mimeType === 'message/rfc822' || EMAIL.test(attachment.filename);
+function opensAsMessage(attachment: Attachment): boolean {
+  return (
+    attachment.mimeType === 'message/rfc822' ||
+    EMAIL.test(attachment.filename) ||
+    TNEF_TYPES.includes(attachment.mimeType) ||
+    TNEF.test(attachment.filename)
+  );
 }
 
 export function fileUri(path: string): string {
@@ -57,8 +65,11 @@ export async function openAttachmentOfFile(file: string, original: Attachment): 
 }
 
 async function openSaved(saved: string, original: Attachment): Promise<void> {
-  if (isAttachedEmail(original)) {
-    router.push({ pathname: '/message', params: { path: saved, name: original.filename } });
+  if (opensAsMessage(original)) {
+    const message = await mailCore().readMessageFile(saved).catch(() => undefined);
+    if (!message) return share(fileUri(saved), original);
+    queryClient.setQueryData(queryKeys.savedMessage(saved), message);
+    router.push({ pathname: '/message', params: { path: saved, name: original.filename, mimeType: original.mimeType } });
     return;
   }
   if (Platform.OS === 'ios' && (VCARD_TYPES.includes(original.mimeType) || VCARD.test(original.filename))) {

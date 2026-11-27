@@ -26,7 +26,7 @@ function attachmentIcon(mimeType: string): LucideIcon {
   if (mimeType.startsWith('image/')) return FileImage;
   if (mimeType === 'application/pdf' || mimeType.startsWith('text/') || mimeType.includes('word')) return FileText;
   if (mimeType.includes('sheet') || mimeType.includes('excel') || mimeType === 'text/csv') return FileSpreadsheet;
-  if (mimeType.includes('zip') || mimeType.includes('compressed')) return FileArchive;
+  if (mimeType.includes('zip') || mimeType.includes('compressed') || mimeType.includes('tnef')) return FileArchive;
   return File;
 }
 

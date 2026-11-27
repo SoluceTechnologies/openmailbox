@@ -17,7 +17,7 @@ import { formatFullDate } from '@/utils/dates';
 import { goBack } from '@/utils/navigation';
 
 export default function MessageScreen() {
-  const { path, name } = useLocalSearchParams<{ path: string; name: string }>();
+  const { path, name, mimeType } = useLocalSearchParams<{ path: string; name: string; mimeType: string }>();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const message = useQuery({
@@ -26,13 +26,13 @@ export default function MessageScreen() {
     retry: false,
     staleTime: Infinity,
   });
-  const share = () => Sharing.shareAsync(fileUri(path), { mimeType: 'message/rfc822', dialogTitle: name }).catch(() => undefined);
+  const share = () => Sharing.shareAsync(fileUri(path), { mimeType, dialogTitle: name }).catch(() => undefined);
 
   const content = message.data ? (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Typography variant="h4" selectable>
-          {message.data.subject}
+          {message.data.subject || name}
         </Typography>
         <AddressLine label={t('compose.headerFrom')} addresses={message.data.from} />
         <AddressLine label={t('compose.headerTo')} addresses={message.data.to} />

@@ -11,9 +11,10 @@ import { core } from '../helpers/fixtures';
 import { renderWithProviders } from '../helpers/render';
 
 const FILE = '/cache/attachments/email-1-4/Original quote.eml';
+let mockParams = { path: FILE, name: 'Original quote.eml', mimeType: 'message/rfc822' };
 jest.mock('expo-router', () => ({
   ...jest.requireActual('expo-router'),
-  useLocalSearchParams: () => ({ path: FILE, name: 'Original quote.eml' }),
+  useLocalSearchParams: () => mockParams,
 }));
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => undefined) }));
 jest.mock('@/features/attachments/openAttachment', () => ({
@@ -61,6 +62,16 @@ describe('attached email screen', () => {
     await screen.findByText('Original quote');
     await act(async () => fireEvent.press(screen.getByRole('button', { name: i18n.t('reader.share') })));
     expect(Sharing.shareAsync).toHaveBeenCalledWith('file:///cache/attachments/email-1-4/Original%20quote.eml', expect.objectContaining({ mimeType: 'message/rfc822' }));
+  });
+
+  it('names an Outlook winmail.dat without a subject by its file', async () => {
+    core.readMessageFile.mockResolvedValueOnce({ subject: '', from: [], to: [], cc: [], body: { text: '', hasRemoteContent: false, attachments: [PDF] } });
+    mockParams = { path: '/cache/attachments/email-1-9/winmail.dat', name: 'winmail.dat', mimeType: 'application/ms-tnef' };
+    renderWithProviders(<MessageScreen />);
+    expect(await screen.findByText('winmail.dat')).toBeOnTheScreen();
+    await act(async () => fireEvent.press(screen.getByRole('button', { name: i18n.t('reader.share') })));
+    expect(Sharing.shareAsync).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ mimeType: 'application/ms-tnef' }));
+    mockParams = { path: FILE, name: 'Original quote.eml', mimeType: 'message/rfc822' };
   });
 
   it('says when the email cannot be read', async () => {

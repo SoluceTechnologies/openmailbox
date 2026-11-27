@@ -15,6 +15,7 @@ use mail_parser::{AddressList, HeaderForm, Message, MessagePart};
 mod charsets;
 mod code_pages;
 mod images;
+mod tnef;
 
 pub use images::readable_png;
 
@@ -384,6 +385,10 @@ fn attachment_mime_type(part: &MessagePart, filename: &str) -> String {
 }
 
 pub fn attachment(raw: &[u8], index: u32) -> Option<(String, Vec<u8>)> {
+    if let Some(tnef) = tnef::read(raw) {
+        let file = tnef.files.into_iter().nth(index as usize)?;
+        return Some((file.filename, file.data));
+    }
     let message = charsets::parse(raw)?;
     let part = message.attachments().nth(index as usize)?;
     Some((
@@ -393,6 +398,9 @@ pub fn attachment(raw: &[u8], index: u32) -> Option<(String, Vec<u8>)> {
 }
 
 pub fn read_message(raw: &[u8]) -> Result<SavedMessage> {
+    if let Some(tnef) = tnef::read(raw) {
+        return tnef_message(tnef);
+    }
     let headers = parse_summary(raw, b"");
     Ok(SavedMessage {
         subject: headers.subject.unwrap_or_default(),
@@ -401,6 +409,40 @@ pub fn read_message(raw: &[u8]) -> Result<SavedMessage> {
         cc: headers.cc,
         date: headers.date,
         body: render(raw)?,
+    })
+}
+
+fn tnef_message(tnef: tnef::Tnef) -> Result<SavedMessage> {
+    if tnef.files.is_empty() {
+        return Err(Error::NotFound);
+    }
+    let attachments = tnef
+        .files
+        .into_iter()
+        .enumerate()
+        .map(|(index, file)| Attachment {
+            index: index as u32,
+            mime_type: file
+                .mime_type
+                .unwrap_or_else(|| tnef::guessed_mime_type(&file.filename).to_owned()),
+            size: file.data.len() as u64,
+            filename: file.filename,
+        })
+        .collect();
+    Ok(SavedMessage {
+        subject: tnef.subject.unwrap_or_default(),
+        from: Vec::new(),
+        to: Vec::new(),
+        cc: Vec::new(),
+        date: None,
+        body: RenderedBody {
+            html: None,
+            text: String::new(),
+            has_remote_content: false,
+            attachments,
+            unsubscribe: None,
+            calendar: None,
+        },
     })
 }
 

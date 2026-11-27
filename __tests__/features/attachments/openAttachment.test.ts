@@ -6,6 +6,7 @@ import type { Attachment } from '@openmailbox/mail-core';
 
 import { openAttachment, openAttachmentOfFile } from '@/features/attachments/openAttachment';
 import { presentVCard } from '@/features/attachments/vcard';
+import { queryClient, queryKeys } from '@/core/queryClient';
 
 import { core } from '../../helpers/fixtures';
 
@@ -54,6 +55,16 @@ describe('openAttachment', () => {
 
   describe('attached emails', () => {
     const EML: Attachment = { index: 4, filename: 'Original quote.eml', mimeType: 'message/rfc822', size: 900 };
+    const WINMAIL: Attachment = { index: 9, filename: 'winmail.dat', mimeType: 'application/ms-tnef', size: 900 };
+    const SAVED = {
+      subject: 'Original quote',
+      from: [],
+      to: [],
+      cc: [],
+      body: { text: '', hasRemoteContent: false, attachments: [PDF] },
+    };
+
+    beforeEach(() => core.readMessageFile.mockResolvedValue(SAVED));
 
     it.each(['ios', 'android'] as const)('opens an attached email in the message screen on %s', async (os) => {
       onPlatform(os);
@@ -61,9 +72,27 @@ describe('openAttachment', () => {
       await openAttachment('email-1', EML);
       expect(router.push).toHaveBeenCalledWith({
         pathname: '/message',
-        params: { path: '/cache/attachments/email-1-4/Original quote.eml', name: 'Original quote.eml' },
+        params: { path: '/cache/attachments/email-1-4/Original quote.eml', name: 'Original quote.eml', mimeType: 'message/rfc822' },
       });
+      expect(queryClient.getQueryData(queryKeys.savedMessage('/cache/attachments/email-1-4/Original quote.eml'))).toBe(SAVED);
       expect(IntentLauncher.startActivityAsync).not.toHaveBeenCalled();
+    });
+
+    it.each([WINMAIL, { ...WINMAIL, mimeType: 'application/vnd.ms-tnef' }, { ...WINMAIL, filename: 'WINMAIL.DAT', mimeType: 'application/octet-stream' }])(
+      'shows the files of an Outlook $filename ($mimeType)',
+      async (attachment) => {
+        onPlatform('android');
+        await openAttachment('email-1', attachment);
+        expect(router.push).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/message' }));
+      },
+    );
+
+    it('shares a winmail.dat with no files inside', async () => {
+      onPlatform('ios');
+      core.readMessageFile.mockRejectedValueOnce(new Error('not found'));
+      await openAttachment('email-1', WINMAIL);
+      expect(router.push).not.toHaveBeenCalled();
+      expect(Sharing.shareAsync).toHaveBeenCalledWith(expect.stringContaining('file:///'), expect.objectContaining({ mimeType: 'application/ms-tnef' }));
     });
 
     it('recognises an .eml file sent without its type', async () => {

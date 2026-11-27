@@ -91,6 +91,17 @@ fn decoder(label: &str) -> Option<Decoder> {
     }
 }
 
+pub(crate) fn decode_code_page(code_page: u32, bytes: &[u8]) -> String {
+    let label = match code_page {
+        65001 => "utf-8".to_owned(),
+        _ => format!("cp{code_page}"),
+    };
+    decoder(&label)
+        .or_else(|| decoder(FALLBACK_LABEL))
+        .map(|decoder| decoder.decode(bytes).into_owned())
+        .unwrap_or_else(|| String::from_utf8_lossy(bytes).into_owned())
+}
+
 impl Decoder {
     fn decode(self, bytes: &[u8]) -> Cow<'_, str> {
         match self {
