@@ -187,3 +187,15 @@ jest.mock('@expo/ui/swift-ui', () => ({}));
 afterAll(() => {
   require('@/core/queryClient').queryClient.clear();
 });
+
+jest.mock('expo-calendar', () => ({
+  EntityTypes: { EVENT: 'event' },
+  Frequency: { DAILY: 'daily', WEEKLY: 'weekly', MONTHLY: 'monthly', YEARLY: 'yearly' },
+  requestCalendarPermissionsAsync: jest.fn(async () => ({ granted: true, status: 'granted' })),
+  getDefaultCalendarAsync: jest.fn(async () => ({ id: 'default', allowsModifications: true })),
+  getCalendarsAsync: jest.fn(async () => []),
+  getEventAsync: jest.fn(async (id) => ({ id })),
+  createEventAsync: jest.fn(async () => 'event-1'),
+  updateEventAsync: jest.fn(async () => undefined),
+  deleteEventAsync: jest.fn(async () => undefined),
+}));

@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { zustandStorage } from '@/storage';
 import type { InboxFilter } from '@/features/categories/categories';
+import type { Partstat } from '@/features/invites/invite';
 import { DEFAULT_FILTER_CRITERIA, type FilterCriteria } from '@/features/threads/threadFilter';
 import { linkedHtml } from '@/features/composer/prefill';
 import type { TimeFormat } from '@/utils/dates';
@@ -61,6 +62,8 @@ interface SettingsState {
   categorySeenAt: Partial<Record<InboxFilter, number>>;
   filterEnabled: boolean;
   filterCriteria: FilterCriteria;
+  inviteAnswers: Record<string, { sequence: number; partstat: Partstat }>;
+  inviteEvents: Record<string, string>;
   setThemePreference: (preference: ThemePreference) => void;
   setLanguage: (language: AppLanguage) => void;
   setTimeFormat: (timeFormat: TimeFormat) => void;
@@ -83,6 +86,8 @@ interface SettingsState {
   markCategorySeen: (filter: InboxFilter, receivedAt: number) => void;
   setFilterEnabled: (enabled: boolean) => void;
   setFilterCriteria: (criteria: Partial<FilterCriteria>) => void;
+  setInviteAnswer: (uid: string, sequence: number, partstat: Partstat) => void;
+  setInviteEvent: (uid: string, eventId: string | null) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -109,6 +114,8 @@ export const useSettingsStore = create<SettingsState>()(
       categorySeenAt: {},
       filterEnabled: false,
       filterCriteria: DEFAULT_FILTER_CRITERIA,
+      inviteAnswers: {},
+      inviteEvents: {},
       setThemePreference: (themePreference) => set({ themePreference }),
       setLanguage: (language) => set({ language }),
       setTimeFormat: (timeFormat) => set({ timeFormat }),
@@ -122,6 +129,12 @@ export const useSettingsStore = create<SettingsState>()(
       setCategoriesEnabled: (categoriesEnabled) => set({ categoriesEnabled }),
       setFilterEnabled: (filterEnabled) => set({ filterEnabled }),
       setFilterCriteria: (criteria) => set(({ filterCriteria }) => ({ filterCriteria: { ...filterCriteria, ...criteria } })),
+      setInviteAnswer: (uid, sequence, partstat) => set(({ inviteAnswers }) => ({ inviteAnswers: { ...inviteAnswers, [uid]: { sequence, partstat } } })),
+      setInviteEvent: (uid, eventId) =>
+        set(({ inviteEvents }) => {
+          const { [uid]: _previous, ...others } = inviteEvents;
+          return { inviteEvents: eventId ? { ...others, [uid]: eventId } : others };
+        }),
       toggleCollapsed: (id) =>
         set(({ collapsedIds }) => ({
           collapsedIds: collapsedIds.includes(id) ? collapsedIds.filter((collapsed) => collapsed !== id) : [...collapsedIds, id],
@@ -201,6 +214,8 @@ export const useSettingsStore = create<SettingsState>()(
         categorySeenAt,
         filterEnabled,
         filterCriteria,
+        inviteAnswers,
+        inviteEvents,
       }) => ({
         themePreference,
         language,
@@ -223,6 +238,8 @@ export const useSettingsStore = create<SettingsState>()(
         categorySeenAt,
         filterEnabled,
         filterCriteria,
+        inviteAnswers,
+        inviteEvents,
       }),
     },
   ),

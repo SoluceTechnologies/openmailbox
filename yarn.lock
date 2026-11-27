@@ -5714,6 +5714,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-calendar@npm:~57.0.7":
+  version: 57.0.7
+  resolution: "expo-calendar@npm:57.0.7"
+  peerDependencies:
+    expo: "*"
+    react-native: "*"
+  checksum: 10c0/13f94526a7037796d9ab6e1b7fab7b4160c54e1b10840966d32494b3b2f7db6f5e48497a0988712bd524c5d25ac6df8d4ddc3aa976993f77f04530378c1b92a2
+  languageName: node
+  linkType: hard
+
 "expo-constants@npm:~57.0.23":
   version: 57.0.23
   resolution: "expo-constants@npm:57.0.23"
@@ -9197,6 +9207,7 @@ __metadata:
     dayjs: "npm:^1.11.20"
     expo: "npm:^57.0.0"
     expo-background-task: "npm:~57.0.0"
+    expo-calendar: "npm:~57.0.7"
     expo-constants: "npm:~57.0.6"
     expo-contacts: "npm:~57.0.0"
     expo-dev-client: "npm:~57.0.9"
