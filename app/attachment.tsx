@@ -7,12 +7,19 @@ import * as Sharing from 'expo-sharing';
 import { File } from 'expo-file-system';
 import { Share, X } from 'lucide-react-native';
 import WebView from 'react-native-webview';
+import { useVideoPlayer, VideoView } from 'expo-video';
 
 import { IconButton, Typography, ViewContainer } from '@/ui/components';
 import { NATIVE_CHROME } from '@/ui/nativeChrome';
 import { goBack } from '@/utils/navigation';
 
 const SVG = 'image/svg+xml';
+const MEDIA = /^(audio|video)\//;
+
+function MediaPlayer({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri);
+  return <VideoView player={player} nativeControls contentFit="contain" allowsPictureInPicture={false} style={styles.flex} />;
+}
 
 function needsPage(mimeType: string): boolean {
   return mimeType === SVG || mimeType === 'application/json' || (mimeType.startsWith('text/') && mimeType !== 'text/html');
@@ -42,7 +49,9 @@ export default function AttachmentScreen() {
   const share = () => Sharing.shareAsync(uri, { mimeType, dialogTitle: name }).catch(() => undefined);
   const [source] = useState(() => ({ uri: needsPage(mimeType) ? viewerPage(uri, mimeType) : uri }));
 
-  const viewer = mimeType.startsWith('image/') && mimeType !== SVG ? (
+  const viewer = MEDIA.test(mimeType) ? (
+    <MediaPlayer uri={uri} />
+  ) : mimeType.startsWith('image/') && mimeType !== SVG ? (
     <ScrollView maximumZoomScale={4} centerContent style={styles.flex} contentContainerStyle={styles.flex}>
       <Image source={{ uri }} resizeMode="contain" accessibilityLabel={name} style={styles.flex} />
     </ScrollView>

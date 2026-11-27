@@ -81,6 +81,7 @@ const config: ExpoConfig = {
     'expo-localization',
     'expo-font',
     'expo-background-task',
+    'expo-video',
     ['expo-notifications', { icon: './assets/notification-icon.png', color: '#109be6' }],
     ['expo-calendar', { calendarPermission: 'Open Mailbox adds the invitations you accept to your calendar.' }],
     [

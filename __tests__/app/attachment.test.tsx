@@ -17,6 +17,14 @@ const PDF = { uri: 'file:///cache/attachments/email-1-0/Facture.pdf', name: 'Fac
 let mockParams = PDF;
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => undefined) }));
 const mockWrite = jest.fn();
+jest.mock('expo-video', () => {
+  const { createElement } = require('react');
+  const { View } = require('react-native');
+  return {
+    useVideoPlayer: (source: string) => ({ source }),
+    VideoView: (props: object) => createElement(View, { testID: 'video-view', ...props }),
+  };
+});
 jest.mock('expo-file-system', () => ({
   File: class {
     uri: string;
@@ -66,6 +74,19 @@ describe('attachment viewer', () => {
     mockParams = { uri: 'file:///cache/attachments/email-1-5/page.html', name: 'page.html', mimeType: 'text/html' };
     renderWithProviders(<AttachmentScreen />);
     expect(screen.getByTestId('web-view').props.source).toEqual({ uri: mockParams.uri });
+  });
+
+  it.each([
+    ['memo.m4a', 'audio/mp4'],
+    ['clip.mp4', 'video/mp4'],
+  ])('plays %s in the native player', (name, mimeType) => {
+    mockParams = { uri: `file:///cache/attachments/email-1-6/${name}`, name, mimeType };
+    renderWithProviders(<AttachmentScreen />);
+    const player = screen.getByTestId('video-view');
+    expect(player.props.player).toEqual({ source: mockParams.uri });
+    expect(player.props.nativeControls).toBe(true);
+    expect(screen.queryByTestId('web-view')).toBeNull();
+    expect(mockWrite).not.toHaveBeenCalled();
   });
 
   it('shows the file without running scripts', () => {

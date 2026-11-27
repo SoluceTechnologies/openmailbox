@@ -13,6 +13,8 @@ import { presentVCard } from './vcard';
 export const VIEWABLE_ON_IOS = [
   'application/pdf',
   'image/',
+  'video/',
+  'audio/',
   'text/',
   'application/json',
   'application/vnd.openxmlformats-officedocument.',

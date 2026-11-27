@@ -6216,6 +6216,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-video@npm:~57.0.5":
+  version: 57.0.5
+  resolution: "expo-video@npm:57.0.5"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/89562cf6fd0e5a1a724eb027d3ad56587db1f42e83eb0cfd7626aaa02555d11334954812b1d9960e3c7d95cc584341849439200b054a71ab7946ee3135dec129
+  languageName: node
+  linkType: hard
+
 "expo-web-browser@npm:~57.0.3":
   version: 57.0.3
   resolution: "expo-web-browser@npm:57.0.3"
@@ -9230,6 +9241,7 @@ __metadata:
     expo-status-bar: "npm:~57.0.1"
     expo-system-ui: "npm:~57.0.4"
     expo-task-manager: "npm:~57.0.0"
+    expo-video: "npm:~57.0.5"
     expo-web-browser: "npm:~57.0.3"
     i18next: "npm:^26.3.1"
     ical.js: "npm:2.2.1"

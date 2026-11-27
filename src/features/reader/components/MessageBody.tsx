@@ -2,7 +2,7 @@ import { memo, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Contact, File, FileArchive, FileImage, FileSpreadsheet, FileText, ImageOff, Mail, type LucideIcon } from 'lucide-react-native';
+import { Contact, File, FileArchive, FileImage, FileJson, FileMusic, FileSpreadsheet, FileText, FileVideoCamera, ImageOff, Mail, type LucideIcon } from 'lucide-react-native';
 import type { Attachment } from '@openmailbox/mail-core';
 
 import { useBody } from '@/core/hooks';
@@ -24,6 +24,9 @@ function attachmentIcon(mimeType: string): LucideIcon {
   if (mimeType === 'message/rfc822') return Mail;
   if (mimeType.includes('vcard')) return Contact;
   if (mimeType.startsWith('image/')) return FileImage;
+  if (mimeType.startsWith('audio/')) return FileMusic;
+  if (mimeType.startsWith('video/')) return FileVideoCamera;
+  if (mimeType === 'application/json') return FileJson;
   if (mimeType === 'application/pdf' || mimeType.startsWith('text/') || mimeType.includes('word')) return FileText;
   if (mimeType.includes('sheet') || mimeType.includes('excel') || mimeType === 'text/csv') return FileSpreadsheet;
   if (mimeType.includes('zip') || mimeType.includes('compressed') || mimeType.includes('tnef')) return FileArchive;

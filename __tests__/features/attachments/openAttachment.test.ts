@@ -182,6 +182,8 @@ describe('openAttachment', () => {
 
   it.each([
     ['logo.svg', 'image/svg+xml'],
+    ['clip.mp4', 'video/mp4'],
+    ['memo.m4a', 'audio/mp4'],
     ['export.csv', 'text/csv'],
     ['README.md', 'text/markdown'],
     ['page.html', 'text/html'],
@@ -191,16 +193,6 @@ describe('openAttachment', () => {
     await openAttachment('email-1', { index: 6, filename, mimeType, size: 300 });
     expect(router.push).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/attachment' }));
     expect(Sharing.shareAsync).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ['clip.mp4', 'video/mp4'],
-    ['memo.m4a', 'audio/mp4'],
-  ])('shares %s on iOS, which the web viewer cannot play', async (filename, mimeType) => {
-    onPlatform('ios');
-    await openAttachment('email-1', { index: 6, filename, mimeType, size: 300 });
-    expect(router.push).not.toHaveBeenCalled();
-    expect(Sharing.shareAsync).toHaveBeenCalled();
   });
 
   it('shares a calendar file on iOS instead of showing its text', async () => {
