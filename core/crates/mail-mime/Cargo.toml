@@ -12,6 +12,7 @@ lettre.workspace = true
 mail-parser.workspace = true
 jxl-oxide.workspace = true
 png.workspace = true
+tiff.workspace = true
 
 [dev-dependencies]
 zune-jpegxl.workspace = true

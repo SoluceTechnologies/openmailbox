@@ -16,7 +16,7 @@ mod charsets;
 mod code_pages;
 mod images;
 
-pub use images::png_from_jxl;
+pub use images::readable_png;
 
 const PREVIEW_LENGTH: usize = 180;
 const INLINE_IMAGE_LIMIT: usize = 2 * 1024 * 1024;
@@ -322,7 +322,7 @@ fn embed_inline_images(
             continue;
         }
         let decoded = part.decoded();
-        let (mime_type, bytes) = match png_from_jxl(&decoded) {
+        let (mime_type, bytes) = match readable_png(&decoded) {
             Some(png) => ("image/png".to_owned(), png),
             None => (
                 format!("image/{}", content_type.subtype().unwrap_or("png")),

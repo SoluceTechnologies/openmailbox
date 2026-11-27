@@ -786,6 +786,28 @@ fn writes_a_png_next_to_a_saved_jpeg_xl_attachment() {
 }
 
 #[test]
+fn writes_a_png_next_to_a_saved_tiff_scan() {
+    let directory = std::env::temp_dir().join(format!("mail-sync-tiff-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let saved = directory.join("scan.tif");
+    let mut tiff = std::io::Cursor::new(Vec::new());
+    tiff::encoder::TiffEncoder::new(&mut tiff)
+        .unwrap()
+        .write_image::<tiff::encoder::colortype::Gray8>(2, 2, &[0, 80, 160, 255])
+        .unwrap();
+    std::fs::write(&saved, tiff.into_inner()).unwrap();
+
+    let readable = readable_image(&saved).unwrap().unwrap();
+
+    assert_eq!(readable, directory.join("scan.png").to_string_lossy());
+    assert!(
+        std::fs::read(&readable)
+            .unwrap()
+            .starts_with(b"\x89PNG\r\n\x1a\n")
+    );
+}
+
+#[test]
 fn leaves_other_saved_attachments_as_they_are() {
     let saved = std::env::temp_dir().join(format!("mail-sync-pdf-{}.pdf", uuid::Uuid::new_v4()));
     std::fs::write(&saved, b"%PDF-1.7").unwrap();

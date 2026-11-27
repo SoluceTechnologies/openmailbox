@@ -18,7 +18,8 @@ export const VIEWABLE_ON_IOS = [
 ];
 
 const UNKNOWN_TYPE = 'application/octet-stream';
-const JPEG_XL = /\.jxl$/i;
+const CONVERTED_TYPES = ['image/jxl', 'image/tiff'];
+const CONVERTED_EXTENSIONS = /\.(jxl|tiff?)$/i;
 const EMAIL = /\.eml$/i;
 const FLAG_GRANT_READ_URI_PERMISSION = 1;
 
@@ -27,7 +28,7 @@ function share(uri: string, attachment: Attachment): Promise<void> {
 }
 
 async function readableCopy(path: string, attachment: Attachment): Promise<{ path: string; attachment: Attachment }> {
-  if (attachment.mimeType !== 'image/jxl' && !JPEG_XL.test(attachment.filename)) return { path, attachment };
+  if (!CONVERTED_TYPES.includes(attachment.mimeType) && !CONVERTED_EXTENSIONS.test(attachment.filename)) return { path, attachment };
   const png = await mailCore().readableImage(path).catch(() => undefined);
   return png ? { path: png, attachment: { ...attachment, mimeType: 'image/png' } } : { path, attachment };
 }

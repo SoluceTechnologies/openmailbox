@@ -4,7 +4,7 @@ use zune_core::colorspace::ColorSpace;
 use zune_core::options::EncoderOptions;
 use zune_jpegxl::JxlSimpleEncoder;
 
-use super::png_from_jxl;
+use super::{png_from_jxl, readable_png};
 use crate::render;
 
 fn jxl(pixels: &[u8], width: usize, height: usize, colorspace: ColorSpace) -> Vec<u8> {
@@ -71,4 +71,99 @@ Content-Transfer-Encoding: base64\r\nContent-Disposition: inline; filename=\"pho
     let html = render(raw.as_bytes()).unwrap().html.unwrap();
     assert!(html.contains("src=\"data:image/png;base64,"), "{html}");
     assert!(!html.contains("image/jxl"));
+}
+
+fn rgb_tiff(pixels: &[u8], width: u32, height: u32) -> Vec<u8> {
+    let mut encoded = std::io::Cursor::new(Vec::new());
+    tiff::encoder::TiffEncoder::new(&mut encoded)
+        .unwrap()
+        .write_image::<tiff::encoder::colortype::RGB8>(width, height, pixels)
+        .unwrap();
+    encoded.into_inner()
+}
+
+fn bilevel_tiff(width: u16, rows: &[u8]) -> Vec<u8> {
+    let height = rows.len() as u16;
+    let entries: [(u16, u16, u32); 8] = [
+        (256, 3, width as u32),
+        (257, 3, height as u32),
+        (258, 3, 1),
+        (259, 3, 1),
+        (262, 3, 0),
+        (273, 4, 8 + 2 + 8 * 12 + 4),
+        (278, 3, height as u32),
+        (279, 4, rows.len() as u32),
+    ];
+    let mut bytes = b"II*\0".to_vec();
+    bytes.extend(8u32.to_le_bytes());
+    bytes.extend((entries.len() as u16).to_le_bytes());
+    for (tag, kind, value) in entries {
+        bytes.extend(tag.to_le_bytes());
+        bytes.extend(kind.to_le_bytes());
+        bytes.extend(1u32.to_le_bytes());
+        bytes.extend(value.to_le_bytes());
+    }
+    bytes.extend(0u32.to_le_bytes());
+    bytes.extend(rows);
+    bytes
+}
+
+#[test]
+fn turns_a_tiff_scan_into_a_png_with_the_same_pixels() {
+    let pixels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
+    let png = readable_png(&rgb_tiff(&pixels, 2, 2)).unwrap();
+    assert_eq!(
+        decode_png(&png),
+        (png::ColorType::Rgb, 2, 2, pixels.to_vec())
+    );
+}
+
+#[test]
+fn keeps_the_depth_of_a_16_bit_grey_tiff() {
+    let mut encoded = std::io::Cursor::new(Vec::new());
+    tiff::encoder::TiffEncoder::new(&mut encoded)
+        .unwrap()
+        .write_image::<tiff::encoder::colortype::Gray16>(2, 1, &[0x0102, 0xfffe])
+        .unwrap();
+    let png = readable_png(&encoded.into_inner()).unwrap();
+    assert_eq!(
+        decode_png(&png),
+        (
+            png::ColorType::Grayscale,
+            2,
+            1,
+            vec![0x01, 0x02, 0xff, 0xfe]
+        )
+    );
+}
+
+#[test]
+fn shows_a_fax_with_black_ink_on_white_paper() {
+    let png = readable_png(&bilevel_tiff(2, &[0b1000_0000, 0b0100_0000])).unwrap();
+    let (color, width, height, rows) = decode_png(&png);
+    assert_eq!((color, width, height), (png::ColorType::Grayscale, 2, 2));
+    assert_eq!(
+        rows.iter().map(|row| row & 0b1100_0000).collect::<Vec<_>>(),
+        [0b0100_0000, 0b1000_0000]
+    );
+}
+
+#[test]
+fn leaves_images_that_need_no_conversion_alone() {
+    assert!(readable_png(b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR").is_none());
+    assert!(readable_png(b"II*\0\x08\0\0\0").is_none());
+}
+
+#[test]
+fn shows_an_inline_tiff_image_as_a_png() {
+    let image = base64::engine::general_purpose::STANDARD.encode(rgb_tiff(&[200; 12], 2, 2));
+    let raw = format!(
+        "From: a@example.com\r\nTo: b@example.com\r\nSubject: Scan\r\nMIME-Version: 1.0\r\n\
+Content-Type: multipart/related; boundary=\"b\"\r\n\r\n--b\r\nContent-Type: text/html; charset=utf-8\r\n\r\n\
+<p>Scan</p><img src=\"cid:scan\">\r\n--b\r\nContent-Type: image/tiff\r\nContent-ID: <scan>\r\n\
+Content-Transfer-Encoding: base64\r\nContent-Disposition: inline; filename=\"scan.tif\"\r\n\r\n{image}\r\n--b--\r\n"
+    );
+    let html = render(raw.as_bytes()).unwrap().html.unwrap();
+    assert!(html.contains("src=\"data:image/png;base64,"), "{html}");
+    assert!(!html.contains("image/tiff"));
 }

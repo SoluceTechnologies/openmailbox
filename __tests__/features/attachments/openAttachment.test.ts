@@ -125,6 +125,28 @@ describe('openAttachment', () => {
     });
   });
 
+  describe('TIFF', () => {
+    const SCAN: Attachment = { index: 5, filename: 'Scan 2026-11-24.tif', mimeType: 'image/tiff', size: 4000 };
+
+    beforeEach(() => {
+      core.saveAttachment.mockResolvedValue('/cache/attachments/email-1-5/Scan 2026-11-24.tif');
+      core.readableImage.mockResolvedValue('/cache/attachments/email-1-5/Scan 2026-11-24.png');
+    });
+
+    it('opens a PNG copy of a scanned TIFF on Android', async () => {
+      onPlatform('android');
+      await openAttachment('email-1', SCAN);
+      expect(core.readableImage).toHaveBeenCalledWith('/cache/attachments/email-1-5/Scan 2026-11-24.tif');
+      expect(IntentLauncher.startActivityAsync).toHaveBeenCalledWith('android.intent.action.VIEW', expect.objectContaining({ type: 'image/png' }));
+    });
+
+    it.each(['Fax.TIFF', 'fax.tif'])('recognises %s sent without its type', async (filename) => {
+      onPlatform('ios');
+      await openAttachment('email-1', { ...SCAN, filename, mimeType: 'application/octet-stream' });
+      expect(router.push).toHaveBeenCalledWith(expect.objectContaining({ params: expect.objectContaining({ mimeType: 'image/png' }) }));
+    });
+  });
+
   it('shares a file named without an extension on iOS, which the viewer could not show', async () => {
     onPlatform('ios');
     await openAttachment('email-1', { ...PDF, filename: 'Facture' });

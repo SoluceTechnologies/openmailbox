@@ -1218,7 +1218,7 @@ pub fn read_message_file(path: &Path) -> Result<mail_model::SavedMessage> {
 
 pub fn readable_image(path: &Path) -> Result<Option<String>> {
     let bytes = std::fs::read(path).map_err(|error| Error::Storage(error.to_string()))?;
-    let Some(png) = mail_mime::png_from_jxl(&bytes) else {
+    let Some(png) = mail_mime::readable_png(&bytes) else {
         return Ok(None);
     };
     let target = path.with_extension("png");
